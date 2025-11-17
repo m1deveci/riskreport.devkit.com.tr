@@ -40,7 +40,13 @@ function App() {
 
     onAuthStateChange((user) => {
       setCurrentUser(user);
-      if (user) {
+      // Route'u her zaman kontrol et (QR form URL'si için)
+      const path = window.location.pathname;
+      const isReportRoute = path.match(/^\/report\/([^/]+)\/([^/]+)$/);
+
+      if (isReportRoute) {
+        checkRoute();
+      } else if (user) {
         setMode('admin');
       } else {
         checkRoute();
@@ -51,7 +57,13 @@ function App() {
     const handleAuthChange = async () => {
       const user = await getCurrentUser();
       setCurrentUser(user);
-      if (user) {
+      // Route'u her zaman kontrol et (QR form URL'si için)
+      const path = window.location.pathname;
+      const isReportRoute = path.match(/^\/report\/([^/]+)\/([^/]+)$/);
+
+      if (isReportRoute) {
+        checkRoute();
+      } else if (user) {
         setMode('admin');
       } else {
         checkRoute();
@@ -66,13 +78,22 @@ function App() {
   }, []);
 
   async function initializeApp() {
-    const user = await getCurrentUser();
-    setCurrentUser(user);
+    // Önce route'u kontrol et (QR form URL'si için auth gerektirmez)
+    const path = window.location.pathname;
+    const isReportRoute = path.match(/^\/report\/([^/]+)\/([^/]+)$/);
 
-    if (user) {
-      setMode('admin');
-    } else {
+    if (isReportRoute) {
       checkRoute();
+    } else {
+      // Report route değilse, auth'u kontrol et
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+
+      if (user) {
+        setMode('admin');
+      } else {
+        checkRoute();
+      }
     }
   }
 
