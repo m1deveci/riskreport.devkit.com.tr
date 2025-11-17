@@ -98,19 +98,22 @@ export function Regions() {
       } else {
         const token = generateToken();
 
+        // Generate QR code URL before creating region
+        const qrUrl = `${window.location.origin}/report/${formData.location_id}/${token}`;
+
         const newRegionData = {
           ...formData,
           qr_code_token: token,
-          qr_code_url: 'temp',
+          qr_code_url: qrUrl,
         };
 
         const newRegion = await api.regions.create(newRegionData);
 
         if (!newRegion || !newRegion.id) throw new Error('Bölge oluşturulamadı');
 
-        const qrUrl = `${window.location.origin}/report/${formData.location_id}/${token}?region=${newRegion.id}`;
-
-        await api.regions.update(newRegion.id, { qr_code_url: qrUrl });
+        // Update QR code URL with region ID query parameter
+        const finalQrUrl = `${qrUrl}?region=${newRegion.id}`;
+        await api.regions.update(newRegion.id, { qr_code_url: finalQrUrl });
 
         await logAction(LogActions.CREATE_REGION, { name: formData.name });
         setSuccess('Bölge başarıyla oluşturuldu');
