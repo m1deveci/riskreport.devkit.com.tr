@@ -58,36 +58,56 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
       setError('');
       setRateLimitError(false);
 
-      // Validate QR code
-      const { data: regionData, error: regionError } = await supabase
-        .from('regions')
-        .select('*, locations(id, name)')
-        .eq('id', regionId)
-        .eq('location_id', locationId)
-        .eq('qr_code_token', qrToken)
-        .eq('is_active', true)
-        .maybeSingle();
+      // Fetch region by ID from API
+      const regionsResponse = await fetch('/api/regions');
+      if (!regionsResponse.ok) {
+        throw new Error('Bölgeler yüklenemedi');
+      }
 
-      if (regionError || !regionData) {
+      const allRegions = await regionsResponse.json();
+
+      // Find the region matching QR code parameters
+      const regionData = allRegions.find(
+        (r: any) =>
+          r.id === regionId &&
+          r.location_id === locationId &&
+          r.qr_code_token === qrToken &&
+          r.is_active
+      );
+
+      if (!regionData) {
         setError('Geçersiz QR kodu. Lütfen sistem yöneticinizle iletişime geçin.');
         return;
       }
 
       setRegion(regionData);
-      setLocation((regionData.locations as unknown) as Location);
+
+      // Fetch location data
+      const locationsResponse = await fetch('/api/locations');
+      if (locationsResponse.ok) {
+        const allLocations = await locationsResponse.json();
+        const locationData = allLocations.find((l: any) => l.id === locationId);
+        if (locationData) {
+          setLocation(locationData);
+        }
+      }
 
       // Check rate limiting - 1 report per 5 minutes per region
-      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-      const { data: recentReports } = await supabase
-        .from('near_miss_reports')
-        .select('id')
-        .eq('region_id', regionId)
-        .gte('created_at', fiveMinutesAgo.toISOString())
-        .limit(1);
+      const reportsResponse = await fetch('/api/reports');
+      if (reportsResponse.ok) {
+        const allReports = await reportsResponse.json();
+        const fiveMinutesAgo = Date.now() - 5 * 60 * 1000;
 
-      if (recentReports && recentReports.length > 0) {
-        setRateLimitError(true);
-        setError('Bu bölge için son 5 dakika içinde zaten bir rapor gönderilmiş. Lütfen daha sonra tekrar deneyin.');
+        const recentReport = allReports.find((r: any) => {
+          if (r.region_id !== regionId) return false;
+          const createdTime = new Date(r.created_at).getTime();
+          return createdTime > fiveMinutesAgo;
+        });
+
+        if (recentReport) {
+          setRateLimitError(true);
+          setError('Bu bölge için son 5 dakika içinde zaten bir rapor gönderilmiş. Lütfen daha sonra tekrar deneyin.');
+        }
       }
     } catch (err) {
       setError('Bir hata oluştu. Lütfen tekrar deneyin.');
