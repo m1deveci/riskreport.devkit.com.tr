@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api, supabase } from '../lib/supabase';
-import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Loader2, Camera, X } from 'lucide-react';
 
 interface NearMissFormProps {
   locationId: string;
@@ -41,10 +41,12 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
 
   const [formData, setFormData] = useState({
     full_name: '',
-    phone: '',
     category: '',
     description: '',
+    image: null as File | null,
   });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [rateLimitError, setRateLimitError] = useState(false);
 
   useEffect(() => {
     validateQRCode();
@@ -54,7 +56,9 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
     try {
       setValidating(true);
       setError('');
+      setRateLimitError(false);
 
+      // Validate QR code
       const { data: regionData, error: regionError } = await supabase
         .from('regions')
         .select('*, locations(id, name)')
@@ -71,12 +75,55 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
 
       setRegion(regionData);
       setLocation((regionData.locations as unknown) as Location);
+
+      // Check rate limiting - 1 report per 5 minutes per region
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+      const { data: recentReports } = await supabase
+        .from('near_miss_reports')
+        .select('id')
+        .eq('region_id', regionId)
+        .gte('created_at', fiveMinutesAgo.toISOString())
+        .limit(1);
+
+      if (recentReports && recentReports.length > 0) {
+        setRateLimitError(true);
+        setError('Bu bölge için son 5 dakika içinde zaten bir rapor gönderilmiş. Lütfen daha sonra tekrar deneyin.');
+      }
     } catch (err) {
       setError('Bir hata oluştu. Lütfen tekrar deneyin.');
       console.error(err);
     } finally {
       setValidating(false);
     }
+  }
+
+  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        setError('Dosya boyutu 10 MB\'den küçük olmalıdır.');
+        return;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        setError('Lütfen bir resim dosyası seçiniz.');
+        return;
+      }
+
+      setFormData({ ...formData, image: file });
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+      setError('');
+    }
+  }
+
+  function removeImage() {
+    setFormData({ ...formData, image: null });
+    setImagePreview(null);
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -89,52 +136,62 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
         throw new Error('Ad Soyad alanı zorunludur');
       }
 
-      if (!formData.phone.trim()) {
-        throw new Error('Telefon alanı zorunludur');
-      }
-
       if (!formData.category) {
         throw new Error('Kategori seçimi zorunludur');
       }
 
-      const { data, error: insertError } = await supabase
-        .from('near_miss_reports')
-        .insert({
+      if (!formData.image) {
+        throw new Error('Görsel (fotoğraf) zorunludur');
+      }
+
+      if (rateLimitError) {
+        throw new Error('Bu bölge için son 5 dakika içinde zaten bir rapor gönderilmiş. Lütfen daha sonra tekrar deneyin.');
+      }
+
+      // Upload image to backend
+      let imagePath = '';
+      if (formData.image) {
+        const imageFormData = new FormData();
+        imageFormData.append('file', formData.image);
+        imageFormData.append('region_id', regionId);
+
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: imageFormData,
+        });
+
+        if (!uploadResponse.ok) {
+          throw new Error('Görsel yüklenirken hata oluştu');
+        }
+
+        const uploadData = await uploadResponse.json();
+        imagePath = uploadData.path;
+      }
+
+      // Submit report using API
+      const response = await fetch('/api/reports', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           location_id: locationId,
           region_id: regionId,
           full_name: formData.full_name.trim(),
-          phone: formData.phone.trim(),
           category: formData.category,
           description: formData.description.trim(),
+          image_path: imagePath,
           status: 'Yeni',
-        })
-        .select('incident_number')
-        .single();
+        }),
+      });
 
-      if (insertError) throw insertError;
+      if (!response.ok) {
+        throw new Error('Rapor gönderilirken hata oluştu');
+      }
 
+      const data = await response.json();
       setIncidentNumber(data.incident_number);
       setSubmitted(true);
-
-      try {
-        await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-nearmiss-notification`,
-          {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              incident_number: data.incident_number,
-              location_id: locationId,
-              region_id: regionId,
-            }),
-          }
-        );
-      } catch (emailError) {
-        console.error('Email notification failed:', emailError);
-      }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Bir hata oluştu';
       setError(errorMessage);
@@ -248,18 +305,47 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
             </div>
 
             <div>
-              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
-                Telefon <span className="text-red-600">*</span>
+              <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-2">
+                Görsel / Fotoğraf <span className="text-red-600">*</span>
               </label>
-              <input
-                type="tel"
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
-                placeholder="0555 555 55 55"
-                required
-              />
+              <div className="relative">
+                <input
+                  type="file"
+                  id="image"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleImageChange}
+                  className="hidden"
+                  required
+                />
+                <label
+                  htmlFor="image"
+                  className="flex items-center justify-center gap-3 w-full px-4 py-8 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-blue-500 transition-colors bg-gray-50"
+                >
+                  <Camera className="w-6 h-6 text-gray-400" />
+                  <div className="text-center">
+                    <p className="text-sm font-medium text-gray-700">Fotoğraf Seç veya Çek</p>
+                    <p className="text-xs text-gray-500 mt-1">Mobil cihazdan kamera veya galeri</p>
+                  </div>
+                </label>
+              </div>
+
+              {imagePreview && (
+                <div className="mt-4 relative">
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="w-full rounded-lg border border-gray-300 max-h-64 object-cover"
+                  />
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-2 hover:bg-red-700 transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
             </div>
 
             <div>

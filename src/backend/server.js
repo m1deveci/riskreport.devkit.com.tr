@@ -7,6 +7,8 @@ import bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import multer from 'multer';
+import fs from 'fs';
 
 // Load environment variables
 dotenv.config();
@@ -19,10 +21,45 @@ const port = process.env.BACKEND_PORT || 6000;
 const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_jwt_key_change_this_in_production';
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '24h';
 
+// Ensure uploads directory exists
+const uploadsDir = dirname(dirname(__dirname)) + '/uploads';
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Multer configuration for image uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const regionId = req.body.region_id || 'unknown';
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(7);
+    const ext = file.originalname.split('.').pop();
+    cb(null, `${regionId}-${timestamp}-${random}.${ext}`);
+  },
+});
+
+const upload = multer({
+  storage,
+  limits: {
+    fileSize: 10 * 1024 * 1024, // 10 MB
+  },
+  fileFilter: (req, file, cb) => {
+    if (!file.mimetype.startsWith('image/')) {
+      cb(new Error('Sadece görsel dosyaları yüklenebilir'));
+    } else {
+      cb(null, true);
+    }
+  },
+});
+
 // Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static(dirname(dirname(__dirname)) + '/dist'));
+app.use('/uploads', express.static(uploadsDir));
 
 // MySQL Connection Pool
 const pool = mysql.createPool({
@@ -397,16 +434,34 @@ app.get('/api/reports/:locationId', async (req, res) => {
 
 app.post('/api/reports', async (req, res) => {
   try {
-    const { location_id, region_id, full_name, phone, category, description } = req.body;
+    const { location_id, region_id, full_name, phone, category, description, image_path } = req.body;
+
+    if (!location_id || !region_id || !full_name || !category) {
+      return res.status(400).json({ error: 'Gerekli alanlar eksik' });
+    }
+
+    const connection = await pool.getConnection();
+
+    // Check rate limiting - 1 report per 5 minutes per region
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const [recentReports] = await connection.query(
+      'SELECT id FROM near_miss_reports WHERE region_id = ? AND created_at >= ? LIMIT 1',
+      [region_id, fiveMinutesAgo.toISOString().slice(0, 19).replace('T', ' ')]
+    );
+
+    if (recentReports.length > 0) {
+      connection.release();
+      return res.status(429).json({ error: 'Bu bölge için son 5 dakika içinde zaten bir rapor gönderilmiş. Lütfen daha sonra tekrar deneyin.' });
+    }
+
     const id = randomUUID();
     const incidentNumber = `RK-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000000)).padStart(6, '0')}`;
-    const connection = await pool.getConnection();
 
     await connection.query(
       `INSERT INTO near_miss_reports
-       (id, incident_number, location_id, region_id, full_name, phone, category, description)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, incidentNumber, location_id, region_id, full_name, phone, category, description || '']
+       (id, incident_number, location_id, region_id, full_name, phone, category, description, image_path)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, incidentNumber, location_id, region_id, full_name, phone || null, category, description || '', image_path || null]
     );
 
     connection.release();
@@ -573,6 +628,27 @@ app.put('/api/settings', authenticateToken, adminOnly, async (req, res) => {
 
     connection.release();
     res.json({ success: true, changes: result.affectedRows });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ==================== FILE UPLOAD ENDPOINTS ====================
+
+// Upload Image Endpoint
+app.post('/api/upload', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Dosya bulunamadı' });
+    }
+
+    const filePath = `/uploads/${req.file.filename}`;
+
+    res.json({
+      success: true,
+      path: filePath,
+      filename: req.file.filename,
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
