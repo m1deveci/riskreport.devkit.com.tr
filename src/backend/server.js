@@ -267,6 +267,21 @@ app.put('/api/locations/:id', authenticateToken, adminOnly, async (req, res) => 
   }
 });
 
+// Delete Location (Admin Only)
+app.delete('/api/locations/:id', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const connection = await pool.getConnection();
+    const [result] = await connection.query('DELETE FROM locations WHERE id = ?', [id]);
+    connection.release();
+
+    res.json({ success: true, message: 'Lokasyon silindi' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ==================== REGIONS ENDPOINTS ====================
 
 app.get('/api/regions/:locationId', async (req, res) => {
@@ -294,6 +309,40 @@ app.post('/api/regions', authenticateToken, adminOnly, async (req, res) => {
     );
     connection.release();
     res.json({ success: true, id: result.insertId });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update Region (Admin Only)
+app.put('/api/regions/:id', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, qr_code_url, is_active } = req.body;
+
+    const connection = await pool.getConnection();
+    const [result] = await connection.query(
+      'UPDATE regions SET name = ?, description = ?, qr_code_url = ?, is_active = ? WHERE id = ?',
+      [name, description, qr_code_url, is_active, id]
+    );
+    connection.release();
+
+    res.json({ success: true, changes: result.affectedRows });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete Region (Admin Only)
+app.delete('/api/regions/:id', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const connection = await pool.getConnection();
+    const [result] = await connection.query('DELETE FROM regions WHERE id = ?', [id]);
+    connection.release();
+
+    res.json({ success: true, message: 'Bölge silindi' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -348,6 +397,25 @@ app.post('/api/reports', async (req, res) => {
   }
 });
 
+// Update Report Status and Notes (Admin Only)
+app.put('/api/reports/:id', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, internal_notes } = req.body;
+
+    const connection = await pool.getConnection();
+    const [result] = await connection.query(
+      'UPDATE near_miss_reports SET status = ?, internal_notes = ? WHERE id = ?',
+      [status, internal_notes, id]
+    );
+    connection.release();
+
+    res.json({ success: true, changes: result.affectedRows });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ==================== ISG EXPERTS ENDPOINTS ====================
 
 app.get('/api/experts/:locationId', async (req, res) => {
@@ -375,6 +443,40 @@ app.post('/api/experts', authenticateToken, adminOnly, async (req, res) => {
     );
     connection.release();
     res.json({ success: true, id: result.insertId });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update ISG Expert (Admin Only)
+app.put('/api/experts/:id', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { full_name, email, phone, is_active } = req.body;
+
+    const connection = await pool.getConnection();
+    const [result] = await connection.query(
+      'UPDATE isg_experts SET full_name = ?, email = ?, phone = ?, is_active = ? WHERE id = ?',
+      [full_name, email, phone, is_active, id]
+    );
+    connection.release();
+
+    res.json({ success: true, changes: result.affectedRows });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete ISG Expert (Admin Only)
+app.delete('/api/experts/:id', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const connection = await pool.getConnection();
+    const [result] = await connection.query('DELETE FROM isg_experts WHERE id = ?', [id]);
+    connection.release();
+
+    res.json({ success: true, message: 'İSG uzmanı silindi' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
