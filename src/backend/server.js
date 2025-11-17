@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import mysql from 'mysql2/promise';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
@@ -165,18 +166,19 @@ app.post('/api/users', authenticateToken, adminOnly, async (req, res) => {
     // Şifreyi bcrypt ile hash'le
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
+    const id = randomUUID();
 
     const connection = await pool.getConnection();
-    const [result] = await connection.query(
-      'INSERT INTO users (id, full_name, email, password_hash, role, is_active) VALUES (UUID(), ?, ?, ?, ?, true)',
-      [full_name, email, password_hash, role || 'viewer']
+    await connection.query(
+      'INSERT INTO users (id, full_name, email, password_hash, role, is_active) VALUES (?, ?, ?, ?, ?, true)',
+      [id, full_name, email, password_hash, role || 'viewer']
     );
     connection.release();
 
     res.json({
       success: true,
       message: 'Kullanıcı başarıyla oluşturuldu',
-      id: result.insertId
+      id
     });
   } catch (error) {
     console.error(error);
@@ -236,13 +238,14 @@ app.get('/api/locations', async (req, res) => {
 app.post('/api/locations', authenticateToken, adminOnly, async (req, res) => {
   try {
     const { name, description, main_email } = req.body;
+    const id = randomUUID();
     const connection = await pool.getConnection();
-    const [result] = await connection.query(
-      'INSERT INTO locations (id, name, description, main_email) VALUES (UUID(), ?, ?, ?)',
-      [name, description || '', main_email]
+    await connection.query(
+      'INSERT INTO locations (id, name, description, main_email) VALUES (?, ?, ?, ?)',
+      [id, name, description || '', main_email]
     );
     connection.release();
-    res.json({ success: true, id: result.insertId });
+    res.json({ success: true, id });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -315,13 +318,14 @@ app.get('/api/regions/:locationId', async (req, res) => {
 app.post('/api/regions', authenticateToken, adminOnly, async (req, res) => {
   try {
     const { location_id, name, description, qr_code_token, qr_code_url } = req.body;
+    const id = randomUUID();
     const connection = await pool.getConnection();
-    const [result] = await connection.query(
-      'INSERT INTO regions (id, location_id, name, description, qr_code_token, qr_code_url) VALUES (UUID(), ?, ?, ?, ?, ?)',
-      [location_id, name, description || '', qr_code_token, qr_code_url]
+    await connection.query(
+      'INSERT INTO regions (id, location_id, name, description, qr_code_token, qr_code_url) VALUES (?, ?, ?, ?, ?, ?)',
+      [id, location_id, name, description || '', qr_code_token, qr_code_url]
     );
     connection.release();
-    res.json({ success: true, id: result.insertId });
+    res.json({ success: true, id });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -394,17 +398,19 @@ app.get('/api/reports/:locationId', async (req, res) => {
 app.post('/api/reports', async (req, res) => {
   try {
     const { location_id, region_id, full_name, phone, category, description } = req.body;
+    const id = randomUUID();
+    const incidentNumber = `RK-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000000)).padStart(6, '0')}`;
     const connection = await pool.getConnection();
 
-    const [result] = await connection.query(
+    await connection.query(
       `INSERT INTO near_miss_reports
        (id, incident_number, location_id, region_id, full_name, phone, category, description)
-       VALUES (UUID(), CONCAT('RK-', YEAR(NOW()), '-', LPAD(FLOOR(RAND() * 1000000), 6, '0')), ?, ?, ?, ?, ?, ?)`,
-      [location_id, region_id, full_name, phone, category, description || '']
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, incidentNumber, location_id, region_id, full_name, phone, category, description || '']
     );
 
     connection.release();
-    res.json({ success: true, id: result.insertId });
+    res.json({ success: true, id, incident_number: incidentNumber });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -462,13 +468,14 @@ app.get('/api/experts/:locationId', async (req, res) => {
 app.post('/api/experts', authenticateToken, adminOnly, async (req, res) => {
   try {
     const { location_id, full_name, email, phone } = req.body;
+    const id = randomUUID();
     const connection = await pool.getConnection();
-    const [result] = await connection.query(
-      'INSERT INTO isg_experts (id, location_id, full_name, email, phone) VALUES (UUID(), ?, ?, ?, ?)',
-      [location_id, full_name, email, phone]
+    await connection.query(
+      'INSERT INTO isg_experts (id, location_id, full_name, email, phone) VALUES (?, ?, ?, ?, ?)',
+      [id, location_id, full_name, email, phone]
     );
     connection.release();
-    res.json({ success: true, id: result.insertId });
+    res.json({ success: true, id });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
