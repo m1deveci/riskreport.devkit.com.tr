@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from '../lib/supabase';
+import { api, supabase } from '../lib/supabase';
 import { logAction, LogActions } from '../lib/logger';
 import { Plus, Edit2, Trash2, MapPin, AlertCircle, CheckCircle2 } from 'lucide-react';
 
@@ -32,12 +32,7 @@ export function Locations() {
 
   async function loadLocations() {
     try {
-      const { data, error } = await supabase
-        .from('locations')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      const data = await api.locations.getList();
       setLocations(data || []);
     } catch (err) {
       console.error('Failed to load locations:', err);
@@ -76,19 +71,12 @@ export function Locations() {
 
     try {
       if (editingId) {
-        const { error } = await supabase
-          .from('locations')
-          .update(formData)
-          .eq('id', editingId);
-
-        if (error) throw error;
+        await api.locations.update(editingId, formData);
 
         await logAction(LogActions.UPDATE_LOCATION, { location_id: editingId });
         setSuccess('Lokasyon başarıyla güncellendi');
       } else {
-        const { error } = await supabase.from('locations').insert(formData);
-
-        if (error) throw error;
+        await api.locations.create(formData);
 
         await logAction(LogActions.CREATE_LOCATION, { name: formData.name });
         setSuccess('Lokasyon başarıyla oluşturuldu');
@@ -109,9 +97,7 @@ export function Locations() {
     if (!confirm('Bu lokasyonu silmek istediğinize emin misiniz?')) return;
 
     try {
-      const { error } = await supabase.from('locations').delete().eq('id', id);
-
-      if (error) throw error;
+      await api.locations.delete(id);
 
       await logAction(LogActions.DELETE_LOCATION, { location_id: id });
       await loadLocations();

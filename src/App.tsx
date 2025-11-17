@@ -18,12 +18,22 @@ type AppMode = 'loading' | 'public-form' | 'login' | 'admin';
 function App() {
   const [mode, setMode] = useState<AppMode>('loading');
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
-  const [currentPage, setCurrentPage] = useState('dashboard');
+  const [currentPage, setCurrentPage] = useState(() => {
+    // localStorage'dan sayfa bilgisini al
+    return localStorage.getItem('currentPage') || 'dashboard';
+  });
   const [formParams, setFormParams] = useState<{
     locationId: string;
     regionId: string;
     qrToken: string;
   } | null>(null);
+
+  // currentPage değiştiğinde localStorage'a kaydet
+  useEffect(() => {
+    localStorage.setItem('currentPage', currentPage);
+    // URL'yi hash ile update et
+    window.history.replaceState(null, '', `#/${currentPage}`);
+  }, [currentPage]);
 
   useEffect(() => {
     initializeApp();

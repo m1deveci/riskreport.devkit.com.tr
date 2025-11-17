@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from '../lib/supabase';
+import { api, supabase } from '../lib/supabase';
 import { logAction, LogActions } from '../lib/logger';
 import { Plus, Edit2, Trash2, Users, AlertCircle, CheckCircle2 } from 'lucide-react';
 
@@ -42,19 +42,13 @@ export function ISGExperts() {
 
   async function loadData() {
     try {
-      const [expertsRes, locationsRes] = await Promise.all([
-        supabase
-          .from('isg_experts')
-          .select('*, locations(name)')
-          .order('created_at', { ascending: false }),
-        supabase.from('locations').select('id, name').eq('is_active', true),
+      const [expertsData, locationsData] = await Promise.all([
+        api.experts.getList(''),
+        api.locations.getList(),
       ]);
 
-      if (expertsRes.error) throw expertsRes.error;
-      if (locationsRes.error) throw locationsRes.error;
-
-      setExperts(expertsRes.data || []);
-      setLocations(locationsRes.data || []);
+      setExperts(expertsData || []);
+      setLocations((locationsData || []).filter((loc: any) => loc.is_active));
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {
@@ -94,16 +88,12 @@ export function ISGExperts() {
 
     try {
       if (editingId) {
-        const { error } = await supabase.from('isg_experts').update(formData).eq('id', editingId);
-
-        if (error) throw error;
+        await api.experts.update(editingId, formData);
 
         await logAction(LogActions.UPDATE_ISG_EXPERT, { expert_id: editingId });
         setSuccess('İSG uzmanı başarıyla güncellendi');
       } else {
-        const { error } = await supabase.from('isg_experts').insert(formData);
-
-        if (error) throw error;
+        await api.experts.create(formData);
 
         await logAction(LogActions.CREATE_ISG_EXPERT, { name: formData.full_name });
         setSuccess('İSG uzmanı başarıyla oluşturuldu');
@@ -124,9 +114,7 @@ export function ISGExperts() {
     if (!confirm('Bu İSG uzmanını silmek istediğinize emin misiniz?')) return;
 
     try {
-      const { error } = await supabase.from('isg_experts').delete().eq('id', id);
-
-      if (error) throw error;
+      await api.experts.delete(id);
 
       await logAction(LogActions.DELETE_ISG_EXPERT, { expert_id: id });
       await loadData();

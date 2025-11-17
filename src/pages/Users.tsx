@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from '../lib/supabase';
+import { api, supabase } from '../lib/supabase';
 import { signUp } from '../lib/auth';
 import { logAction, LogActions } from '../lib/logger';
 import { Plus, Edit2, Trash2, Users as UsersIcon, AlertCircle, CheckCircle2 } from 'lucide-react';
@@ -40,12 +40,7 @@ export function Users() {
 
   async function loadUsers() {
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
+      const data = await api.users.getList();
       setUsers(data || []);
     } catch (err) {
       console.error('Failed to load users:', err);
@@ -96,9 +91,7 @@ export function Users() {
           is_active: formData.is_active,
         };
 
-        const { error } = await supabase.from('users').update(updateData).eq('id', editingId);
-
-        if (error) throw error;
+        await api.users.update(editingId, updateData);
 
         await logAction(LogActions.UPDATE_USER, { user_id: editingId });
         setSuccess('Kullanıcı başarıyla güncellendi');
@@ -133,9 +126,7 @@ export function Users() {
     if (!confirm('Bu kullanıcıyı silmek istediğinize emin misiniz?')) return;
 
     try {
-      const { error } = await supabase.from('users').delete().eq('id', id);
-
-      if (error) throw error;
+      await api.users.delete(id);
 
       await logAction(LogActions.DELETE_USER, { user_id: id });
       await loadUsers();

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { api } from '../lib/supabase';
+import { api, supabase } from '../lib/supabase';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 
 interface NearMissFormProps {

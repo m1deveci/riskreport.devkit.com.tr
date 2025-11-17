@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from '../lib/supabase';
+import { api, supabase } from '../lib/supabase';
 import { logAction, LogActions } from '../lib/logger';
 import { Search, Filter, X, AlertTriangle, Eye } from 'lucide-react';
 
@@ -74,22 +74,15 @@ export function Reports() {
 
   async function loadData() {
     try {
-      const [reportsRes, locationsRes, regionsRes] = await Promise.all([
-        supabase
-          .from('near_miss_reports')
-          .select('*, locations(name), regions(name)')
-          .order('created_at', { ascending: false }),
-        supabase.from('locations').select('id, name').eq('is_active', true),
-        supabase.from('regions').select('id, name, location_id').eq('is_active', true),
+      const [reportsData, locationsData, regionsData] = await Promise.all([
+        api.reports.getList(),
+        api.locations.getList(),
+        api.regions.getList(''),
       ]);
 
-      if (reportsRes.error) throw reportsRes.error;
-      if (locationsRes.error) throw locationsRes.error;
-      if (regionsRes.error) throw regionsRes.error;
-
-      setReports(reportsRes.data || []);
-      setLocations(locationsRes.data || []);
-      setRegions(regionsRes.data || []);
+      setReports(reportsData || []);
+      setLocations((locationsData || []).filter((loc: any) => loc.is_active));
+      setRegions((regionsData || []).filter((reg: any) => reg.is_active));
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {
@@ -164,15 +157,23 @@ export function Reports() {
     if (!selectedReport) return;
 
     try {
-      const { error } = await supabase
-        .from('near_miss_reports')
-        .update({
+      // Reports don't have an update method in the api, so we'll use the backend endpoint directly
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:6000'}/api/reports/${selectedReport.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
           status: editStatus,
           internal_notes: editNotes,
-        })
-        .eq('id', selectedReport.id);
+        }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error('Rapor güncellenirken hata oluştu');
+      }
 
       await logAction(LogActions.UPDATE_NEARMISS, { report_id: selectedReport.id });
       await loadData();

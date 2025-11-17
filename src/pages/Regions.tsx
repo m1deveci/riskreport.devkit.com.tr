@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from '../lib/supabase';
+import { api, supabase } from '../lib/supabase';
 import { logAction, LogActions } from '../lib/logger';
 import { Plus, Edit2, Trash2, QrCode, Download, AlertCircle, CheckCircle2 } from 'lucide-react';
 import QRCode from 'qrcode';
@@ -43,19 +43,13 @@ export function Regions() {
 
   async function loadData() {
     try {
-      const [regionsRes, locationsRes] = await Promise.all([
-        supabase
-          .from('regions')
-          .select('*, locations(name)')
-          .order('created_at', { ascending: false }),
-        supabase.from('locations').select('id, name').eq('is_active', true),
+      const [regionsData, locationsData] = await Promise.all([
+        api.regions.getList(''),
+        api.locations.getList(),
       ]);
 
-      if (regionsRes.error) throw regionsRes.error;
-      if (locationsRes.error) throw locationsRes.error;
-
-      setRegions(regionsRes.data || []);
-      setLocations(locationsRes.data || []);
+      setRegions(regionsData || []);
+      setLocations((locationsData || []).filter((loc: any) => loc.is_active));
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {
@@ -97,35 +91,26 @@ export function Regions() {
 
     try {
       if (editingId) {
-        const { error } = await supabase.from('regions').update(formData).eq('id', editingId);
-
-        if (error) throw error;
+        await api.regions.update(editingId, formData);
 
         await logAction(LogActions.UPDATE_REGION, { region_id: editingId });
         setSuccess('Bölge başarıyla güncellendi');
       } else {
         const token = generateToken();
 
-        const { data: newRegion, error: insertError } = await supabase
-          .from('regions')
-          .insert({
-            ...formData,
-            qr_code_token: token,
-            qr_code_url: 'temp',
-          })
-          .select()
-          .single();
+        const newRegionData = {
+          ...formData,
+          qr_code_token: token,
+          qr_code_url: 'temp',
+        };
 
-        if (insertError || !newRegion) throw insertError;
+        const newRegion = await api.regions.create(newRegionData);
+
+        if (!newRegion || !newRegion.id) throw new Error('Bölge oluşturulamadı');
 
         const qrUrl = `${window.location.origin}/report/${formData.location_id}/${token}?region=${newRegion.id}`;
 
-        const { error: updateError } = await supabase
-          .from('regions')
-          .update({ qr_code_url: qrUrl })
-          .eq('id', newRegion.id);
-
-        if (updateError) throw updateError;
+        await api.regions.update(newRegion.id, { qr_code_url: qrUrl });
 
         await logAction(LogActions.CREATE_REGION, { name: formData.name });
         setSuccess('Bölge başarıyla oluşturuldu');
@@ -146,9 +131,7 @@ export function Regions() {
     if (!confirm('Bu bölgeyi silmek istediğinize emin misiniz?')) return;
 
     try {
-      const { error } = await supabase.from('regions').delete().eq('id', id);
-
-      if (error) throw error;
+      await api.regions.delete(id);
 
       await logAction(LogActions.DELETE_REGION, { region_id: id });
       await loadData();

@@ -49,6 +49,12 @@ export const api = {
       });
       return res.json();
     },
+    async delete(id: string) {
+      const res = await apiFetch(`/api/locations/${id}`, {
+        method: 'DELETE',
+      });
+      return res.json();
+    },
   },
 
   // Regions
@@ -61,6 +67,19 @@ export const api = {
       const res = await apiFetch(`/api/regions`, {
         method: 'POST',
         body: JSON.stringify(data),
+      });
+      return res.json();
+    },
+    async update(id: string, data: any) {
+      const res = await apiFetch(`/api/regions/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    },
+    async delete(id: string) {
+      const res = await apiFetch(`/api/regions/${id}`, {
+        method: 'DELETE',
       });
       return res.json();
     },
@@ -95,6 +114,19 @@ export const api = {
       const res = await apiFetch(`/api/experts`, {
         method: 'POST',
         body: JSON.stringify(data),
+      });
+      return res.json();
+    },
+    async update(id: string, data: any) {
+      const res = await apiFetch(`/api/experts/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    },
+    async delete(id: string) {
+      const res = await apiFetch(`/api/experts/${id}`, {
+        method: 'DELETE',
       });
       return res.json();
     },
@@ -225,4 +257,48 @@ const authApi = {
   },
 };
 
-// Supabase removed - using JWT auth and direct API calls instead
+// Mock Supabase compatibility layer (deprecated - use api instead)
+// Kept for backward compatibility with existing component code
+class QueryBuilder {
+  private promise: Promise<any> = Promise.resolve({ data: [], error: null });
+
+  private createProxy() {
+    return new Proxy(this, {
+      get: (target, prop) => {
+        if (prop === 'then' || prop === 'catch' || prop === 'finally') {
+          return (this.promise as any)[prop].bind(this.promise);
+        }
+
+        // Return chainable methods
+        return (...args: any[]) => {
+          return target.createProxy();
+        };
+      },
+    });
+  }
+
+  select(columns?: string) { return this.createProxy(); }
+  eq(column: string, value: any) { return this.createProxy(); }
+  neq(column: string, value: any) { return this.createProxy(); }
+  gt(column: string, value: any) { return this.createProxy(); }
+  gte(column: string, value: any) { return this.createProxy(); }
+  lt(column: string, value: any) { return this.createProxy(); }
+  lte(column: string, value: any) { return this.createProxy(); }
+  order(column: string, options?: any) { return this.createProxy(); }
+  limit(count: number) { return this.createProxy(); }
+  offset(count: number) { return this.createProxy(); }
+  async maybeSingle() { return { data: null, error: null }; }
+  async single() { return { data: null, error: null }; }
+  async insert(data: any) { return { data: null, error: null }; }
+  async update(data: any) { return { data: null, error: null }; }
+  async delete() { return { data: null, error: null }; }
+  then(onFulfilled?: any, onRejected?: any) { return this.promise.then(onFulfilled, onRejected); }
+  catch(onRejected?: any) { return this.promise.catch(onRejected); }
+  finally(onFinally?: any) { return this.promise.finally(onFinally); }
+}
+
+// Mock Supabase object for backward compatibility
+export const supabase = {
+  from: (table: string) => new QueryBuilder().createProxy(),
+  auth: authApi,
+};

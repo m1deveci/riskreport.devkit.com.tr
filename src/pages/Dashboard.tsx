@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from '../lib/supabase';
+import { api, supabase } from '../lib/supabase';
 import { MapPin, AlertTriangle, TrendingUp, Calendar } from 'lucide-react';
 
 interface Stats {
@@ -35,44 +35,43 @@ export function Dashboard() {
 
   async function loadStats() {
     try {
-      const { data: locations } = await supabase
-        .from('locations')
-        .select('id')
-        .eq('is_active', true);
+      const [locationsData, reportsData] = await Promise.all([
+        api.locations.getList(),
+        api.reports.getList(),
+      ]);
 
-      const { data: reports } = await supabase.from('near_miss_reports').select('*');
-
-      const { data: newReports } = await supabase
-        .from('near_miss_reports')
-        .select('id')
-        .eq('status', 'Yeni');
+      const activeLocations = (locationsData || []).filter((loc: any) => loc.is_active);
+      const allReports = reportsData || [];
+      const newReports = allReports.filter((report: any) => report.status === 'Yeni');
 
       const categoryCount: Record<string, number> = {};
-      reports?.forEach((report) => {
+      allReports.forEach((report: any) => {
         categoryCount[report.category] = (categoryCount[report.category] || 0) + 1;
       });
 
-      const { data: reportsByLocation } = await supabase
-        .from('near_miss_reports')
-        .select('location_id, locations(name)')
-        .order('created_at', { ascending: false });
-
       const locationCount: Record<string, number> = {};
-      reportsByLocation?.forEach((report: { locations: { name: string } }) => {
-        const locName = (report.locations as unknown as { name: string }).name;
-        locationCount[locName] = (locationCount[locName] || 0) + 1;
+      allReports.forEach((report: any) => {
+        const locName = (report.locations as unknown as { name: string })?.name;
+        if (locName) {
+          locationCount[locName] = (locationCount[locName] || 0) + 1;
+        }
       });
 
-      const { data: recentReports } = await supabase
-        .from('near_miss_reports')
-        .select('id, incident_number, full_name, category, created_at, status')
-        .order('created_at', { ascending: false })
-        .limit(10);
+      const recentReportsList = allReports
+        .slice(0, 10)
+        .map((report: any) => ({
+          id: report.id,
+          incident_number: report.incident_number,
+          full_name: report.full_name,
+          category: report.category,
+          created_at: report.created_at,
+          status: report.status,
+        }));
 
       setStats({
-        totalLocations: locations?.length || 0,
-        totalReports: reports?.length || 0,
-        newReports: newReports?.length || 0,
+        totalLocations: activeLocations.length,
+        totalReports: allReports.length,
+        newReports: newReports.length,
         reportsByCategory: Object.entries(categoryCount).map(([category, count]) => ({
           category,
           count,
@@ -81,7 +80,7 @@ export function Dashboard() {
           location_name,
           count,
         })),
-        recentReports: recentReports || [],
+        recentReports: recentReportsList,
       });
     } catch (error) {
       console.error('Failed to load stats:', error);

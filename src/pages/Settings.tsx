@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from '../lib/supabase';
+import { api, supabase } from '../lib/supabase';
 import { logAction, LogActions } from '../lib/logger';
 import { Settings as SettingsIcon, Save, AlertCircle, CheckCircle2, Download } from 'lucide-react';
 
@@ -36,12 +36,7 @@ export function Settings() {
 
   async function loadSettings() {
     try {
-      const { data, error } = await supabase
-        .from('system_settings')
-        .select('*')
-        .maybeSingle();
-
-      if (error) throw error;
+      const data = await api.settings.get();
 
       if (data) {
         setSettings(data);
@@ -69,18 +64,7 @@ export function Settings() {
     setSuccess('');
 
     try {
-      if (settings) {
-        const { error } = await supabase
-          .from('system_settings')
-          .update(formData)
-          .eq('id', settings.id);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from('system_settings').insert(formData);
-
-        if (error) throw error;
-      }
+      await api.settings.update(formData);
 
       await logAction(LogActions.UPDATE_SETTINGS);
       setSuccess('Ayarlar başarıyla kaydedildi');

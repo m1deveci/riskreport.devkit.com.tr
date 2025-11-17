@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api } from '../lib/supabase';
+import { api, supabase } from '../lib/supabase';
 import { FileText, Search } from 'lucide-react';
 
 interface SystemLog {
@@ -39,14 +39,8 @@ export function SystemLogs() {
 
   async function loadLogs() {
     try {
-      const { data, error } = await supabase
-        .from('system_logs')
-        .select('*, users(full_name)')
-        .order('created_at', { ascending: false })
-        .limit(500);
-
-      if (error) throw error;
-      setLogs(data || []);
+      const data = await api.logs.getList();
+      setLogs((data || []).slice(0, 500));
     } catch (err) {
       console.error('Failed to load logs:', err);
     } finally {
