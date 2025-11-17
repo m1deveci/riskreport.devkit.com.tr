@@ -36,6 +36,23 @@ function App() {
         checkRoute();
       }
     });
+
+    // Custom auth event listener
+    const handleAuthChange = async () => {
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+      if (user) {
+        setMode('admin');
+      } else {
+        checkRoute();
+      }
+    };
+
+    window.addEventListener('auth-changed', handleAuthChange);
+
+    return () => {
+      window.removeEventListener('auth-changed', handleAuthChange);
+    };
   }, []);
 
   async function initializeApp() {

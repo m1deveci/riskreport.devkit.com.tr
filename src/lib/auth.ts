@@ -1,4 +1,4 @@
-import { supabase } from './supabase';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:6000';
 
 export interface UserProfile {
   id: string;
@@ -9,29 +9,46 @@ export interface UserProfile {
 }
 
 export async function signIn(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  try {
+    const res = await fetch(`${API_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
 
-  if (error) throw error;
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error || 'Login başarısız');
+    }
 
-  const { data: profile, error: profileError } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', data.user.id)
-    .maybeSingle();
+    const data = await res.json();
 
-  if (profileError) throw profileError;
-  if (!profile) throw new Error('Kullanıcı profili bulunamadı');
-  if (!profile.is_active) throw new Error('Kullanıcı hesabı aktif değil');
+    // Başarılı login - token ve user'ı localStorage'a kaydet
+    const token = data.token;
+    const user = data.user;
 
-  return { user: data.user, profile };
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
+
+    // Custom event tetikle (same-tab'ta storage event'i çalışmadığı için)
+    window.dispatchEvent(new Event('auth-changed'));
+
+    return { user, profile: user };
+  } catch (error) {
+    throw new Error(`Login hatası: ${(error as Error).message}`);
+  }
 }
 
 export async function signOut() {
-  const { error } = await supabase.auth.signOut();
-  if (error) throw error;
+  try {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+
+    // Custom event tetikle
+    window.dispatchEvent(new Event('auth-changed'));
+  } catch (error) {
+    throw new Error(`Logout hatası: ${(error as Error).message}`);
+  }
 }
 
 export async function signUp(
@@ -40,68 +57,93 @@ export async function signUp(
   full_name: string,
   role: 'admin' | 'isg_expert' | 'viewer' = 'viewer'
 ) {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-  });
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) throw new Error('Yönetici yetkisi gereklidir');
 
-  if (error) throw error;
-  if (!data.user) throw new Error('Kullanıcı oluşturulamadı');
+    const res = await fetch(`${API_URL}/api/users`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        full_name,
+        email,
+        password,
+        role,
+      }),
+    });
 
-  const { error: profileError } = await supabase.from('users').insert({
-    id: data.user.id,
-    email,
-    full_name,
-    role,
-    is_active: true,
-  });
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error || 'Kullanıcı oluşturulamadı');
+    }
 
-  if (profileError) throw profileError;
-
-  return data.user;
+    const data = await res.json();
+    return { id: data.id, email, full_name, role };
+  } catch (error) {
+    throw new Error(`Kayıt hatası: ${(error as Error).message}`);
+  }
 }
 
 export async function getCurrentUser(): Promise<UserProfile | null> {
-  const { data: { session } } = await supabase.auth.getSession();
+  try {
+    const token = localStorage.getItem('token');
+    const userStr = localStorage.getItem('user');
 
-  if (!session) return null;
+    if (!token || !userStr) return null;
 
-  const { data: profile, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', session.user.id)
-    .maybeSingle();
+    const user = JSON.parse(userStr);
 
-  if (error || !profile) return null;
+    // Token doğrulaması yap
+    const res = await fetch(`${API_URL}/api/auth/verify`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
 
-  return profile as UserProfile;
+    if (!res.ok) {
+      // Token geçersiz, localStorage'dan sil
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      return null;
+    }
+
+    return user as UserProfile;
+  } catch (error) {
+    console.error('getCurrentUser hatası:', error);
+    return null;
+  }
 }
 
 export async function resetPassword(email: string) {
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${window.location.origin}/reset-password`,
-  });
-
-  if (error) throw error;
+  throw new Error('Şifre sıfırlama şu anda desteklenmemektedir');
 }
 
 export async function updatePassword(newPassword: string) {
-  const { error } = await supabase.auth.updateUser({
-    password: newPassword,
-  });
-
-  if (error) throw error;
+  throw new Error('Şifre güncelleme şu anda desteklenmemektedir');
 }
 
 export function onAuthStateChange(callback: (user: UserProfile | null) => void) {
-  supabase.auth.onAuthStateChange((event, session) => {
-    (async () => {
-      if (session?.user) {
-        const profile = await getCurrentUser();
-        callback(profile);
-      } else {
-        callback(null);
-      }
-    })();
-  });
+  (async () => {
+    const user = await getCurrentUser();
+    callback(user);
+  })();
+
+  // localStorage değişikliklerini dinle
+  const handleStorageChange = async () => {
+    const user = await getCurrentUser();
+    callback(user);
+  };
+
+  window.addEventListener('storage', handleStorageChange);
+
+  return () => {
+    window.removeEventListener('storage', handleStorageChange);
+  };
+}
+
+export function getToken(): string | null {
+  return localStorage.getItem('token');
 }

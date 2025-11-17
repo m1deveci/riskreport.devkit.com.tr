@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/supabase';
 import { logAction, LogActions } from '../lib/logger';
 import { Search, Filter, X, AlertTriangle, Eye } from 'lucide-react';
 

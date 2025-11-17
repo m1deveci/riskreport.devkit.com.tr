@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { api } from '../lib/supabase';
 import { MapPin, AlertTriangle, TrendingUp, Calendar } from 'lucide-react';
 
 interface Stats {

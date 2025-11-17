@@ -8,17 +8,43 @@ interface ApiResponse<T> {
   error?: { message: string };
 }
 
+// Fetch wrapper - JWT token'ı otomatik ekler
+async function apiFetch(endpoint: string, options: RequestInit = {}) {
+  const token = localStorage.getItem('token');
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  } as Record<string, string>;
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`${API_URL}${endpoint}`, {
+    ...options,
+    headers,
+  });
+
+  return response;
+}
+
 export const api = {
   // Locations
   locations: {
     async getList() {
-      const res = await fetch(`${API_URL}/api/locations`);
+      const res = await apiFetch(`/api/locations`);
       return res.json();
     },
     async create(data: any) {
-      const res = await fetch(`${API_URL}/api/locations`, {
+      const res = await apiFetch(`/api/locations`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    },
+    async update(id: string, data: any) {
+      const res = await apiFetch(`/api/locations/${id}`, {
+        method: 'PUT',
         body: JSON.stringify(data),
       });
       return res.json();
@@ -28,13 +54,12 @@ export const api = {
   // Regions
   regions: {
     async getList(locationId: string) {
-      const res = await fetch(`${API_URL}/api/regions/${locationId}`);
+      const res = await apiFetch(`/api/regions/${locationId}`);
       return res.json();
     },
     async create(data: any) {
-      const res = await fetch(`${API_URL}/api/regions`, {
+      const res = await apiFetch(`/api/regions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
       return res.json();
@@ -44,17 +69,16 @@ export const api = {
   // Near-Miss Reports
   reports: {
     async getList() {
-      const res = await fetch(`${API_URL}/api/reports`);
+      const res = await apiFetch(`/api/reports`);
       return res.json();
     },
     async getByLocation(locationId: string) {
-      const res = await fetch(`${API_URL}/api/reports/${locationId}`);
+      const res = await apiFetch(`/api/reports/${locationId}`);
       return res.json();
     },
     async create(data: any) {
-      const res = await fetch(`${API_URL}/api/reports`, {
+      const res = await apiFetch(`/api/reports`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
       return res.json();
@@ -64,13 +88,12 @@ export const api = {
   // ISG Experts
   experts: {
     async getList(locationId: string) {
-      const res = await fetch(`${API_URL}/api/experts/${locationId}`);
+      const res = await apiFetch(`/api/experts/${locationId}`);
       return res.json();
     },
     async create(data: any) {
-      const res = await fetch(`${API_URL}/api/experts`, {
+      const res = await apiFetch(`/api/experts`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
       return res.json();
@@ -80,14 +103,26 @@ export const api = {
   // Users
   users: {
     async getList() {
-      const res = await fetch(`${API_URL}/api/users`);
+      const res = await apiFetch(`/api/users`);
       return res.json();
     },
     async create(data: any) {
-      const res = await fetch(`${API_URL}/api/users`, {
+      const res = await apiFetch(`/api/users`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
+      });
+      return res.json();
+    },
+    async update(id: string, data: any) {
+      const res = await apiFetch(`/api/users/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    },
+    async delete(id: string) {
+      const res = await apiFetch(`/api/users/${id}`, {
+        method: 'DELETE',
       });
       return res.json();
     },
@@ -96,13 +131,12 @@ export const api = {
   // System Logs
   logs: {
     async getList() {
-      const res = await fetch(`${API_URL}/api/logs`);
+      const res = await apiFetch(`/api/logs`);
       return res.json();
     },
     async create(data: any) {
-      const res = await fetch(`${API_URL}/api/logs`, {
+      const res = await apiFetch(`/api/logs`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
       return res.json();
@@ -112,13 +146,12 @@ export const api = {
   // System Settings
   settings: {
     async get() {
-      const res = await fetch(`${API_URL}/api/settings`);
+      const res = await apiFetch(`/api/settings`);
       return res.json();
     },
     async update(data: any) {
-      const res = await fetch(`${API_URL}/api/settings`, {
+      const res = await apiFetch(`/api/settings`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
       });
       return res.json();
@@ -127,21 +160,69 @@ export const api = {
 
   // Health Check
   async health() {
-    const res = await fetch(`${API_URL}/api/health`);
+    const res = await apiFetch(`/api/health`);
     return res.json();
   },
 };
 
-// Mock Supabase compatibility layer for existing code
-export const supabase = {
-  from: (table: string) => ({
-    select: () => Promise.resolve({ data: [], error: null }),
-    insert: () => Promise.resolve({ data: null, error: null }),
-    update: () => Promise.resolve({ data: null, error: null }),
-    delete: () => Promise.resolve({ data: null, error: null }),
-  }),
-  auth: {
-    getSession: () => Promise.resolve({ data: { session: null } }),
-    onAuthStateChange: () => ({ data: { subscription: null } }),
+// Authentication API
+const authApi = {
+  async signInWithPassword(credentials: { email: string; password: string }) {
+    const res = await fetch(`${API_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials),
+    });
+
+    if (!res.ok) {
+      const error = await res.json();
+      return { data: null, error: new Error(error.error || 'Login failed') };
+    }
+
+    const data = await res.json();
+    return { data, error: null };
+  },
+
+  async signOut() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    return { error: null };
+  },
+
+  async getSession() {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+
+    if (!token || !user) {
+      return { data: { session: null }, error: null };
+    }
+
+    return {
+      data: {
+        session: {
+          user: JSON.parse(user),
+          access_token: token,
+        },
+      },
+      error: null,
+    };
+  },
+
+  onAuthStateChange(callback: any) {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+
+    if (token && user) {
+      callback('SIGNED_IN', {
+        user: JSON.parse(user),
+        access_token: token,
+      });
+    } else {
+      callback('SIGNED_OUT', null);
+    }
+
+    return { data: { subscription: null } };
   },
 };
+
+// Supabase removed - using JWT auth and direct API calls instead

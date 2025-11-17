@@ -1,4 +1,5 @@
-import { supabase } from './supabase';
+import { api } from './supabase';
+import { getCurrentUser } from './auth';
 
 export async function logAction(
   action: string,
@@ -6,10 +7,10 @@ export async function logAction(
   userId?: string
 ) {
   try {
-    const { data: { session } } = await supabase.auth.getSession();
+    const currentUser = await getCurrentUser();
 
-    await supabase.from('system_logs').insert({
-      user_id: userId || session?.user?.id || null,
+    await api.logs.create({
+      user_id: userId || currentUser?.id || null,
       action,
       details,
       ip_address: null,
