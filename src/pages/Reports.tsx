@@ -81,8 +81,8 @@ export function Reports() {
       ]);
 
       setReports(reportsData || []);
-      setLocations((locationsData || []).filter((loc: any) => loc.is_active));
-      setRegions((regionsData || []).filter((reg: any) => reg.is_active));
+      setLocations(locationsData || []);
+      setRegions(regionsData || []);
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {

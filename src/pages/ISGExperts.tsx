@@ -48,7 +48,7 @@ export function ISGExperts() {
       ]);
 
       setExperts(expertsData || []);
-      setLocations((locationsData || []).filter((loc: any) => loc.is_active));
+      setLocations(locationsData || []);
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {
