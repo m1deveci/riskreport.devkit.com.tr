@@ -1,0 +1,62 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs
+dist/
+build/
+.vite/
+
+# Environment variables (IMPORTANT: Never commit credentials)
+.env
+.env.local
+.env.*.local
+
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# PM2 and Process Management
+.pm2/
+pm2.json
+
+# OS files
+Thumbs.db
+.DS_Store
+
+# Temporary files
+*.tmp
+*.temp
+
+# SSL Certificates (Keep Let's Encrypt certs out of repo)
+*.crt
+*.key
+*.pem
+
+# Uploads directory
+uploads/
+/uploads/
+
+# Backup files
+*.backup
+*.bak
+*.zip
+*-backup/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Development
+.claude/
