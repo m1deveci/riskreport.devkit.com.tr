@@ -36,64 +36,55 @@ function App() {
   }, [currentPage]);
 
   useEffect(() => {
-    initializeApp();
-
-    onAuthStateChange((user) => {
-      setCurrentUser(user);
-      // Route'u her zaman kontrol et (QR form URL'si için)
-      const path = window.location.pathname;
-      const isReportRoute = path.match(/^\/report\/([^/]+)\/([^/]+)$/);
-
-      if (isReportRoute) {
-        checkRoute();
-      } else if (user) {
-        setMode('admin');
-      } else {
-        checkRoute();
-      }
-    });
-
-    // Custom auth event listener
-    const handleAuthChange = async () => {
-      const user = await getCurrentUser();
-      setCurrentUser(user);
-      // Route'u her zaman kontrol et (QR form URL'si için)
-      const path = window.location.pathname;
-      const isReportRoute = path.match(/^\/report\/([^/]+)\/([^/]+)$/);
-
-      if (isReportRoute) {
-        checkRoute();
-      } else if (user) {
-        setMode('admin');
-      } else {
-        checkRoute();
-      }
-    };
-
-    window.addEventListener('auth-changed', handleAuthChange);
-
-    return () => {
-      window.removeEventListener('auth-changed', handleAuthChange);
-    };
-  }, []);
-
-  async function initializeApp() {
-    // Önce route'u kontrol et (QR form URL'si için auth gerektirmez)
     const path = window.location.pathname;
     const isReportRoute = path.match(/^\/report\/([^/]+)\/([^/]+)$/);
 
     if (isReportRoute) {
+      // Report route ise hiç auth kontrolü yapmadan form göster
       checkRoute();
     } else {
-      // Report route değilse, auth'u kontrol et
-      const user = await getCurrentUser();
-      setCurrentUser(user);
+      // Diğer route'lar için auth kontrol et
+      initializeApp();
+    }
 
-      if (user) {
-        setMode('admin');
-      } else {
-        checkRoute();
-      }
+    // Auth state değişikliklerini dinle (sadece report dışı sayfalar için)
+    if (!isReportRoute) {
+      onAuthStateChange((user) => {
+        setCurrentUser(user);
+        if (user) {
+          setMode('admin');
+        } else {
+          checkRoute();
+        }
+      });
+
+      // Custom auth event listener
+      const handleAuthChange = async () => {
+        const user = await getCurrentUser();
+        setCurrentUser(user);
+        if (user) {
+          setMode('admin');
+        } else {
+          checkRoute();
+        }
+      };
+
+      window.addEventListener('auth-changed', handleAuthChange);
+
+      return () => {
+        window.removeEventListener('auth-changed', handleAuthChange);
+      };
+    }
+  }, []);
+
+  async function initializeApp() {
+    const user = await getCurrentUser();
+    setCurrentUser(user);
+
+    if (user) {
+      setMode('admin');
+    } else {
+      checkRoute();
     }
   }
 
