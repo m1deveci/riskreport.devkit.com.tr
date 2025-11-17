@@ -284,6 +284,19 @@ app.delete('/api/locations/:id', authenticateToken, adminOnly, async (req, res) 
 
 // ==================== REGIONS ENDPOINTS ====================
 
+// Get All Regions
+app.get('/api/regions', async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+    const [rows] = await connection.query('SELECT * FROM regions WHERE is_active = true');
+    connection.release();
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get Regions by Location ID
 app.get('/api/regions/:locationId', async (req, res) => {
   try {
     const { locationId } = req.params;
@@ -418,6 +431,19 @@ app.put('/api/reports/:id', authenticateToken, adminOnly, async (req, res) => {
 
 // ==================== ISG EXPERTS ENDPOINTS ====================
 
+// Get All Experts
+app.get('/api/experts', async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+    const [rows] = await connection.query('SELECT * FROM isg_experts WHERE is_active = true');
+    connection.release();
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get Experts by Location ID
 app.get('/api/experts/:locationId', async (req, res) => {
   try {
     const { locationId } = req.params;
