@@ -375,9 +375,38 @@ app.put('/api/regions/:id', authenticateToken, adminOnly, async (req, res) => {
     const { name, description, qr_code_url, is_active } = req.body;
 
     const connection = await pool.getConnection();
+
+    // Build dynamic UPDATE query based on provided fields
+    const updates = [];
+    const values = [];
+
+    if (name !== undefined) {
+      updates.push('name = ?');
+      values.push(name);
+    }
+    if (description !== undefined) {
+      updates.push('description = ?');
+      values.push(description);
+    }
+    if (qr_code_url !== undefined) {
+      updates.push('qr_code_url = ?');
+      values.push(qr_code_url);
+    }
+    if (is_active !== undefined) {
+      updates.push('is_active = ?');
+      values.push(is_active);
+    }
+
+    if (updates.length === 0) {
+      connection.release();
+      return res.status(400).json({ error: 'Güncellenecek alan yok' });
+    }
+
+    values.push(id); // Add id for WHERE clause
+
     const [result] = await connection.query(
-      'UPDATE regions SET name = ?, description = ?, qr_code_url = ?, is_active = ? WHERE id = ?',
-      [name, description, qr_code_url, is_active, id]
+      `UPDATE regions SET ${updates.join(', ')} WHERE id = ?`,
+      values
     );
     connection.release();
 
