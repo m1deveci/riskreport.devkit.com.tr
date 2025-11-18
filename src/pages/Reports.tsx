@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, supabase } from '../lib/supabase';
 import { logAction, LogActions } from '../lib/logger';
-import { Search, Filter, X, AlertTriangle, Eye } from 'lucide-react';
+import { Search, Filter, X, AlertTriangle, Eye, Download, Image as ImageIcon } from 'lucide-react';
 
 interface Report {
   id: string;
@@ -15,6 +15,9 @@ interface Report {
   status: string;
   internal_notes: string;
   created_at: string;
+  image_path?: string;
+  location_name?: string;
+  region_name?: string;
   locations?: { name: string };
   regions?: { name: string };
 }
@@ -370,9 +373,9 @@ export function Reports() {
                     {report.incident_number}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    <div>{(report.locations as unknown as { name: string })?.name}</div>
+                    <div>{report.location_name || (report.locations as unknown as { name: string })?.name}</div>
                     <div className="text-xs text-gray-500">
-                      {(report.regions as unknown as { name: string })?.name}
+                      {report.region_name || (report.regions as unknown as { name: string })?.name}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
@@ -464,14 +467,14 @@ export function Reports() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Lokasyon</label>
                   <p className="text-gray-900">
-                    {(selectedReport.locations as unknown as { name: string })?.name}
+                    {selectedReport.location_name || (selectedReport.locations as unknown as { name: string })?.name}
                   </p>
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Bölge</label>
                   <p className="text-gray-900">
-                    {(selectedReport.regions as unknown as { name: string })?.name}
+                    {selectedReport.region_name || (selectedReport.regions as unknown as { name: string })?.name}
                   </p>
                 </div>
 
@@ -514,6 +517,40 @@ export function Reports() {
                   </p>
                 </div>
               </div>
+
+              {selectedReport.image_path && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Yüklenen Görsel</label>
+                  <div className="bg-gray-50 rounded-lg p-4 flex flex-col items-center gap-4">
+                    <div className="w-full max-h-96 flex items-center justify-center bg-white rounded border border-gray-200">
+                      <img
+                        src={selectedReport.image_path}
+                        alt="Rapor görseli"
+                        className="max-w-full max-h-96 object-contain"
+                      />
+                    </div>
+                    <div className="w-full flex gap-2">
+                      <a
+                        href={selectedReport.image_path}
+                        download
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                      >
+                        <Download className="w-4 h-4" />
+                        Görseli İndir
+                      </a>
+                      <a
+                        href={selectedReport.image_path}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+                      >
+                        <ImageIcon className="w-4 h-4" />
+                        Tam Boyut
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">

@@ -437,7 +437,14 @@ app.get('/api/reports', async (req, res) => {
   try {
     const connection = await pool.getConnection();
     const [rows] = await connection.query(
-      'SELECT * FROM near_miss_reports ORDER BY created_at DESC LIMIT 100'
+      `SELECT
+        nmr.*,
+        l.name as location_name,
+        r.name as region_name
+      FROM near_miss_reports nmr
+      LEFT JOIN locations l ON nmr.location_id = l.id
+      LEFT JOIN regions r ON nmr.region_id = r.id
+      ORDER BY nmr.created_at DESC LIMIT 100`
     );
     connection.release();
     res.json(rows);
@@ -451,7 +458,14 @@ app.get('/api/reports/:locationId', async (req, res) => {
     const { locationId } = req.params;
     const connection = await pool.getConnection();
     const [rows] = await connection.query(
-      'SELECT * FROM near_miss_reports WHERE location_id = ? ORDER BY created_at DESC',
+      `SELECT
+        nmr.*,
+        l.name as location_name,
+        r.name as region_name
+      FROM near_miss_reports nmr
+      LEFT JOIN locations l ON nmr.location_id = l.id
+      LEFT JOIN regions r ON nmr.region_id = r.id
+      WHERE nmr.location_id = ? ORDER BY nmr.created_at DESC`,
       [locationId]
     );
     connection.release();
