@@ -124,6 +124,9 @@ CREATE TABLE IF NOT EXISTS system_settings (
   smtp_password VARCHAR(255) DEFAULT '',
   smtp_from_email VARCHAR(255) DEFAULT '',
   backup_target_path TEXT DEFAULT '',
+  logo_path VARCHAR(500) DEFAULT '',
+  background_path VARCHAR(500) DEFAULT '',
+  favicon_path VARCHAR(500) DEFAULT '',
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -132,6 +135,11 @@ CREATE TABLE IF NOT EXISTS system_settings (
 INSERT INTO system_settings (id, site_title)
 SELECT UUID(), 'Ramak Kala Raporlama Sistemi'
 WHERE NOT EXISTS (SELECT 1 FROM system_settings LIMIT 1);
+
+-- Add new columns to existing system_settings table if they don't exist
+ALTER TABLE system_settings ADD COLUMN IF NOT EXISTS logo_path VARCHAR(500) DEFAULT '';
+ALTER TABLE system_settings ADD COLUMN IF NOT EXISTS background_path VARCHAR(500) DEFAULT '';
+ALTER TABLE system_settings ADD COLUMN IF NOT EXISTS favicon_path VARCHAR(500) DEFAULT '';
 
 -- Create trigger to generate incident number before insert on near_miss_reports
 DELIMITER //

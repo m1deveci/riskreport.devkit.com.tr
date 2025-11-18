@@ -9,6 +9,8 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import multer from 'multer';
 import fs from 'fs';
+import { exec } from 'child_process';
+import { promisify } from 'util';
 
 // Load environment variables
 dotenv.config();
@@ -883,15 +885,16 @@ app.get('/api/settings', async (req, res) => {
 
 app.put('/api/settings', authenticateToken, adminOnly, async (req, res) => {
   try {
-    const { site_title, smtp_host, smtp_port, smtp_username, smtp_password, smtp_from_email, backup_target_path } = req.body;
+    const { site_title, smtp_host, smtp_port, smtp_username, smtp_password, smtp_from_email, backup_target_path, logo_path, background_path, favicon_path } = req.body;
     const connection = await pool.getConnection();
 
     const [result] = await connection.query(
       `UPDATE system_settings SET
        site_title = ?, smtp_host = ?, smtp_port = ?,
        smtp_username = ?, smtp_password = ?, smtp_from_email = ?,
-       backup_target_path = ? WHERE id = (SELECT id FROM system_settings LIMIT 1)`,
-      [site_title, smtp_host, smtp_port, smtp_username, smtp_password, smtp_from_email, backup_target_path]
+       backup_target_path = ?, logo_path = ?, background_path = ?, favicon_path = ?
+       WHERE id = (SELECT id FROM system_settings LIMIT 1)`,
+      [site_title, smtp_host, smtp_port, smtp_username, smtp_password, smtp_from_email, backup_target_path, logo_path, background_path, favicon_path]
     );
 
     connection.release();
@@ -919,6 +922,97 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete Asset Endpoint
+app.delete('/api/settings/asset/:assetType', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { assetType } = req.params;
+
+    // Validate asset type
+    if (!['logo', 'background', 'favicon'].includes(assetType)) {
+      return res.status(400).json({ error: 'Geçersiz dosya türü' });
+    }
+
+    const connection = await pool.getConnection();
+
+    // Get current file path
+    const [rows] = await connection.query(
+      `SELECT ${assetType}_path FROM system_settings LIMIT 1`
+    );
+
+    if (rows.length > 0 && rows[0][`${assetType}_path`]) {
+      const filePath = rows[0][`${assetType}_path`];
+      const fullPath = dirname(dirname(__dirname)) + filePath;
+
+      // Delete file from disk
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+    }
+
+    // Update database
+    const columnName = `${assetType}_path`;
+    await connection.query(
+      `UPDATE system_settings SET ${columnName} = '' WHERE id = (SELECT id FROM system_settings LIMIT 1)`
+    );
+
+    connection.release();
+    res.json({ success: true, message: `${assetType} dosyası silindi` });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ==================== BACKUP ENDPOINTS ====================
+
+// Download Database Backup
+app.get('/api/backup/download', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const execPromise = promisify(exec);
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    const backupFileName = `riskreport_backup_${timestamp}.sql`;
+    const backupFilePath = `/tmp/${backupFileName}`;
+
+    // Build mysqldump command
+    const mysqldumpCmd = `mysqldump -h ${process.env.MYSQL_HOST} -u ${process.env.MYSQL_USER} -p'${process.env.MYSQL_PASSWORD}' --single-transaction --quick --lock-tables=false ${process.env.MYSQL_DATABASE} > "${backupFilePath}"`;
+
+    // Execute mysqldump
+    await execPromise(mysqldumpCmd);
+
+    // Check if file exists
+    if (!fs.existsSync(backupFilePath)) {
+      return res.status(500).json({ error: 'Yedek dosyası oluşturulamadı' });
+    }
+
+    // Log the action
+    try {
+      const logConnection = await pool.getConnection();
+      await logConnection.query(
+        'INSERT INTO system_logs (id, user_id, action, details, ip_address) VALUES (UUID(), ?, ?, ?, ?)',
+        [req.user?.id || null, 'DOWNLOAD_BACKUP', JSON.stringify({ filename: backupFileName }), req.ip || null]
+      );
+      logConnection.release();
+    } catch (logErr) {
+      console.error('Failed to log backup action:', logErr);
+    }
+
+    // Send file to client
+    res.download(backupFilePath, backupFileName, (err) => {
+      if (err) {
+        console.error('Error sending file:', err);
+      }
+      // Delete temp file after sending
+      try {
+        fs.unlinkSync(backupFilePath);
+      } catch (unlinkErr) {
+        console.error('Error deleting temp backup file:', unlinkErr);
+      }
+    });
+  } catch (error) {
+    console.error('Backup error:', error);
+    res.status(500).json({ error: error.message || 'Yedek oluşturulurken bir hata oluştu' });
   }
 });
 

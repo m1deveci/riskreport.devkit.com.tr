@@ -1,9 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signIn } from '../lib/auth';
-import { Database, Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 
 interface LoginPageProps {
   onLogin: () => void;
+}
+
+interface Settings {
+  site_title: string;
+  logo_path: string;
+  background_path: string;
 }
 
 export function LoginPage({ onLogin }: LoginPageProps) {
@@ -11,6 +17,21 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [settings, setSettings] = useState<Settings | null>(null);
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  async function fetchSettings() {
+    try {
+      const response = await fetch('/api/settings');
+      const data = await response.json();
+      setSettings(data);
+    } catch (err) {
+      console.error('Failed to fetch settings:', err);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -29,14 +50,36 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     }
   }
 
+  const backgroundStyle = settings?.background_path
+    ? { backgroundImage: `url(${settings.background_path})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+    : {};
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl p-8 w-full max-w-md">
+    <div
+      className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4"
+      style={backgroundStyle}
+    >
+      {/* Overlay for better text visibility when background is present */}
+      {settings?.background_path && (
+        <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>
+      )}
+
+      <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl p-8 w-full max-w-md relative z-10">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
-            <Database className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Ramak Kala Sistemi</h1>
+          {settings?.logo_path ? (
+            <img
+              src={settings.logo_path}
+              alt="Logo"
+              className="w-16 h-16 mx-auto mb-4 object-contain"
+            />
+          ) : (
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-full mb-4">
+              <span className="text-xl font-bold text-white">RK</span>
+            </div>
+          )}
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            {settings?.site_title || 'Ramak Kala Sistemi'}
+          </h1>
           <p className="text-gray-600">Yönetim Paneli Girişi</p>
         </div>
 

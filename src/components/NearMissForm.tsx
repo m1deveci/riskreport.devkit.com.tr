@@ -38,6 +38,7 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
   const [incidentNumber, setIncidentNumber] = useState('');
   const [region, setRegion] = useState<Region | null>(null);
   const [location, setLocation] = useState<Location | null>(null);
+  const [siteTitle, setSiteTitle] = useState('Ramak Kala Sistemi');
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -50,8 +51,21 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
   const [rateLimitError, setRateLimitError] = useState(false);
 
   useEffect(() => {
+    loadSiteTitle();
     validateQRCode();
   }, [locationId, regionId, qrToken]);
+
+  async function loadSiteTitle() {
+    try {
+      const response = await fetch('/api/settings');
+      const data = await response.json();
+      if (data.site_title) {
+        setSiteTitle(data.site_title);
+      }
+    } catch (err) {
+      console.error('Failed to load site title:', err);
+    }
+  }
 
   async function validateQRCode() {
     try {
@@ -333,7 +347,7 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
       <div className="max-w-2xl mx-auto">
         <div className="bg-white rounded-lg shadow-xl p-6 md:p-8">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Ramak Kala Bildirimi</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2">{siteTitle} Bildirimi</h1>
             <div className="flex flex-col gap-1 text-sm text-gray-600">
               <p>
                 <span className="font-medium">Lokasyon:</span> {location?.name}

@@ -35,6 +35,41 @@ function App() {
     window.history.replaceState(null, '', `#/${currentPage}`);
   }, [currentPage]);
 
+  // Favicon ve site başlığını yükle
+  useEffect(() => {
+    async function loadFaviconAndTitle() {
+      try {
+        const response = await fetch('/api/settings');
+        const data = await response.json();
+
+        // Başlığı güncelle
+        if (data.site_title) {
+          document.title = data.site_title;
+        }
+
+        // Favicon'u güncelle
+        if (data.favicon_path) {
+          const faviconLink = document.getElementById('favicon') as HTMLLinkElement;
+          if (faviconLink) {
+            faviconLink.href = data.favicon_path;
+            // SVG olmayan favicon türleri için type'ı güncelle
+            if (data.favicon_path.endsWith('.ico')) {
+              faviconLink.type = 'image/x-icon';
+            } else if (data.favicon_path.endsWith('.png')) {
+              faviconLink.type = 'image/png';
+            } else if (data.favicon_path.endsWith('.jpg') || data.favicon_path.endsWith('.jpeg')) {
+              faviconLink.type = 'image/jpeg';
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load favicon and title:', err);
+      }
+    }
+
+    loadFaviconAndTitle();
+  }, []);
+
   useEffect(() => {
     const path = window.location.pathname;
     const isReportRoute = path.match(/^\/report\/([^/]+)\/([^/]+)$/);
