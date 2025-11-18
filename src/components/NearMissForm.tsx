@@ -41,6 +41,7 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
 
   const [formData, setFormData] = useState({
     full_name: '',
+    phone: '',
     category: '',
     description: '',
     image: null as File | null,
@@ -146,6 +147,64 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
     setImagePreview(null);
   }
 
+  function formatTurkishPhone(value: string): string {
+    // Remove all non-digit characters except +
+    let cleaned = value.replace(/[^\d+]/g, '');
+
+    // Remove + and any leading zeros/ones (except the first digit)
+    if (cleaned.startsWith('+')) {
+      cleaned = '+' + cleaned.substring(1).replace(/[^\d]/g, '');
+    } else {
+      cleaned = cleaned.replace(/[^\d]/g, '');
+    }
+
+    // Handle different input formats
+    let digits = cleaned.replace(/\D/g, '');
+
+    if (!digits) return '';
+
+    // If it starts with 0 and has 10+ digits, remove leading 0 and add +90
+    if (cleaned.startsWith('0') && digits.length >= 10) {
+      digits = '90' + digits.substring(1);
+    }
+    // If it starts with +90, keep as is
+    else if (cleaned.startsWith('+90') && digits.length > 2) {
+      // Already has +90
+    }
+    // If it doesn't start with +90 and doesn't start with 0, but is 10 digits starting with 5
+    else if (digits.length === 10 && digits.startsWith('5')) {
+      digits = '90' + digits;
+    }
+    // If it's 11 digits starting with 05, convert to 90 format
+    else if (digits.length === 11 && digits.startsWith('0')) {
+      digits = '90' + digits.substring(1);
+    }
+
+    // Format as +90 5XX XXX XX XX
+    if (digits.startsWith('90') && digits.length >= 10) {
+      const countryCode = digits.substring(0, 2);
+      const areaCode = digits.substring(2, 5);
+      const firstPart = digits.substring(5, 8);
+      const secondPart = digits.substring(8, 10);
+      const thirdPart = digits.substring(10, 12);
+
+      let formatted = '+' + countryCode;
+      if (areaCode) formatted += ' ' + areaCode;
+      if (firstPart) formatted += ' ' + firstPart;
+      if (secondPart) formatted += ' ' + secondPart;
+      if (thirdPart) formatted += ' ' + thirdPart;
+
+      return formatted;
+    }
+
+    return cleaned;
+  }
+
+  function handlePhoneChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const formatted = formatTurkishPhone(e.target.value);
+    setFormData({ ...formData, phone: formatted });
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -198,6 +257,7 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
           location_id: locationId,
           region_id: regionId,
           full_name: formData.full_name.trim(),
+          phone: formData.phone || null,
           category: formData.category,
           description: formData.description.trim(),
           image_path: imagePath,
@@ -322,6 +382,23 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
                 placeholder="Ad Soyadınız"
                 required
               />
+            </div>
+
+            <div>
+              <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                Telefon Numarası
+              </label>
+              <input
+                type="tel"
+                id="phone"
+                value={formData.phone}
+                onChange={handlePhoneChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-base"
+                placeholder="+90 5XX XXX XX XX"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Türkçe telefon formatında otomatik düzenlenecektir
+              </p>
             </div>
 
             <div>

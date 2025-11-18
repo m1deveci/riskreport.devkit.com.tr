@@ -146,15 +146,39 @@ export function Regions() {
 
   async function downloadQRCode(region: Region) {
     try {
-      const canvas = document.createElement('canvas');
-      await QRCode.toCanvas(canvas, region.qr_code_url, {
+      const qrCanvas = document.createElement('canvas');
+      await QRCode.toCanvas(qrCanvas, region.qr_code_url, {
         width: 512,
         margin: 2,
       });
 
+      // Create a new canvas with extra space for title
+      const titleHeight = 100;
+      const finalCanvas = document.createElement('canvas');
+      finalCanvas.width = qrCanvas.width;
+      finalCanvas.height = qrCanvas.height + titleHeight;
+
+      const ctx = finalCanvas.getContext('2d');
+      if (!ctx) throw new Error('Canvas context bulunamadı');
+
+      // White background
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
+
+      // Draw title
+      ctx.fillStyle = '#1F2937'; // Dark gray
+      ctx.font = 'bold 48px Arial, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillText('RAMAK KALA BİLDİR', finalCanvas.width / 2, 20);
+
+      // Draw QR code on the canvas below title
+      ctx.drawImage(qrCanvas, 0, titleHeight);
+
+      // Download
       const link = document.createElement('a');
       link.download = `qr-${region.name.replace(/\s+/g, '-')}.png`;
-      link.href = canvas.toDataURL();
+      link.href = finalCanvas.toDataURL();
       link.click();
     } catch (err) {
       console.error('Failed to generate QR code:', err);
