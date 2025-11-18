@@ -5,13 +5,12 @@ import { Plus, Edit2, Trash2, Users, AlertCircle, CheckCircle2 } from 'lucide-re
 
 interface ISGExpert {
   id: string;
-  location_id: string;
+  location_ids?: string[];
   full_name: string;
   email: string;
   phone: string;
   is_active: boolean;
   created_at: string;
-  locations?: { name: string };
 }
 
 interface Location {
@@ -27,7 +26,7 @@ export function ISGExperts() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedLocationFilter, setSelectedLocationFilter] = useState<string>('');
   const [formData, setFormData] = useState({
-    location_id: '',
+    location_ids: [] as string[],
     full_name: '',
     email: '',
     phone: '',
@@ -61,7 +60,7 @@ export function ISGExperts() {
     if (expert) {
       setEditingId(expert.id);
       setFormData({
-        location_id: expert.location_id,
+        location_ids: expert.location_ids || [],
         full_name: expert.full_name,
         email: expert.email,
         phone: expert.phone,
@@ -71,7 +70,7 @@ export function ISGExperts() {
     } else {
       setEditingId(null);
       setFormData({
-        location_id: '',
+        location_ids: [],
         full_name: '',
         email: '',
         phone: '',
@@ -128,12 +127,12 @@ export function ISGExperts() {
   }
 
   const filteredExperts = selectedLocationFilter
-    ? experts.filter((e) => e.location_id === selectedLocationFilter)
+    ? experts.filter((e) => e.location_ids?.includes(selectedLocationFilter))
     : experts;
 
   const expertsByLocation = locations.map((loc) => ({
     location: loc,
-    activeCount: experts.filter((e) => e.location_id === loc.id && e.is_active).length,
+    activeCount: experts.filter((e) => e.location_ids?.includes(loc.id) && e.is_active).length,
   }));
 
   if (loading) {
@@ -241,9 +240,23 @@ export function ISGExperts() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-slate-100">{expert.full_name}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-slate-300">
-                      {(expert.locations as unknown as { name: string })?.name}
+                  <td className="px-6 py-4">
+                    <div className="flex flex-wrap gap-1">
+                      {expert.location_ids && expert.location_ids.length > 0 ? (
+                        expert.location_ids.map((locId) => {
+                          const location = locations.find((l) => l.id === locId);
+                          return (
+                            <span
+                              key={locId}
+                              className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800"
+                            >
+                              {location?.name || 'Bilinmeyen'}
+                            </span>
+                          );
+                        })
+                      ) : (
+                        <span className="text-xs text-slate-500">Lokasyon atanmamış</span>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -322,21 +335,40 @@ export function ISGExperts() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Lokasyon <span className="text-red-600">*</span>
+                  Lokasyonlar <span className="text-red-600">*</span>
                 </label>
-                <select
-                  value={formData.location_id}
-                  onChange={(e) => setFormData({ ...formData, location_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  required
-                >
-                  <option value="">Lokasyon Seçin</option>
-                  {locations.map((loc) => (
-                    <option key={loc.id} value={loc.id}>
-                      {loc.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="space-y-2 border border-slate-600 bg-slate-700 rounded-lg p-3 max-h-48 overflow-y-auto">
+                  {locations.length === 0 ? (
+                    <p className="text-sm text-slate-500">Henüz lokasyon yok</p>
+                  ) : (
+                    locations.map((location) => (
+                      <label key={location.id} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={formData.location_ids.includes(location.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFormData({
+                                ...formData,
+                                location_ids: [...formData.location_ids, location.id],
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                location_ids: formData.location_ids.filter((id) => id !== location.id),
+                              });
+                            }
+                          }}
+                          className="w-4 h-4 text-blue-600 border-slate-600 rounded focus:ring-blue-500"
+                        />
+                        <span className="ml-2 text-sm text-slate-300">{location.name}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
+                {formData.location_ids.length === 0 && (
+                  <p className="mt-1 text-xs text-amber-400">En az bir lokasyon seçiniz</p>
+                )}
               </div>
 
               <div>

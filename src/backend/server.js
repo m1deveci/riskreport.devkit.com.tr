@@ -664,23 +664,61 @@ app.get('/api/experts', async (req, res) => {
     const connection = await pool.getConnection();
     const [rows] = await connection.query('SELECT * FROM isg_experts WHERE is_active = true');
     connection.release();
-    res.json(rows);
+
+    // Parse location_ids for each expert
+    const expertsWithParsedLocations = rows.map((expert) => {
+      let locationIds = [];
+      try {
+        locationIds = typeof expert.location_ids === 'string'
+          ? JSON.parse(expert.location_ids)
+          : (expert.location_ids || []);
+      } catch (e) {
+        locationIds = [];
+      }
+      return { ...expert, location_ids: locationIds };
+    });
+
+    res.json(expertsWithParsedLocations);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Get Experts by Location ID
+// Get Experts by Location ID (returns experts who have access to this location)
 app.get('/api/experts/:locationId', async (req, res) => {
   try {
     const { locationId } = req.params;
     const connection = await pool.getConnection();
     const [rows] = await connection.query(
-      'SELECT * FROM isg_experts WHERE location_id = ? AND is_active = true',
-      [locationId]
+      'SELECT * FROM isg_experts WHERE is_active = true',
+      []
     );
     connection.release();
-    res.json(rows);
+
+    // Filter experts who have access to this location
+    const filteredExperts = rows.filter((expert) => {
+      let locationIds = [];
+      try {
+        locationIds = typeof expert.location_ids === 'string'
+          ? JSON.parse(expert.location_ids)
+          : (expert.location_ids || []);
+      } catch (e) {
+        locationIds = [];
+      }
+      return locationIds.includes(locationId);
+    }).map((expert) => {
+      let locationIds = [];
+      try {
+        locationIds = typeof expert.location_ids === 'string'
+          ? JSON.parse(expert.location_ids)
+          : (expert.location_ids || []);
+      } catch (e) {
+        locationIds = [];
+      }
+      return { ...expert, location_ids: locationIds };
+    });
+
+    res.json(filteredExperts);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -688,14 +726,21 @@ app.get('/api/experts/:locationId', async (req, res) => {
 
 app.post('/api/experts', authenticateToken, adminOnly, async (req, res) => {
   try {
-    const { location_id, full_name, email, phone, password } = req.body;
+    const { location_ids, full_name, email, phone, password } = req.body;
+
+    // Validate location_ids is an array
+    if (!Array.isArray(location_ids) || location_ids.length === 0) {
+      return res.status(400).json({ error: 'En az bir lokasyon seçilmelidir' });
+    }
+
     const id = randomUUID();
     const connection = await pool.getConnection();
 
-    // Insert ISG Expert
+    // Insert ISG Expert with location_ids
+    const locationIdsJson = JSON.stringify(location_ids);
     await connection.query(
-      'INSERT INTO isg_experts (id, location_id, full_name, email, phone) VALUES (?, ?, ?, ?, ?)',
-      [id, location_id, full_name, email, phone]
+      'INSERT INTO isg_experts (id, full_name, email, phone, location_ids) VALUES (?, ?, ?, ?, ?)',
+      [id, full_name, email, phone, locationIdsJson]
     );
 
     // If password provided, create user account too
@@ -709,8 +754,7 @@ app.post('/api/experts', authenticateToken, adminOnly, async (req, res) => {
       const password_hash = await bcrypt.hash(password, salt);
       const userId = randomUUID();
 
-      // Create user account with isg_expert role and location assignment
-      const locationIdsJson = JSON.stringify([location_id]);
+      // Create user account with isg_expert role and location assignments
       await connection.query(
         'INSERT INTO users (id, full_name, email, password_hash, role, is_active, location_ids) VALUES (?, ?, ?, ?, ?, true, ?)',
         [userId, full_name, email, password_hash, 'isg_expert', locationIdsJson]
@@ -728,12 +772,48 @@ app.post('/api/experts', authenticateToken, adminOnly, async (req, res) => {
 app.put('/api/experts/:id', authenticateToken, adminOnly, async (req, res) => {
   try {
     const { id } = req.params;
-    const { full_name, email, phone, is_active } = req.body;
+    const { full_name, email, phone, is_active, location_ids } = req.body;
 
     const connection = await pool.getConnection();
+
+    const updates = [];
+    const values = [];
+
+    if (full_name !== undefined) {
+      updates.push('full_name = ?');
+      values.push(full_name);
+    }
+    if (email !== undefined) {
+      updates.push('email = ?');
+      values.push(email);
+    }
+    if (phone !== undefined) {
+      updates.push('phone = ?');
+      values.push(phone);
+    }
+    if (is_active !== undefined) {
+      updates.push('is_active = ?');
+      values.push(is_active);
+    }
+    if (location_ids !== undefined) {
+      if (!Array.isArray(location_ids) || location_ids.length === 0) {
+        connection.release();
+        return res.status(400).json({ error: 'En az bir lokasyon seçilmelidir' });
+      }
+      updates.push('location_ids = ?');
+      values.push(JSON.stringify(location_ids));
+    }
+
+    values.push(id);
+
+    if (updates.length === 0) {
+      connection.release();
+      return res.status(400).json({ error: 'Güncellenecek alan yok' });
+    }
+
     const [result] = await connection.query(
-      'UPDATE isg_experts SET full_name = ?, email = ?, phone = ?, is_active = ? WHERE id = ?',
-      [full_name, email, phone, is_active, id]
+      `UPDATE isg_experts SET ${updates.join(', ')} WHERE id = ?`,
+      values
     );
     connection.release();
 
