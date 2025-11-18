@@ -97,16 +97,16 @@ export function Settings() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 -my-6 px-6 py-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Sistem Ayarları</h1>
-        <p className="text-gray-600 mt-1">Uygulama ayarlarını yapılandırın</p>
+        <h1 className="text-4xl font-bold text-white">Sistem Ayarları</h1>
+        <p className="text-slate-400 text-lg mt-2">Uygulama ayarlarını yapılandırın</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+        <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md">
+          <div className="p-6 border-b border-slate-700">
+            <h2 className="text-xl font-semibold text-white flex items-center gap-2">
               <SettingsIcon className="w-5 h-5" />
               Genel Ayarlar
             </h2>
@@ -132,23 +132,23 @@ export function Settings() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-slate-300 mb-2">
                 Site Başlığı
               </label>
               <input
                 type="text"
                 value={formData.site_title}
                 onChange={(e) => setFormData({ ...formData, site_title: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">SMTP Ayarları</h2>
-            <p className="text-sm text-gray-600 mt-1">
+        <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md">
+          <div className="p-6 border-b border-slate-700">
+            <h2 className="text-xl font-semibold text-white">SMTP Ayarları</h2>
+            <p className="text-sm text-slate-400 mt-1">
               E-posta bildirimleri için SMTP sunucu ayarları
             </p>
           </div>
@@ -156,52 +156,52 @@ export function Settings() {
           <div className="p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">SMTP Host</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">SMTP Host</label>
                 <input
                   type="text"
                   value={formData.smtp_host}
                   onChange={(e) => setFormData({ ...formData, smtp_host: e.target.value })}
                   placeholder="smtp.gmail.com"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">SMTP Port</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">SMTP Port</label>
                 <input
                   type="number"
                   value={formData.smtp_port}
                   onChange={(e) =>
                     setFormData({ ...formData, smtp_port: parseInt(e.target.value) || 587 })
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   SMTP Kullanıcı Adı
                 </label>
                 <input
                   type="text"
                   value={formData.smtp_username}
                   onChange={(e) => setFormData({ ...formData, smtp_username: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">SMTP Şifre</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">SMTP Şifre</label>
                 <input
                   type="password"
                   value={formData.smtp_password}
                   onChange={(e) => setFormData({ ...formData, smtp_password: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   Gönderen E-posta
                 </label>
                 <input
@@ -209,21 +209,21 @@ export function Settings() {
                   value={formData.smtp_from_email}
                   onChange={(e) => setFormData({ ...formData, smtp_from_email: e.target.value })}
                   placeholder="noreply@sirket.com"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">Yedekleme Ayarları</h2>
+        <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md">
+          <div className="p-6 border-b border-slate-700">
+            <h2 className="text-xl font-semibold text-white">Yedekleme Ayarları</h2>
           </div>
 
           <div className="p-6 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-slate-300 mb-2">
                 Yedek Hedef Yolu
               </label>
               <input
@@ -231,7 +231,7 @@ export function Settings() {
                 value={formData.backup_target_path}
                 onChange={(e) => setFormData({ ...formData, backup_target_path: e.target.value })}
                 placeholder="/backups"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
 

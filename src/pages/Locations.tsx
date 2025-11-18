@@ -116,11 +116,11 @@ export function Locations() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 -my-6 px-6 py-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Lokasyonlar</h1>
-          <p className="text-gray-600 mt-1">Fabrika ve işyeri lokasyonlarını yönetin</p>
+          <h1 className="text-4xl font-bold text-white">Lokasyonlar</h1>
+          <p className="text-slate-400 text-lg mt-2">Fabrika ve işyeri lokasyonlarını yönetin</p>
         </div>
         <button
           onClick={() => openModal()}
@@ -133,15 +133,15 @@ export function Locations() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {locations.map((location) => (
-          <div key={location.id} className="bg-white rounded-lg shadow hover:shadow-lg transition-shadow">
+          <div key={location.id} className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md hover:shadow-lg transition-shadow">
             <div className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <MapPin className="w-6 h-6 text-blue-600" />
+                  <div className="w-12 h-12 bg-blue-600/20 rounded-lg flex items-center justify-center">
+                    <MapPin className="w-6 h-6 text-blue-400" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{location.name}</h3>
+                    <h3 className="text-lg font-semibold text-slate-100">{location.name}</h3>
                     <span
                       className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-1 ${
                         location.is_active
@@ -155,9 +155,9 @@ export function Locations() {
                 </div>
               </div>
 
-              <p className="text-sm text-gray-600 mb-3 line-clamp-2">{location.description}</p>
+              <p className="text-sm text-slate-400 mb-3 line-clamp-2">{location.description}</p>
 
-              <div className="text-sm text-gray-500 mb-4">
+              <div className="text-sm text-slate-400 mb-4">
                 <p className="font-medium">E-posta:</p>
                 <p className="truncate">{location.main_email}</p>
               </div>
@@ -165,7 +165,7 @@ export function Locations() {
               <div className="flex gap-2">
                 <button
                   onClick={() => openModal(location)}
-                  className="flex-1 flex items-center justify-center gap-2 bg-gray-100 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                  className="flex-1 flex items-center justify-center gap-2 bg-slate-700 text-slate-300 px-3 py-2 rounded-lg hover:bg-slate-600 transition-colors text-sm"
                 >
                   <Edit2 className="w-4 h-4" />
                   Düzenle
@@ -183,10 +183,10 @@ export function Locations() {
       </div>
 
       {locations.length === 0 && (
-        <div className="bg-white rounded-lg shadow p-12 text-center">
-          <MapPin className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Henüz lokasyon yok</h3>
-          <p className="text-gray-600 mb-6">İlk lokasyonunuzu oluşturarak başlayın</p>
+        <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md p-12 text-center">
+          <MapPin className="w-16 h-16 text-slate-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-white mb-2">Henüz lokasyon yok</h3>
+          <p className="text-slate-400 mb-6">İlk lokasyonunuzu oluşturarak başlayın</p>
           <button
             onClick={() => openModal()}
             className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -199,9 +199,9 @@ export function Locations() {
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">
+          <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 shadow-xl backdrop-blur-md max-w-md w-full">
+            <div className="p-6 border-b border-slate-700">
+              <h2 className="text-xl font-semibold text-white">
                 {editingId ? 'Lokasyon Düzenle' : 'Yeni Lokasyon'}
               </h2>
             </div>
@@ -226,37 +226,37 @@ export function Locations() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   Lokasyon Adı <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Açıklama</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">Açıklama</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   İSG E-posta <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="email"
                   value={formData.main_email}
                   onChange={(e) => setFormData({ ...formData, main_email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
               </div>
@@ -267,9 +267,9 @@ export function Locations() {
                   id="is_active"
                   checked={formData.is_active}
                   onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-blue-600 border-slate-600 rounded focus:ring-blue-500"
                 />
-                <label htmlFor="is_active" className="ml-2 text-sm text-gray-700">
+                <label htmlFor="is_active" className="ml-2 text-sm text-slate-300">
                   Aktif
                 </label>
               </div>
@@ -278,7 +278,7 @@ export function Locations() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="flex-1 px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
                 >
                   İptal
                 </button>

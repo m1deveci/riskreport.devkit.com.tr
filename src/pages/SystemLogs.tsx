@@ -57,57 +57,57 @@ export function SystemLogs() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 -my-6 px-6 py-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Sistem Logları</h1>
-        <p className="text-gray-600 mt-1">Tüm sistem aktivitelerini görüntüleyin</p>
+        <h1 className="text-4xl font-bold text-white">Sistem Logları</h1>
+        <p className="text-slate-400 text-lg mt-2">Tüm sistem aktivitelerini görüntüleyin</p>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-4">
+      <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md p-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-500" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="İşlem veya kullanıcı adında ara..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full pl-10 pr-4 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-slate-900/50 border-b border-slate-600">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   Tarih/Saat
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   Kullanıcı
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   İşlem
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   Detaylar
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-transparent divide-y divide-slate-700">
               {filteredLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                <tr key={log.id} className="hover:bg-slate-900/50 border-b border-slate-700">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
                     {new Date(log.created_at).toLocaleString('tr-TR')}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
                     {(log.users as unknown as { full_name: string })?.full_name || 'Sistem'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-100">
                     {log.action}
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
+                  <td className="px-6 py-4 text-sm text-slate-400">
                     <pre className="text-xs max-w-md overflow-x-auto">
                       {JSON.stringify(log.details, null, 2)}
                     </pre>
@@ -120,9 +120,9 @@ export function SystemLogs() {
 
         {filteredLogs.length === 0 && (
           <div className="p-12 text-center">
-            <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Log bulunamadı</h3>
-            <p className="text-gray-600">Henüz sistem aktivitesi kaydedilmemiş</p>
+            <FileText className="w-16 h-16 text-slate-500 mx-auto mb-4" />
+            <h3 className="text-lg font-medium text-white mb-2">Log bulunamadı</h3>
+            <p className="text-slate-400">Henüz sistem aktivitesi kaydedilmemiş</p>
           </div>
         )}
       </div>

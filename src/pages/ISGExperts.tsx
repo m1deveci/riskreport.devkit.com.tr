@@ -142,11 +142,11 @@ export function ISGExperts() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 -my-6 px-6 py-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">İSG Uzmanları</h1>
-          <p className="text-gray-600 mt-1">İş sağlığı ve güvenliği uzmanlarını yönetin</p>
+          <h1 className="text-4xl font-bold text-white">İSG Uzmanları</h1>
+          <p className="text-slate-400 text-lg mt-2">İş sağlığı ve güvenliği uzmanlarını yönetin</p>
         </div>
         <button
           onClick={() => openModal()}
@@ -159,11 +159,11 @@ export function ISGExperts() {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {expertsByLocation.map(({ location, activeCount }) => (
-          <div key={location.id} className="bg-white rounded-lg shadow p-4">
+          <div key={location.id} className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">{location.name}</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{activeCount} / 5</p>
+                <p className="text-sm text-slate-400">{location.name}</p>
+                <p className="text-2xl font-bold text-slate-100 mt-1">{activeCount} / 5</p>
               </div>
               <div
                 className={`w-12 h-12 rounded-lg flex items-center justify-center ${
@@ -176,7 +176,7 @@ export function ISGExperts() {
               </div>
             </div>
             <div className="mt-2">
-              <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="w-full bg-slate-900/50 rounded-full h-2">
                 <div
                   className={`h-2 rounded-full ${
                     activeCount >= 5 ? 'bg-red-600' : 'bg-green-600'
@@ -189,14 +189,14 @@ export function ISGExperts() {
         ))}
       </div>
 
-      <div className="bg-white rounded-lg shadow p-4">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+      <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md p-4">
+        <label className="block text-sm font-medium text-slate-300 mb-2">
           Lokasyona Göre Filtrele
         </label>
         <select
           value={selectedLocationFilter}
           onChange={(e) => setSelectedLocationFilter(e.target.value)}
-          className="w-full sm:w-64 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full sm:w-64 px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
           <option value="">Tüm Lokasyonlar</option>
           {locations.map((loc) => (
@@ -207,47 +207,47 @@ export function ISGExperts() {
         </select>
       </div>
 
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-slate-900/50 border-b border-slate-600">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   Ad Soyad
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   Lokasyon
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   E-posta
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   Telefon
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   Durum
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">
                   İşlemler
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-transparent divide-y divide-slate-700">
               {filteredExperts.map((expert) => (
-                <tr key={expert.id} className="hover:bg-gray-50">
+                <tr key={expert.id} className="hover:bg-slate-900/50 border-b border-slate-700">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{expert.full_name}</div>
+                    <div className="text-sm font-medium text-slate-100">{expert.full_name}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-700">
+                    <div className="text-sm text-slate-300">
                       {(expert.locations as unknown as { name: string })?.name}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-700">{expert.email}</div>
+                    <div className="text-sm text-slate-300">{expert.email}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-700">{expert.phone}</div>
+                    <div className="text-sm text-slate-300">{expert.phone}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
@@ -282,18 +282,18 @@ export function ISGExperts() {
       </div>
 
       {filteredExperts.length === 0 && (
-        <div className="bg-white rounded-lg shadow p-12 text-center">
-          <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Henüz İSG uzmanı yok</h3>
-          <p className="text-gray-600 mb-6">İlk İSG uzmanınızı ekleyerek başlayın</p>
+        <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md p-12 text-center">
+          <Users className="w-16 h-16 text-slate-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-white mb-2">Henüz İSG uzmanı yok</h3>
+          <p className="text-slate-400 mb-6">İlk İSG uzmanınızı ekleyerek başlayın</p>
         </div>
       )}
 
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold text-gray-900">
+          <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 shadow-xl backdrop-blur-md max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-slate-700">
+              <h2 className="text-xl font-semibold text-white">
                 {editingId ? 'İSG Uzmanı Düzenle' : 'Yeni İSG Uzmanı'}
               </h2>
             </div>
@@ -318,13 +318,13 @@ export function ISGExperts() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   Lokasyon <span className="text-red-600">*</span>
                 </label>
                 <select
                   value={formData.location_id}
                   onChange={(e) => setFormData({ ...formData, location_id: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 >
                   <option value="">Lokasyon Seçin</option>
@@ -337,40 +337,40 @@ export function ISGExperts() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   Ad Soyad <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.full_name}
                   onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   E-posta <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-slate-300 mb-2">
                   Telefon <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
               </div>
@@ -381,9 +381,9 @@ export function ISGExperts() {
                   id="is_active"
                   checked={formData.is_active}
                   onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                  className="w-4 h-4 text-blue-600 border-slate-600 rounded focus:ring-blue-500"
                 />
-                <label htmlFor="is_active" className="ml-2 text-sm text-gray-700">
+                <label htmlFor="is_active" className="ml-2 text-sm text-slate-300">
                   Aktif
                 </label>
               </div>
@@ -392,7 +392,7 @@ export function ISGExperts() {
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                  className="flex-1 px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
                 >
                   İptal
                 </button>
