@@ -139,8 +139,10 @@ export function Settings() {
                 type="text"
                 value={formData.site_title}
                 onChange={(e) => setFormData({ ...formData, site_title: e.target.value })}
-                className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Ramak Kala Sistemi"
+                className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white placeholder-slate-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+              <p className="mt-2 text-xs text-slate-400">Bu başlık, uygulamanın başında gösterilir</p>
             </div>
           </div>
         </div>
