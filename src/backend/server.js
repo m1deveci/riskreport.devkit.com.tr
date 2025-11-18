@@ -688,15 +688,37 @@ app.get('/api/experts/:locationId', async (req, res) => {
 
 app.post('/api/experts', authenticateToken, adminOnly, async (req, res) => {
   try {
-    const { location_id, full_name, email, phone } = req.body;
+    const { location_id, full_name, email, phone, password } = req.body;
     const id = randomUUID();
     const connection = await pool.getConnection();
+
+    // Insert ISG Expert
     await connection.query(
       'INSERT INTO isg_experts (id, location_id, full_name, email, phone) VALUES (?, ?, ?, ?, ?)',
       [id, location_id, full_name, email, phone]
     );
+
+    // If password provided, create user account too
+    if (password) {
+      if (password.length < 6) {
+        connection.release();
+        return res.status(400).json({ error: 'Şifre en az 6 karakter olmalıdır' });
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      const password_hash = await bcrypt.hash(password, salt);
+      const userId = randomUUID();
+
+      // Create user account with isg_expert role and location assignment
+      const locationIdsJson = JSON.stringify([location_id]);
+      await connection.query(
+        'INSERT INTO users (id, full_name, email, password_hash, role, is_active, location_ids) VALUES (?, ?, ?, ?, ?, true, ?)',
+        [userId, full_name, email, password_hash, 'isg_expert', locationIdsJson]
+      );
+    }
+
     connection.release();
-    res.json({ success: true, id });
+    res.json({ success: true, id, message: password ? 'İSG uzmanı ve kullanıcı hesabı başarıyla oluşturuldu' : 'İSG uzmanı başarıyla oluşturuldu' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

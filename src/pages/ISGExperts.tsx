@@ -31,6 +31,7 @@ export function ISGExperts() {
     full_name: '',
     email: '',
     phone: '',
+    password: '',
     is_active: true,
   });
   const [error, setError] = useState('');
@@ -64,6 +65,7 @@ export function ISGExperts() {
         full_name: expert.full_name,
         email: expert.email,
         phone: expert.phone,
+        password: '',
         is_active: expert.is_active,
       });
     } else {
@@ -73,6 +75,7 @@ export function ISGExperts() {
         full_name: '',
         email: '',
         phone: '',
+        password: '',
         is_active: true,
       });
     }
@@ -361,6 +364,24 @@ export function ISGExperts() {
                   required
                 />
               </div>
+
+              {!editingId && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Parola <span className="text-red-600">*</span>
+                  </label>
+                  <input
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                    minLength={6}
+                    placeholder="En az 6 karakter"
+                  />
+                  <p className="mt-1 text-xs text-slate-500">Minimum 6 karakter - Uzman bu parolayla login olabilecek</p>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
