@@ -533,6 +533,43 @@ app.put('/api/reports/:id', authenticateToken, adminOnly, async (req, res) => {
   }
 });
 
+// Delete Report (Admin Only)
+app.delete('/api/reports/:id', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const connection = await pool.getConnection();
+
+    // Get the report first to check for image
+    const [reports] = await connection.query(
+      'SELECT image_path FROM near_miss_reports WHERE id = ?',
+      [id]
+    );
+
+    if (reports.length > 0 && reports[0].image_path) {
+      try {
+        const imagePath = dirname(dirname(__dirname)) + reports[0].image_path;
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath);
+        }
+      } catch (error) {
+        console.error('Görsel silinirken hata oluştu:', error);
+        // Continue with report deletion even if image deletion fails
+      }
+    }
+
+    const [result] = await connection.query(
+      'DELETE FROM near_miss_reports WHERE id = ?',
+      [id]
+    );
+    connection.release();
+
+    res.json({ success: true, message: 'Rapor başarıyla silindi' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ==================== ISG EXPERTS ENDPOINTS ====================
 
 // Get All Experts

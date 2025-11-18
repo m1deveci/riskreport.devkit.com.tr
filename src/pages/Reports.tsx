@@ -56,6 +56,7 @@ export function Reports() {
   const [showFilters, setShowFilters] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
   const [filters, setFilters] = useState({
     location_id: '',
     region_id: '',
@@ -184,6 +185,38 @@ export function Reports() {
     } catch (err) {
       console.error('Failed to update report:', err);
       alert('Rapor güncellenirken bir hata oluştu');
+    }
+  }
+
+  async function handleDeleteReport() {
+    if (!selectedReport) return;
+
+    if (!confirm('Bu raporu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:6000'}/api/reports/${selectedReport.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Rapor silinirken hata oluştu');
+      }
+
+      await logAction(LogActions.DELETE_NEARMISS, { report_id: selectedReport.id });
+      await loadData();
+      setShowDetailModal(false);
+    } catch (err) {
+      console.error('Failed to delete report:', err);
+      alert('Rapor silinirken bir hata oluştu');
+    } finally {
+      setIsDeleting(false);
     }
   }
 
@@ -568,13 +601,22 @@ export function Reports() {
               <div className="flex gap-3 pt-4">
                 <button
                   onClick={() => setShowDetailModal(false)}
-                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Kapat
                 </button>
                 <button
+                  onClick={handleDeleteReport}
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {isDeleting ? 'Siliniyor...' : 'Sil'}
+                </button>
+                <button
                   onClick={handleUpdateReport}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  disabled={isDeleting}
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   Değişiklikleri Kaydet
                 </button>
