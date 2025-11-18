@@ -99,8 +99,8 @@ export function Settings() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 -my-6 px-6 py-6">
       <div>
-        <h1 className="text-4xl font-bold text-white">Sistem Ayarları</h1>
-        <p className="text-slate-400 text-lg mt-2">Uygulama ayarlarını yapılandırın</p>
+        <h1 className="text-4xl font-bold text-white">Ramak Kala Sistemi</h1>
+        <p className="text-slate-400 text-lg mt-2">İSG Yönetim Paneli</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
