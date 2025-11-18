@@ -114,7 +114,7 @@ app.post('/api/auth/login', async (req, res) => {
 
     const connection = await pool.getConnection();
     const [rows] = await connection.query(
-      'SELECT id, full_name, email, password_hash, role, is_active FROM users WHERE email = ? AND is_active = true',
+      'SELECT id, full_name, email, password_hash, role, is_active, location_ids FROM users WHERE email = ? AND is_active = true',
       [email]
     );
     connection.release();
@@ -132,13 +132,24 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Email veya şifre hatalı' });
     }
 
+    // Parse location_ids from JSON
+    let locationIds = [];
+    try {
+      locationIds = typeof user.location_ids === 'string'
+        ? JSON.parse(user.location_ids)
+        : (user.location_ids || []);
+    } catch (e) {
+      locationIds = [];
+    }
+
     // JWT Token Oluştur
     const token = jwt.sign(
       {
         id: user.id,
         email: user.email,
         full_name: user.full_name,
-        role: user.role
+        role: user.role,
+        location_ids: locationIds
       },
       JWT_SECRET,
       { expiresIn: JWT_EXPIRY }
@@ -151,7 +162,8 @@ app.post('/api/auth/login', async (req, res) => {
         id: user.id,
         full_name: user.full_name,
         email: user.email,
-        role: user.role
+        role: user.role,
+        location_ids: locationIds
       }
     });
   } catch (error) {
@@ -182,10 +194,24 @@ app.get('/api/users', authenticateToken, adminOnly, async (req, res) => {
   try {
     const connection = await pool.getConnection();
     const [rows] = await connection.query(
-      'SELECT id, full_name, email, role, is_active FROM users'
+      'SELECT id, full_name, email, role, is_active, location_ids FROM users'
     );
     connection.release();
-    res.json(rows);
+
+    // Parse location_ids JSON for each user
+    const usersWithParsedLocations = rows.map((user) => {
+      let locationIds = [];
+      try {
+        locationIds = typeof user.location_ids === 'string'
+          ? JSON.parse(user.location_ids)
+          : (user.location_ids || []);
+      } catch (e) {
+        locationIds = [];
+      }
+      return { ...user, location_ids: locationIds };
+    });
+
+    res.json(usersWithParsedLocations);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -194,7 +220,7 @@ app.get('/api/users', authenticateToken, adminOnly, async (req, res) => {
 // Create User (Admin Only)
 app.post('/api/users', authenticateToken, adminOnly, async (req, res) => {
   try {
-    const { full_name, email, password, role } = req.body;
+    const { full_name, email, password, role, location_ids } = req.body;
 
     if (!full_name || !email || !password) {
       return res.status(400).json({ error: 'Tüm alanlar zorunludur' });
@@ -205,10 +231,13 @@ app.post('/api/users', authenticateToken, adminOnly, async (req, res) => {
     const password_hash = await bcrypt.hash(password, salt);
     const id = randomUUID();
 
+    // Prepare location_ids as JSON
+    const locationIdsJson = JSON.stringify(location_ids || []);
+
     const connection = await pool.getConnection();
     await connection.query(
-      'INSERT INTO users (id, full_name, email, password_hash, role, is_active) VALUES (?, ?, ?, ?, ?, true)',
-      [id, full_name, email, password_hash, role || 'viewer']
+      'INSERT INTO users (id, full_name, email, password_hash, role, is_active, location_ids) VALUES (?, ?, ?, ?, ?, true, ?)',
+      [id, full_name, email, password_hash, role || 'viewer', locationIdsJson]
     );
     connection.release();
 
@@ -227,12 +256,47 @@ app.post('/api/users', authenticateToken, adminOnly, async (req, res) => {
 app.put('/api/users/:id', authenticateToken, adminOnly, async (req, res) => {
   try {
     const { id } = req.params;
-    const { full_name, email, role, is_active } = req.body;
+    const { full_name, email, role, is_active, location_ids } = req.body;
+
+    // Prepare location_ids as JSON if provided
+    const locationIdsJson = location_ids ? JSON.stringify(location_ids) : undefined;
 
     const connection = await pool.getConnection();
+
+    const updates = [];
+    const values = [];
+
+    if (full_name !== undefined) {
+      updates.push('full_name = ?');
+      values.push(full_name);
+    }
+    if (email !== undefined) {
+      updates.push('email = ?');
+      values.push(email);
+    }
+    if (role !== undefined) {
+      updates.push('role = ?');
+      values.push(role);
+    }
+    if (is_active !== undefined) {
+      updates.push('is_active = ?');
+      values.push(is_active);
+    }
+    if (locationIdsJson !== undefined) {
+      updates.push('location_ids = ?');
+      values.push(locationIdsJson);
+    }
+
+    values.push(id);
+
+    if (updates.length === 0) {
+      connection.release();
+      return res.status(400).json({ error: 'Güncellenecek alan yok' });
+    }
+
     const [result] = await connection.query(
-      'UPDATE users SET full_name = ?, email = ?, role = ?, is_active = ? WHERE id = ?',
-      [full_name, email, role, is_active, id]
+      `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
+      values
     );
     connection.release();
 
@@ -433,19 +497,41 @@ app.delete('/api/regions/:id', authenticateToken, adminOnly, async (req, res) =>
 
 // ==================== NEAR-MISS REPORTS ENDPOINTS ====================
 
-app.get('/api/reports', async (req, res) => {
+app.get('/api/reports', authenticateToken, async (req, res) => {
   try {
     const connection = await pool.getConnection();
-    const [rows] = await connection.query(
-      `SELECT
-        nmr.*,
-        l.name as location_name,
-        r.name as region_name
-      FROM near_miss_reports nmr
-      LEFT JOIN locations l ON nmr.location_id = l.id
-      LEFT JOIN regions r ON nmr.region_id = r.id
-      ORDER BY nmr.created_at DESC LIMIT 100`
-    );
+
+    // Build query based on user role
+    let query = `SELECT
+      nmr.*,
+      l.name as location_name,
+      r.name as region_name
+    FROM near_miss_reports nmr
+    LEFT JOIN locations l ON nmr.location_id = l.id
+    LEFT JOIN regions r ON nmr.region_id = r.id`;
+
+    const params = [];
+
+    // If user is not admin, filter by their assigned locations
+    if (req.user.role !== 'admin') {
+      // Parse location_ids from token
+      const locationIds = req.user.location_ids || [];
+
+      // If user has no assigned locations, return empty
+      if (locationIds.length === 0) {
+        connection.release();
+        return res.json([]);
+      }
+
+      // Filter by location_ids
+      const placeholders = locationIds.map(() => '?').join(',');
+      query += ` WHERE nmr.location_id IN (${placeholders})`;
+      params.push(...locationIds);
+    }
+
+    query += ` ORDER BY nmr.created_at DESC LIMIT 100`;
+
+    const [rows] = await connection.query(query, params);
     connection.release();
     res.json(rows);
   } catch (error) {

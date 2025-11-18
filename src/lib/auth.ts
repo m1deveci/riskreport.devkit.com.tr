@@ -5,7 +5,8 @@ export interface UserProfile {
   full_name: string;
   email: string;
   role: 'admin' | 'isg_expert' | 'viewer';
-  is_active: boolean;
+  is_active?: boolean;
+  location_ids?: string[];
 }
 
 export async function signIn(email: string, password: string) {
@@ -55,7 +56,8 @@ export async function signUp(
   email: string,
   password: string,
   full_name: string,
-  role: 'admin' | 'isg_expert' | 'viewer' = 'viewer'
+  role: 'admin' | 'isg_expert' | 'viewer' = 'viewer',
+  location_ids: string[] = []
 ) {
   try {
     const token = localStorage.getItem('token');
@@ -72,6 +74,7 @@ export async function signUp(
         email,
         password,
         role,
+        location_ids,
       }),
     });
 
@@ -81,7 +84,7 @@ export async function signUp(
     }
 
     const data = await res.json();
-    return { id: data.id, email, full_name, role };
+    return { id: data.id, email, full_name, role, location_ids };
   } catch (error) {
     throw new Error(`Kayıt hatası: ${(error as Error).message}`);
   }

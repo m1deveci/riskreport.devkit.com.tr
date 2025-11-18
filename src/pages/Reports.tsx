@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { api, supabase } from '../lib/supabase';
 import { logAction, LogActions } from '../lib/logger';
-import { Search, Filter, X, AlertTriangle, Eye, Download, Image as ImageIcon } from 'lucide-react';
+import { Search, Filter, X, AlertTriangle, Eye, Download, Image as ImageIcon, Lock } from 'lucide-react';
+import type { UserProfile } from '../lib/auth';
 
 interface Report {
   id: string;
@@ -47,6 +48,7 @@ const CATEGORIES = [
 const STATUSES = ['Yeni', 'İnceleniyor', 'Kapatıldı'];
 
 export function Reports() {
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
   const [filteredReports, setFilteredReports] = useState<Report[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
@@ -78,6 +80,21 @@ export function Reports() {
 
   async function loadData() {
     try {
+      // Get current user from localStorage
+      const userStr = localStorage.getItem('user');
+      const user = userStr ? JSON.parse(userStr) : null;
+      setCurrentUser(user);
+
+      // Check if user has no assigned locations and is not admin
+      if (user && user.role !== 'admin' && (!user.location_ids || user.location_ids.length === 0)) {
+        // User has no access to any locations
+        setReports([]);
+        setLocations([]);
+        setRegions([]);
+        setLoading(false);
+        return;
+      }
+
       const [reportsData, locationsData, regionsData] = await Promise.all([
         api.reports.getList(),
         api.locations.getList(),
@@ -228,6 +245,21 @@ export function Reports() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
+  // Check if user is restricted and has no assigned locations
+  if (currentUser && currentUser.role !== 'admin' && (!currentUser.location_ids || currentUser.location_ids.length === 0)) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 -my-6 px-6 py-6">
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <Lock className="w-16 h-16 text-amber-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-white mb-2">Erişim Kısıtlı</h2>
+            <p className="text-slate-400">Henüz hiçbir lokasyona yetki verilmemiştir. Sistem yöneticisine başvurunuz.</p>
+          </div>
+        </div>
       </div>
     );
   }

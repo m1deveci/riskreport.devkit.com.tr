@@ -10,7 +10,13 @@ interface User {
   email: string;
   role: string;
   is_active: boolean;
+  location_ids?: string[];
   created_at: string;
+}
+
+interface Location {
+  id: string;
+  name: string;
 }
 
 const ROLES = [
@@ -21,6 +27,7 @@ const ROLES = [
 
 export function Users() {
   const [users, setUsers] = useState<User[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -30,20 +37,25 @@ export function Users() {
     password: '',
     role: 'viewer',
     is_active: true,
+    location_ids: [] as string[],
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
   useEffect(() => {
-    loadUsers();
+    loadData();
   }, []);
 
-  async function loadUsers() {
+  async function loadData() {
     try {
-      const data = await api.users.getList();
-      setUsers(data || []);
+      const [usersData, locationsData] = await Promise.all([
+        api.users.getList(),
+        api.locations.getList(),
+      ]);
+      setUsers(usersData || []);
+      setLocations(locationsData || []);
     } catch (err) {
-      console.error('Failed to load users:', err);
+      console.error('Failed to load data:', err);
     } finally {
       setLoading(false);
     }
@@ -58,6 +70,7 @@ export function Users() {
         password: '',
         role: user.role,
         is_active: user.is_active,
+        location_ids: user.location_ids || [],
       });
     } else {
       setEditingId(null);
@@ -67,6 +80,7 @@ export function Users() {
         password: '',
         role: 'viewer',
         is_active: true,
+        location_ids: [],
       });
     }
     setShowModal(true);
@@ -85,10 +99,12 @@ export function Users() {
           full_name: string;
           role: string;
           is_active: boolean;
+          location_ids: string[];
         } = {
           full_name: formData.full_name,
           role: formData.role,
           is_active: formData.is_active,
+          location_ids: formData.location_ids,
         };
 
         await api.users.update(editingId, updateData);
@@ -104,14 +120,15 @@ export function Users() {
           formData.email,
           formData.password,
           formData.full_name,
-          formData.role as 'admin' | 'isg_expert' | 'viewer'
+          formData.role as 'admin' | 'isg_expert' | 'viewer',
+          formData.location_ids
         );
 
         await logAction(LogActions.CREATE_USER, { email: formData.email });
         setSuccess('Kullanıcı başarıyla oluşturuldu');
       }
 
-      await loadUsers();
+      await loadData();
       setTimeout(() => {
         setShowModal(false);
         setSuccess('');
@@ -129,7 +146,7 @@ export function Users() {
       await api.users.delete(id);
 
       await logAction(LogActions.DELETE_USER, { user_id: id });
-      await loadUsers();
+      await loadData();
     } catch (err) {
       console.error('Failed to delete user:', err);
       alert('Kullanıcı silinirken bir hata oluştu');
@@ -175,6 +192,9 @@ export function Users() {
                   Rol
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                  Lokasyonlar
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   Durum
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
@@ -198,6 +218,25 @@ export function Users() {
                     <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 capitalize">
                       {ROLES.find((r) => r.value === user.role)?.label || user.role}
                     </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <div className="flex flex-wrap gap-1">
+                      {user.location_ids && user.location_ids.length > 0 ? (
+                        user.location_ids.map((locId) => {
+                          const location = locations.find((l) => l.id === locId);
+                          return (
+                            <span
+                              key={locId}
+                              className="px-2 py-1 text-xs font-medium rounded-full bg-slate-600 text-slate-200"
+                            >
+                              {location?.name || 'Bilinmeyen'}
+                            </span>
+                          );
+                        })
+                      ) : (
+                        <span className="text-xs text-slate-500">Hiç lokasyon atanmamış</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
@@ -330,6 +369,44 @@ export function Users() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Lokasyonlar {formData.role !== 'admin' && <span className="text-red-600">*</span>}
+                </label>
+                <div className="space-y-2 border border-slate-600 bg-slate-700 rounded-lg p-3 max-h-48 overflow-y-auto">
+                  {locations.length === 0 ? (
+                    <p className="text-sm text-slate-500">Henüz lokasyon yok</p>
+                  ) : (
+                    locations.map((location) => (
+                      <label key={location.id} className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={formData.location_ids.includes(location.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setFormData({
+                                ...formData,
+                                location_ids: [...formData.location_ids, location.id],
+                              });
+                            } else {
+                              setFormData({
+                                ...formData,
+                                location_ids: formData.location_ids.filter((id) => id !== location.id),
+                              });
+                            }
+                          }}
+                          className="w-4 h-4 text-blue-600 border-slate-600 rounded focus:ring-blue-500"
+                        />
+                        <span className="ml-2 text-sm text-slate-300">{location.name}</span>
+                      </label>
+                    ))
+                  )}
+                </div>
+                {formData.role !== 'admin' && formData.location_ids.length === 0 && (
+                  <p className="mt-1 text-xs text-amber-400">En az bir lokasyon seçiniz</p>
+                )}
               </div>
 
               <div className="flex items-center">
