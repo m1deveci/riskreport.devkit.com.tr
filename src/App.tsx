@@ -108,8 +108,15 @@ function App() {
 
       window.addEventListener('auth-changed', handleAuthChange);
 
+      // Listen for hash changes (for forgot-password, reset-password routes)
+      const handleHashChange = () => {
+        checkRoute();
+      };
+      window.addEventListener('hashchange', handleHashChange);
+
       return () => {
         window.removeEventListener('auth-changed', handleAuthChange);
+        window.removeEventListener('hashchange', handleHashChange);
       };
     }
   }, []);
