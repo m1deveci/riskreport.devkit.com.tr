@@ -130,13 +130,7 @@ export function ForgotPasswordPage() {
 
         {/* Help Text */}
         <p className="text-center text-slate-500 text-sm mt-6">
-          Hesabınız yok mu?{' '}
-          <button
-            onClick={() => handleNavigate('/signup')}
-            className="text-blue-400 hover:text-blue-300 transition-colors font-medium"
-          >
-            Kayıt ol
-          </button>
+          Hesap ekleme işlemi yalnızca yöneticiler tarafından yapılabilir
         </p>
       </div>
     </div>
