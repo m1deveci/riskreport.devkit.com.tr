@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { NearMissForm } from './components/NearMissForm';
 import { LoginPage } from './components/LoginPage';
+import { ForgotPasswordPage } from './components/ForgotPasswordPage';
+import { ResetPasswordPage } from './components/ResetPasswordPage';
 import { AdminLayout } from './components/AdminLayout';
 import { Dashboard } from './pages/Dashboard';
 import { Locations } from './pages/Locations';
@@ -13,7 +15,7 @@ import { Users } from './pages/Users';
 import { getCurrentUser, onAuthStateChange } from './lib/auth';
 import type { UserProfile } from './lib/auth';
 
-type AppMode = 'loading' | 'public-form' | 'login' | 'admin';
+type AppMode = 'loading' | 'public-form' | 'login' | 'forgot-password' | 'reset-password' | 'admin';
 
 function App() {
   const [mode, setMode] = useState<AppMode>('loading');
@@ -125,7 +127,20 @@ function App() {
 
   function checkRoute() {
     const path = window.location.pathname;
+    const hash = window.location.hash;
     const reportMatch = path.match(/^\/report\/([^/]+)\/([^/]+)$/);
+
+    // Hash-based routing
+    if (hash) {
+      if (hash.includes('/forgot-password')) {
+        setMode('forgot-password');
+        return;
+      }
+      if (hash.includes('/reset-password')) {
+        setMode('reset-password');
+        return;
+      }
+    }
 
     if (reportMatch) {
       const locationId = reportMatch[1];
@@ -158,15 +173,14 @@ function App() {
       case 'regions':
         return <Regions />;
       case 'experts':
-        return <ISGExperts />;
+      case 'users':
+        return <Users />;
       case 'reports':
         return <Reports />;
       case 'logs':
         return <SystemLogs />;
       case 'settings':
         return <Settings />;
-      case 'users':
-        return <Users />;
       default:
         return <Dashboard />;
     }
@@ -192,6 +206,14 @@ function App() {
 
   if (mode === 'login') {
     return <LoginPage onLogin={handleLogin} />;
+  }
+
+  if (mode === 'forgot-password') {
+    return <ForgotPasswordPage />;
+  }
+
+  if (mode === 'reset-password') {
+    return <ResetPasswordPage />;
   }
 
   if (mode === 'admin' && currentUser) {

@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import mysql from 'mysql2/promise';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import { randomUUID } from 'crypto';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
@@ -11,6 +12,7 @@ import multer from 'multer';
 import fs from 'fs';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { sendPasswordResetEmail, verifyEmailConnection, initializeEmailService } from './emailService.js';
 
 // Load environment variables
 dotenv.config();
@@ -1029,6 +1031,171 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
+// ==================== PASSWORD RESET ENDPOINTS ====================
+
+// Request Password Reset - Send reset link to email
+app.post('/api/password-reset', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'E-posta adresi gereklidir' });
+    }
+
+    const connection = await pool.getConnection();
+
+    // Check if user exists
+    const [rows] = await connection.query(
+      'SELECT id, full_name FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (rows.length === 0) {
+      connection.release();
+      // Don't reveal if email exists for security reasons
+      return res.json({ success: true, message: 'Eğer bu e-posta hesapla ilişkili bir hesap varsa, parola sıfırlama bağlantısı gönderildi' });
+    }
+
+    const user = rows[0];
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + (parseInt(process.env.PASSWORD_RESET_TOKEN_EXPIRY || 3600) * 1000));
+
+    // Save token to database
+    const tokenId = randomUUID();
+    await connection.query(
+      'INSERT INTO password_reset_tokens (id, user_id, token, expires_at) VALUES (?, ?, ?, ?)',
+      [tokenId, user.id, resetToken, expiresAt]
+    );
+
+    connection.release();
+
+    // Send email
+    try {
+      await sendPasswordResetEmail(email, resetToken, user.full_name);
+    } catch (emailError) {
+      console.error('Failed to send email:', emailError);
+      return res.status(500).json({ error: 'E-posta gönderme başarısız oldu' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Parola sıfırlama bağlantısı e-posta adresinize gönderildi'
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Verify Reset Token and Reset Password
+app.post('/api/password-reset/verify', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: 'Token ve yeni şifre gereklidir' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'Şifre en az 6 karakter olmalıdır' });
+    }
+
+    const connection = await pool.getConnection();
+
+    // Check if token is valid and not expired
+    const [tokenRows] = await connection.query(
+      'SELECT * FROM password_reset_tokens WHERE token = ? AND expires_at > NOW() AND used_at IS NULL',
+      [token]
+    );
+
+    if (tokenRows.length === 0) {
+      connection.release();
+      return res.status(400).json({ error: 'Geçersiz veya süresi dolmuş token' });
+    }
+
+    const resetTokenRecord = tokenRows[0];
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(newPassword, salt);
+
+    // Update user password
+    await connection.query(
+      'UPDATE users SET password_hash = ? WHERE id = ?',
+      [password_hash, resetTokenRecord.user_id]
+    );
+
+    // Mark token as used
+    await connection.query(
+      'UPDATE password_reset_tokens SET used_at = NOW() WHERE id = ?',
+      [resetTokenRecord.id]
+    );
+
+    connection.release();
+
+    res.json({
+      success: true,
+      message: 'Parolanız başarıyla sıfırlandı. Lütfen yeni parolanızla giriş yapın.'
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Admin: Reset User Password (send reset email)
+app.post('/api/password-reset/admin/:id', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const connection = await pool.getConnection();
+
+    // Check if user exists
+    const [rows] = await connection.query(
+      'SELECT id, email, full_name FROM users WHERE id = ?',
+      [id]
+    );
+
+    if (rows.length === 0) {
+      connection.release();
+      return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+    }
+
+    const user = rows[0];
+
+    // Generate reset token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + (parseInt(process.env.PASSWORD_RESET_TOKEN_EXPIRY || 3600) * 1000));
+
+    // Save token to database
+    const tokenId = randomUUID();
+    await connection.query(
+      'INSERT INTO password_reset_tokens (id, user_id, token, expires_at) VALUES (?, ?, ?, ?)',
+      [tokenId, user.id, resetToken, expiresAt]
+    );
+
+    connection.release();
+
+    // Send email
+    try {
+      await sendPasswordResetEmail(user.email, resetToken, user.full_name);
+    } catch (emailError) {
+      console.error('Failed to send email:', emailError);
+      return res.status(500).json({ error: 'E-posta gönderme başarısız oldu' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Parola sıfırlama bağlantısı kullanıcının e-posta adresine gönderildi'
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ==================== SPA ROUTING ====================
 
 app.get('*', (req, res) => {
@@ -1048,6 +1215,9 @@ app.use((err, req, res, next) => {
 
 // ==================== START SERVER ====================
 
+// Initialize email service
+await initializeEmailService(pool);
+
 app.listen(port, '0.0.0.0', () => {
   console.log(`\n╔════════════════════════════════════════╗`);
   console.log(`║  Ramak Kala Reporting System (MySQL)   ║`);
@@ -1055,5 +1225,6 @@ app.listen(port, '0.0.0.0', () => {
   console.log(`║  Database: ${process.env.MYSQL_DATABASE}                      ║`);
   console.log(`║  User: ${process.env.MYSQL_USER}                         ║`);
   console.log(`║  JWT Authentication: ✓ ENABLED         ║`);
+  console.log(`║  Email Service: ✓ INITIALIZED          ║`);
   console.log(`╚════════════════════════════════════════╝\n`);
 });

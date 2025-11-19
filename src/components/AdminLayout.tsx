@@ -26,10 +26,9 @@ const menuItems = [
   { id: 'dashboard', label: 'Gösterge Paneli', icon: LayoutDashboard },
   { id: 'locations', label: 'Lokasyonlar', icon: MapPin },
   { id: 'regions', label: 'Bölgeler', icon: Grid3x3 },
-  { id: 'experts', label: 'İSG Uzmanları', icon: Users },
   { id: 'reports', label: 'Ramak Kala Raporları', icon: AlertTriangle },
   { id: 'logs', label: 'Sistem Logları', icon: FileText },
-  { id: 'users', label: 'Kullanıcı Yönetimi', icon: Users },
+  { id: 'users', label: 'Kullanıcılar ve Uzmanlar', icon: Users },
   { id: 'settings', label: 'Ayarlar', icon: Settings },
 ];
 

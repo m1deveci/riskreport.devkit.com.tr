@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, supabase } from '../lib/supabase';
 import { logAction, LogActions } from '../lib/logger';
-import { Plus, Edit2, Trash2, Users, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Users, AlertCircle, CheckCircle2, Lock } from 'lucide-react';
 
 interface ISGExpert {
   id: string;
@@ -123,6 +123,36 @@ export function ISGExperts() {
     } catch (err) {
       console.error('Failed to delete expert:', err);
       alert('İSG uzmanı silinirken bir hata oluştu');
+    }
+  }
+
+  async function handleResetPassword(expertId: string) {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setError('Oturum geçersiz');
+        return;
+      }
+
+      const response = await fetch(`/api/password-reset/admin/${expertId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Hata oluştu');
+      }
+
+      setSuccess('Parola sıfırlama bağlantısı e-postaya gönderildi');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Bir hata oluştu';
+      setError(errorMessage);
+      setTimeout(() => setError(''), 3000);
     }
   }
 
@@ -276,18 +306,25 @@ export function ISGExperts() {
                       {expert.is_active ? 'Aktif' : 'Pasif'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+                    <button
+                      onClick={() => handleResetPassword(expert.id)}
+                      title="Parola sıfırlama linki gönder"
+                      className="text-amber-600 hover:text-amber-900 inline-block"
+                    >
+                      <Lock className="w-4 h-4" />
+                    </button>
                     <button
                       onClick={() => openModal(expert)}
-                      className="text-blue-600 hover:text-blue-900 mr-3"
+                      className="text-blue-600 hover:text-blue-900 inline-block"
                     >
-                      <Edit2 className="w-4 h-4 inline" />
+                      <Edit2 className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(expert.id)}
-                      className="text-red-600 hover:text-red-900"
+                      className="text-red-600 hover:text-red-900 inline-block"
                     >
-                      <Trash2 className="w-4 h-4 inline" />
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </td>
                 </tr>

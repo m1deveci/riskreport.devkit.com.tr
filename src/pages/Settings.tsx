@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, supabase } from '../lib/supabase';
 import { logAction, LogActions } from '../lib/logger';
-import { Settings as SettingsIcon, Save, AlertCircle, CheckCircle2, Download, Upload, Trash2, Eye } from 'lucide-react';
+import { Settings as SettingsIcon, Save, AlertCircle, CheckCircle2, Download, Upload, Trash2, Eye, Globe, Mail, Image as ImageIcon } from 'lucide-react';
 
 interface SystemSettings {
   id: string;
@@ -45,6 +45,7 @@ export function Settings() {
     type: null,
     src: '',
   });
+  const [activeTab, setActiveTab] = useState<'general' | 'smtp' | 'files' | 'backup'>('general');
 
   useEffect(() => {
     loadSettings();
@@ -236,7 +237,57 @@ export function Settings() {
         <p className="text-slate-400 text-lg mt-2">İSG Yönetim Paneli</p>
       </div>
 
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mt-6 border-b border-slate-700 overflow-x-auto">
+        <button
+          onClick={() => setActiveTab('general')}
+          className={`px-4 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${
+            activeTab === 'general'
+              ? 'border-blue-600 text-blue-400'
+              : 'border-transparent text-slate-400 hover:text-white'
+          }`}
+        >
+          <Globe className="w-4 h-4" />
+          Genel Ayarlar
+        </button>
+        <button
+          onClick={() => setActiveTab('smtp')}
+          className={`px-4 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${
+            activeTab === 'smtp'
+              ? 'border-blue-600 text-blue-400'
+              : 'border-transparent text-slate-400 hover:text-white'
+          }`}
+        >
+          <Mail className="w-4 h-4" />
+          SMTP Ayarları
+        </button>
+        <button
+          onClick={() => setActiveTab('files')}
+          className={`px-4 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${
+            activeTab === 'files'
+              ? 'border-blue-600 text-blue-400'
+              : 'border-transparent text-slate-400 hover:text-white'
+          }`}
+        >
+          <ImageIcon className="w-4 h-4" />
+          Dosyalar
+        </button>
+        <button
+          onClick={() => setActiveTab('backup')}
+          className={`px-4 py-3 font-medium text-sm flex items-center gap-2 border-b-2 transition-colors ${
+            activeTab === 'backup'
+              ? 'border-blue-600 text-blue-400'
+              : 'border-transparent text-slate-400 hover:text-white'
+          }`}
+        >
+          <Download className="w-4 h-4" />
+          Yedek Alma
+        </button>
+      </div>
+
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Genel Ayarlar Tab */}
+        {activeTab === 'general' && (
         <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md">
           <div className="p-6 border-b border-slate-700">
             <h2 className="text-xl font-semibold text-white flex items-center gap-2">
@@ -279,12 +330,14 @@ export function Settings() {
             </div>
           </div>
         </div>
+        )}
 
-        {/* Asset Management Section */}
+        {/* Dosyalar Tab - Asset Management Section */}
+        {activeTab === 'files' && (
         <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md">
           <div className="p-6 border-b border-slate-700">
             <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-              <Upload className="w-5 h-5" />
+              <ImageIcon className="w-5 h-5" />
               Tasarım Elemanları
             </h2>
             <p className="text-sm text-slate-400 mt-1">
@@ -441,10 +494,16 @@ export function Settings() {
             </div>
           </div>
         </div>
+        )}
 
+        {/* SMTP Tab */}
+        {activeTab === 'smtp' && (
         <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md">
           <div className="p-6 border-b border-slate-700">
-            <h2 className="text-xl font-semibold text-white">SMTP Ayarları</h2>
+            <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+              <Mail className="w-5 h-5" />
+              SMTP Ayarları
+            </h2>
             <p className="text-sm text-slate-400 mt-1">
               E-posta bildirimleri için SMTP sunucu ayarları
             </p>
@@ -512,10 +571,16 @@ export function Settings() {
             </div>
           </div>
         </div>
+        )}
 
+        {/* Backup Tab */}
+        {activeTab === 'backup' && (
         <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md">
           <div className="p-6 border-b border-slate-700">
-            <h2 className="text-xl font-semibold text-white">Yedekleme Ayarları</h2>
+            <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+              <Download className="w-5 h-5" />
+              Yedekleme Ayarları
+            </h2>
           </div>
 
           <div className="p-6 space-y-4">
@@ -552,6 +617,7 @@ export function Settings() {
             </button>
           </div>
         </div>
+        )}
 
         <div className="flex justify-end">
           <button
