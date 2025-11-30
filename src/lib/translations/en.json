@@ -11,7 +11,9 @@
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",
-    "close": "Close"
+    "close": "Close",
+    "active": "Active",
+    "inactive": "Inactive"
   },
   "auth": {
     "login": "Login",
@@ -34,7 +36,20 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "subtitle": "Welcome"
+    "subtitle": "Near-miss reporting system summary and statistics",
+    "totalLocations": "TOTAL LOCATIONS",
+    "totalReports": "TOTAL REPORTS",
+    "newReports": "NEW REPORTS",
+    "thisMonth": "THIS MONTH",
+    "categoryDistribution": "Distribution by Category",
+    "locationDistribution": "Distribution by Location",
+    "recentReports": "Recent Reports",
+    "noReports": "No reports found yet",
+    "restrictedAccess": "Access Restricted",
+    "noAccessMessage": "No locations have been assigned yet. Please contact your system administrator.",
+    "incidentNumber": "Incident No",
+    "reporter": "Reporter",
+    "date": "Date"
   },
   "locations": {
     "title": "Locations",
@@ -57,7 +72,10 @@
     "isgExpert": "ISG Expert",
     "viewer": "Viewer",
     "resetPassword": "Reset Password",
-    "manualReset": "Manual Reset"
+    "manualReset": "Manual Reset",
+    "password": "Password",
+    "locations": "Locations",
+    "isActive": "Active"
   },
   "logs": {
     "title": "System Logs",
@@ -72,7 +90,20 @@
   "settings": {
     "title": "Settings",
     "siteTitle": "Site Title",
-    "save": "Save"
+    "save": "Save",
+    "general": "General",
+    "smtp": "Email (SMTP)",
+    "files": "Files",
+    "backup": "Backup",
+    "backup_path": "Backup Path",
+    "upload": "Upload",
+    "delete": "Delete",
+    "preview": "Preview",
+    "logo": "Logo",
+    "background": "Background",
+    "favicon": "Favicon",
+    "start_backup": "Backup",
+    "download": "Download"
   },
   "messages": {
     "successCreated": "successfully created",
@@ -91,6 +122,7 @@
     "report": "Report",
     "expert": "ISG Expert",
     "file": "File",
+    "user": "User",
     "searchPlaceholder": "Search by action or username...",
     "confirmDeleteLocation": "Are you sure you want to delete this location?",
     "confirmDeleteRegion": "Are you sure you want to delete this region?",
@@ -120,6 +152,12 @@
     "from": "Start Date",
     "to": "End Date",
     "internalNotes": "Internal Notes",
-    "created": "Created"
+    "created": "Created",
+    "reportNumber": "Report No",
+    "reporter": "Reporter",
+    "phone": "Phone",
+    "description": "Description",
+    "viewDetails": "View Details",
+    "name": "Full Name"
   }
 }

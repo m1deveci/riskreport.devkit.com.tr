@@ -131,8 +131,8 @@ export function Dashboard() {
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <Lock className="w-16 h-16 text-amber-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-white mb-2">Erişim Kısıtlı</h2>
-            <p className="text-slate-400">Henüz hiçbir lokasyona yetki verilmemiştir. Sistem yöneticisine başvurunuz.</p>
+            <h2 className="text-2xl font-bold text-white mb-2">{t('dashboard.restrictedAccess') || 'Erişim Kısıtlı'}</h2>
+            <p className="text-slate-400">{t('dashboard.noAccessMessage') || 'Henüz hiçbir lokasyona yetki verilmemiştir. Sistem yöneticisine başvurunuz.'}</p>
           </div>
         </div>
       </div>
@@ -149,8 +149,8 @@ export function Dashboard() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 -my-6 px-6 py-6">
       {/* Header Section */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-white mb-2">Gösterge Paneli</h1>
-        <p className="text-slate-400 text-lg">Ramak kala raporlama sistemi özeti ve istatistikleri</p>
+        <h1 className="text-4xl font-bold text-white mb-2">{t('dashboard.title') || 'Gösterge Paneli'}</h1>
+        <p className="text-slate-400 text-lg">{t('dashboard.subtitle') || 'Ramak kala raporlama sistemi özeti ve istatistikleri'}</p>
       </div>
 
       {/* Stats Cards Grid */}
@@ -160,7 +160,7 @@ export function Dashboard() {
           <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-blue-400/10 blur-2xl transition-all duration-300 group-hover:bg-blue-400/20" />
           <div className="relative flex items-center justify-between">
             <div>
-              <p className="text-blue-100 text-sm font-medium tracking-wide">TOPLAM LOKASYON</p>
+              <p className="text-blue-100 text-sm font-medium tracking-wide">{t('dashboard.totalLocations') || 'TOPLAM LOKASYON'}</p>
               <p className="text-4xl font-bold text-white mt-2">{stats.totalLocations}</p>
             </div>
             <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md transition-all duration-300 group-hover:scale-110">
@@ -174,7 +174,7 @@ export function Dashboard() {
           <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-emerald-400/10 blur-2xl transition-all duration-300 group-hover:bg-emerald-400/20" />
           <div className="relative flex items-center justify-between">
             <div>
-              <p className="text-emerald-100 text-sm font-medium tracking-wide">TOPLAM RAPOR</p>
+              <p className="text-emerald-100 text-sm font-medium tracking-wide">{t('dashboard.totalReports') || 'TOPLAM RAPOR'}</p>
               <p className="text-4xl font-bold text-white mt-2">{stats.totalReports}</p>
             </div>
             <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md transition-all duration-300 group-hover:scale-110">
@@ -188,7 +188,7 @@ export function Dashboard() {
           <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-amber-400/10 blur-2xl transition-all duration-300 group-hover:bg-amber-400/20" />
           <div className="relative flex items-center justify-between">
             <div>
-              <p className="text-amber-100 text-sm font-medium tracking-wide">YENİ RAPORLAR</p>
+              <p className="text-amber-100 text-sm font-medium tracking-wide">{t('dashboard.newReports') || 'YENİ RAPORLAR'}</p>
               <p className="text-4xl font-bold text-white mt-2">{stats.newReports}</p>
             </div>
             <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md transition-all duration-300 group-hover:scale-110">
@@ -202,7 +202,7 @@ export function Dashboard() {
           <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-violet-400/10 blur-2xl transition-all duration-300 group-hover:bg-violet-400/20" />
           <div className="relative flex items-center justify-between">
             <div>
-              <p className="text-violet-100 text-sm font-medium tracking-wide">BU AY</p>
+              <p className="text-violet-100 text-sm font-medium tracking-wide">{t('dashboard.thisMonth') || 'BU AY'}</p>
               <p className="text-4xl font-bold text-white mt-2">{monthReports}</p>
             </div>
             <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md transition-all duration-300 group-hover:scale-110">
@@ -216,9 +216,9 @@ export function Dashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Categories Distribution */}
         <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-slate-700 backdrop-blur-md">
-          <h2 className="text-xl font-bold text-white mb-6">Kategorilere Göre Dağılım</h2>
+          <h2 className="text-xl font-bold text-white mb-6">{t('dashboard.categoryDistribution') || 'Kategorilere Göre Dağılım'}</h2>
           {stats.reportsByCategory.length === 0 ? (
-            <p className="text-slate-400 text-center py-12">Henüz rapor bulunmuyor</p>
+            <p className="text-slate-400 text-center py-12">{t('dashboard.noReports') || 'Henüz rapor bulunmuyor'}</p>
           ) : (
             <div className="space-y-5">
               {stats.reportsByCategory
@@ -257,9 +257,9 @@ export function Dashboard() {
 
         {/* Locations Distribution */}
         <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-slate-700 backdrop-blur-md">
-          <h2 className="text-xl font-bold text-white mb-6">Lokasyonlara Göre Dağılım</h2>
+          <h2 className="text-xl font-bold text-white mb-6">{t('dashboard.locationDistribution') || 'Lokasyonlara Göre Dağılım'}</h2>
           {stats.reportsByLocation.length === 0 ? (
-            <p className="text-slate-400 text-center py-12">Henüz rapor bulunmuyor</p>
+            <p className="text-slate-400 text-center py-12">{t('dashboard.noReports') || 'Henüz rapor bulunmuyor'}</p>
           ) : (
             <div className="space-y-5">
               {stats.reportsByLocation
@@ -303,7 +303,7 @@ export function Dashboard() {
         <div className="p-6 border-b border-slate-600">
           <h2 className="text-xl font-bold text-white flex items-center gap-2">
             <div className="w-1 h-6 bg-gradient-to-b from-blue-500 to-cyan-500 rounded-full" />
-            Son Raporlar
+            {t('dashboard.recentReports') || 'Son Raporlar'}
           </h2>
         </div>
         <div className="overflow-x-auto">
@@ -311,19 +311,19 @@ export function Dashboard() {
             <thead>
               <tr className="bg-slate-900/50 border-b border-slate-600">
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                  Olay No
+                  {t('dashboard.incidentNumber') || 'Olay No'}
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                  Bildirim Yapan
+                  {t('dashboard.reporter') || 'Bildirim Yapan'}
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                  Kategori
+                  {t('reports.category') || 'Kategori'}
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                  Tarih
+                  {t('dashboard.date') || 'Tarih'}
                 </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-slate-300 uppercase tracking-wider">
-                  Durum
+                  {t('reports.status') || 'Durum'}
                 </th>
               </tr>
             </thead>
@@ -371,7 +371,7 @@ export function Dashboard() {
         </div>
         {stats.recentReports.length === 0 && (
           <div className="p-12 text-center">
-            <p className="text-slate-400">Henüz rapor bulunmuyor</p>
+            <p className="text-slate-400">{t('dashboard.noReports') || 'Henüz rapor bulunmuyor'}</p>
           </div>
         )}
       </div>

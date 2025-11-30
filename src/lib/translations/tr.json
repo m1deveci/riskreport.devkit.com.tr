@@ -11,7 +11,9 @@
     "loading": "Yükleniyor...",
     "error": "Hata",
     "success": "Başarılı",
-    "close": "Kapat"
+    "close": "Kapat",
+    "active": "Aktif",
+    "inactive": "Pasif"
   },
   "auth": {
     "login": "Giriş",
@@ -34,7 +36,20 @@
   },
   "dashboard": {
     "title": "Gösterge Paneli",
-    "subtitle": "Hoş geldiniz"
+    "subtitle": "Ramak kala raporlama sistemi özeti ve istatistikleri",
+    "totalLocations": "TOPLAM LOKASYON",
+    "totalReports": "TOPLAM RAPOR",
+    "newReports": "YENİ RAPORLAR",
+    "thisMonth": "BU AY",
+    "categoryDistribution": "Kategorilere Göre Dağılım",
+    "locationDistribution": "Lokasyonlara Göre Dağılım",
+    "recentReports": "Son Raporlar",
+    "noReports": "Henüz rapor bulunmuyor",
+    "restrictedAccess": "Erişim Kısıtlı",
+    "noAccessMessage": "Henüz hiçbir lokasyona yetki verilmemiştir. Sistem yöneticisine başvurunuz.",
+    "incidentNumber": "Olay No",
+    "reporter": "Bildirim Yapan",
+    "date": "Tarih"
   },
   "locations": {
     "title": "Lokasyonlar",
@@ -57,7 +72,10 @@
     "isgExpert": "İSG Uzmanı",
     "viewer": "Görüntüleyici",
     "resetPassword": "Parolayı Sıfırla",
-    "manualReset": "Manuel Sıfırla"
+    "manualReset": "Manuel Sıfırla",
+    "password": "Parola",
+    "locations": "Lokasyonlar",
+    "isActive": "Aktif"
   },
   "logs": {
     "title": "Sistem Logları",
@@ -72,7 +90,20 @@
   "settings": {
     "title": "Ayarlar",
     "siteTitle": "Site Başlığı",
-    "save": "Kaydet"
+    "save": "Kaydet",
+    "general": "Genel",
+    "smtp": "E-posta (SMTP)",
+    "files": "Dosyalar",
+    "backup": "Yedekleme",
+    "backup_path": "Yedekleme Yolu",
+    "upload": "Yükle",
+    "delete": "Sil",
+    "preview": "Önizle",
+    "logo": "Logo",
+    "background": "Arka Plan",
+    "favicon": "Favicon",
+    "start_backup": "Yedekle",
+    "download": "İndir"
   },
   "messages": {
     "successCreated": "başarıyla oluşturuldu",
@@ -91,6 +122,7 @@
     "report": "Rapor",
     "expert": "İSG uzmanı",
     "file": "Dosya",
+    "user": "Kullanıcı",
     "searchPlaceholder": "İşlem veya kullanıcı adında ara...",
     "confirmDeleteLocation": "Bu lokasyonu silmek istediğinize emin misiniz?",
     "confirmDeleteRegion": "Bu bölgeyi silmek istediğinize emin misiniz?",
@@ -120,6 +152,12 @@
     "from": "Başlangıç Tarihi",
     "to": "Bitiş Tarihi",
     "internalNotes": "İç Notlar",
-    "created": "Oluşturuldu"
+    "created": "Oluşturuldu",
+    "reportNumber": "Rapor No",
+    "reporter": "Bildiren Kişi",
+    "phone": "Telefon",
+    "description": "Açıklama",
+    "viewDetails": "Detayları Gör",
+    "name": "Ad Soyad"
   }
 }

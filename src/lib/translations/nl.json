@@ -11,7 +11,9 @@
     "loading": "Bezig met laden...",
     "error": "Fout",
     "success": "Succes",
-    "close": "Sluiten"
+    "close": "Sluiten",
+    "active": "Actief",
+    "inactive": "Inactief"
   },
   "auth": {
     "login": "Aanmelden",
@@ -34,7 +36,20 @@
   },
   "dashboard": {
     "title": "Dashboard",
-    "subtitle": "Welkom"
+    "subtitle": "Samenvatting en statistieken van het bijna-ongevallen rapportagesysteem",
+    "totalLocations": "TOTAAL LOCATIES",
+    "totalReports": "TOTAAL RAPPORTEN",
+    "newReports": "NIEUWE RAPPORTEN",
+    "thisMonth": "DEZE MAAND",
+    "categoryDistribution": "Verdeling naar Categorie",
+    "locationDistribution": "Verdeling naar Locatie",
+    "recentReports": "Recente Rapporten",
+    "noReports": "Nog geen rapporten gevonden",
+    "restrictedAccess": "Beperkte Toegang",
+    "noAccessMessage": "U hebt nog geen locaties toegewezen gekregen. Neem contact op met uw systeembeheerder.",
+    "incidentNumber": "Incident-nr.",
+    "reporter": "Melder",
+    "date": "Datum"
   },
   "locations": {
     "title": "Locaties",
@@ -57,7 +72,10 @@
     "isgExpert": "ISG-Expert",
     "viewer": "Viewer",
     "resetPassword": "Wachtwoord Opnieuw Instellen",
-    "manualReset": "Handmatig Herstellen"
+    "manualReset": "Handmatig Herstellen",
+    "password": "Wachtwoord",
+    "locations": "Locaties",
+    "isActive": "Actief"
   },
   "logs": {
     "title": "Systeemlogboeken",
@@ -72,7 +90,20 @@
   "settings": {
     "title": "Instellingen",
     "siteTitle": "Sitertitel",
-    "save": "Opslaan"
+    "save": "Opslaan",
+    "general": "Algemeen",
+    "smtp": "E-mail (SMTP)",
+    "files": "Bestanden",
+    "backup": "Back-up",
+    "backup_path": "Back-up Pad",
+    "upload": "Uploaden",
+    "delete": "Verwijderen",
+    "preview": "Voorbeeld",
+    "logo": "Logo",
+    "background": "Achtergrond",
+    "favicon": "Favicon",
+    "start_backup": "Back-up",
+    "download": "Downloaden"
   },
   "messages": {
     "successCreated": "succesvol aangemaakt",
@@ -91,6 +122,7 @@
     "report": "Rapport",
     "expert": "ISG-Expert",
     "file": "Bestand",
+    "user": "Gebruiker",
     "searchPlaceholder": "Zoeken op actie of gebruikersnaam...",
     "confirmDeleteLocation": "Weet u zeker dat u deze locatie wilt verwijderen?",
     "confirmDeleteRegion": "Weet u zeker dat u deze regio wilt verwijderen?",
@@ -120,6 +152,12 @@
     "from": "Begindatum",
     "to": "Einddatum",
     "internalNotes": "Interne Opmerkingen",
-    "created": "Gemaakt"
+    "created": "Gemaakt",
+    "reportNumber": "Rapport-nr.",
+    "reporter": "Melder",
+    "phone": "Telefoon",
+    "description": "Beschrijving",
+    "viewDetails": "Details Bekijken",
+    "name": "Volledige Naam"
   }
 }

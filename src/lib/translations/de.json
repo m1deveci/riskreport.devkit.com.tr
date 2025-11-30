@@ -11,7 +11,9 @@
     "loading": "Wird geladen...",
     "error": "Fehler",
     "success": "Erfolg",
-    "close": "Schließen"
+    "close": "Schließen",
+    "active": "Aktiv",
+    "inactive": "Inaktiv"
   },
   "auth": {
     "login": "Anmelden",
@@ -34,7 +36,20 @@
   },
   "dashboard": {
     "title": "Übersicht",
-    "subtitle": "Willkommen"
+    "subtitle": "Zusammenfassung und Statistiken des Beinahe-Unfall-Berichtssystems",
+    "totalLocations": "GESAMTZAHL STANDORTE",
+    "totalReports": "GESAMTZAHL BERICHTE",
+    "newReports": "NEUE BERICHTE",
+    "thisMonth": "DIESEN MONAT",
+    "categoryDistribution": "Verteilung nach Kategorie",
+    "locationDistribution": "Verteilung nach Standort",
+    "recentReports": "Letzte Berichte",
+    "noReports": "Noch keine Berichte gefunden",
+    "restrictedAccess": "Zugriff eingeschränkt",
+    "noAccessMessage": "Ihnen wurden noch keine Standorte zugewiesen. Wenden Sie sich bitte an Ihren Systemadministrator.",
+    "incidentNumber": "Vorfall-Nr.",
+    "reporter": "Meldeperson",
+    "date": "Datum"
   },
   "locations": {
     "title": "Standorte",
@@ -57,7 +72,10 @@
     "isgExpert": "ISG-Experte",
     "viewer": "Betrachter",
     "resetPassword": "Passwort Zurücksetzen",
-    "manualReset": "Manuelles Zurücksetzen"
+    "manualReset": "Manuelles Zurücksetzen",
+    "password": "Passwort",
+    "locations": "Standorte",
+    "isActive": "Aktiv"
   },
   "logs": {
     "title": "Systemprotokolle",
@@ -72,7 +90,20 @@
   "settings": {
     "title": "Einstellungen",
     "siteTitle": "Webseitentitel",
-    "save": "Speichern"
+    "save": "Speichern",
+    "general": "Allgemein",
+    "smtp": "E-Mail (SMTP)",
+    "files": "Dateien",
+    "backup": "Sicherung",
+    "backup_path": "Sicherungspfad",
+    "upload": "Hochladen",
+    "delete": "Löschen",
+    "preview": "Vorschau",
+    "logo": "Logo",
+    "background": "Hintergrund",
+    "favicon": "Favicon",
+    "start_backup": "Sicherung",
+    "download": "Herunterladen"
   },
   "messages": {
     "successCreated": "erfolgreich erstellt",
@@ -91,6 +122,7 @@
     "report": "Bericht",
     "expert": "ISG-Experte",
     "file": "Datei",
+    "user": "Benutzer",
     "searchPlaceholder": "Nach Aktion oder Benutzername suchen...",
     "confirmDeleteLocation": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",
     "confirmDeleteRegion": "Sind Sie sicher, dass Sie diese Region löschen möchten?",
@@ -120,6 +152,12 @@
     "from": "Startdatum",
     "to": "Enddatum",
     "internalNotes": "Interne Notizen",
-    "created": "Erstellt"
+    "created": "Erstellt",
+    "reportNumber": "Bericht-Nr.",
+    "reporter": "Meldeperson",
+    "phone": "Telefon",
+    "description": "Beschreibung",
+    "viewDetails": "Details anzeigen",
+    "name": "Vollständiger Name"
   }
 }

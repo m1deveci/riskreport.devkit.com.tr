@@ -207,7 +207,7 @@ export function Regions() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-4xl font-bold text-white">{t('regions.title')}</h1>
-          <p className="text-slate-400 text-lg mt-2">QR kodlu bölgeleri yönetin</p>
+          <p className="text-slate-400 text-lg mt-2">{t('regions.subtitle') || 'QR kodlu bölgeleri yönetin'}</p>
         </div>
         <button
           onClick={() => openModal()}
@@ -219,13 +219,13 @@ export function Regions() {
       </div>
 
       <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md p-4">
-        <label className="block text-sm font-medium text-slate-300 mb-2">Lokasyona Göre Filtrele</label>
+        <label className="block text-sm font-medium text-slate-300 mb-2">{t('regions.filterByLocation') || 'Lokasyona Göre Filtrele'}</label>
         <select
           value={selectedLocationFilter}
           onChange={(e) => setSelectedLocationFilter(e.target.value)}
           className="w-full sm:w-64 px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
-          <option value="">Tüm Lokasyonlar</option>
+          <option value="">{t('regions.allLocations') || 'Tüm Lokasyonlar'}</option>
           {locations.map((loc) => (
             <option key={loc.id} value={loc.id}>
               {loc.name}
@@ -251,7 +251,7 @@ export function Regions() {
                         : 'bg-gray-100 text-gray-800'
                     }`}
                   >
-                    {region.is_active ? t('common.active') : 'Pasif'}
+                    {region.is_active ? t('common.active') : (t('common.inactive') || 'Pasif')}
                   </span>
                 </div>
                 <QrCode className="w-8 h-8 text-blue-600" />
@@ -260,7 +260,7 @@ export function Regions() {
               <p className="text-sm text-slate-400 mb-4 line-clamp-2">{region.description}</p>
 
               <div className="bg-slate-900/50 rounded p-3 mb-4">
-                <p className="text-xs text-slate-500 mb-1">QR Kod URL:</p>
+                <p className="text-xs text-slate-500 mb-1">{t('regions.qrCodeUrl') || 'QR Kod URL'}:</p>
                 <p className="text-xs text-slate-300 font-mono truncate">{region.qr_code_url}</p>
               </div>
 
@@ -270,7 +270,7 @@ export function Regions() {
                   className="flex items-center justify-center gap-2 bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
                 >
                   <Download className="w-4 h-4" />
-                  QR Kodu İndir
+                  {t('regions.downloadQr') || 'QR Kodu İndir'}
                 </button>
                 <div className="flex gap-2">
                   <button
@@ -296,8 +296,8 @@ export function Regions() {
       {filteredRegions.length === 0 && (
         <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md p-12 text-center">
           <QrCode className="w-16 h-16 text-slate-500 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">Henüz bölge yok</h3>
-          <p className="text-slate-400 mb-6">İlk bölgenizi oluşturarak başlayın</p>
+          <h3 className="text-lg font-medium text-white mb-2">{t('regions.noRegions') || 'Henüz bölge yok'}</h3>
+          <p className="text-slate-400 mb-6">{t('regions.createFirstRegion') || 'İlk bölgenizi oluşturarak başlayın'}</p>
           <button
             onClick={() => openModal()}
             className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
@@ -347,7 +347,7 @@ export function Regions() {
                   required
                   disabled={!!editingId}
                 >
-                  <option value="">Lokasyon Seçin</option>
+                  <option value="">{t('regions.selectLocation') || 'Lokasyon Seçin'}</option>
                   {locations.map((loc) => (
                     <option key={loc.id} value={loc.id}>
                       {loc.name}

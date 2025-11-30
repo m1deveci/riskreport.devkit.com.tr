@@ -21,14 +21,18 @@ interface Location {
   name: string;
 }
 
-const ROLES = [
-  { value: 'admin', label: 'Admin' },
-  { value: 'isg_expert', label: 'İSG Uzmanı' },
-  { value: 'viewer', label: 'Görüntüleyici' },
-];
+// Moved ROLES to a function so it can use t()
+function getRoles(t: (key: string) => string) {
+  return [
+    { value: 'admin', label: t('users.roleAdmin') || 'Admin' },
+    { value: 'isg_expert', label: t('users.roleExpert') || 'İSG Uzmanı' },
+    { value: 'viewer', label: t('users.roleViewer') || 'Görüntüleyici' },
+  ];
+}
 
 export function Users() {
   const { t } = useI18n();
+  const ROLES = getRoles(t);
   const [users, setUsers] = useState<User[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
@@ -270,15 +274,15 @@ export function Users() {
       )}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-white">Kullanıcı Yönetimi</h1>
-          <p className="text-slate-400 text-lg mt-2">Sistem kullanıcılarını yönetin</p>
+          <h1 className="text-4xl font-bold text-white">{t('users.title') || 'Kullanıcı Yönetimi'}</h1>
+          <p className="text-slate-400 text-lg mt-2">{t('users.subtitle') || 'Sistem kullanıcılarını yönetin'}</p>
         </div>
         <button
           onClick={() => openModal()}
           className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-5 h-5" />
-          Yeni Kullanıcı
+          {t('users.addNew') || 'Yeni Kullanıcı'}
         </button>
       </div>
 
@@ -288,28 +292,28 @@ export function Users() {
             <thead className="bg-slate-900/50 border-b border-slate-600">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Ad Soyad
+                  {t('users.fullName') || 'Ad Soyad'}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  E-posta
+                  {t('users.email') || 'E-posta'}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Rol
+                  {t('users.role') || 'Rol'}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Lokasyonlar
+                  {t('users.locations') || 'Lokasyonlar'}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Durum
+                  {t('reports.status') || 'Durum'}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Kayıt Tarihi
+                  {t('users.registrationDate') || 'Kayıt Tarihi'}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Son Giriş
+                  {t('users.lastLogin') || 'Son Giriş'}
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  İşlemler
+                  {t('common.actions') || 'İşlemler'}
                 </th>
               </tr>
             </thead>
@@ -342,7 +346,7 @@ export function Users() {
                           );
                         })
                       ) : (
-                        <span className="text-xs text-slate-500">Hiç lokasyon atanmamış</span>
+                        <span className="text-xs text-slate-500">{t('users.noLocationsAssigned') || 'Hiç lokasyon atanmamış'}</span>
                       )}
                     </div>
                   </td>
@@ -354,7 +358,7 @@ export function Users() {
                           : 'bg-gray-100 text-gray-800'
                       }`}
                     >
-                      {user.is_active ? t('common.active') : 'Pasif'}
+                      {user.is_active ? t('common.active') : (t('common.inactive') || 'Pasif')}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
@@ -364,7 +368,7 @@ export function Users() {
                       day: '2-digit',
                       hour: '2-digit',
                       minute: '2-digit'
-                    }) : 'Bilinmiyor'}
+                    }) : (t('common.unknown') || 'Bilinmiyor')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
                     {user.last_login ? new Date(user.last_login).toLocaleDateString('tr-TR', {
@@ -373,7 +377,7 @@ export function Users() {
                       day: '2-digit',
                       hour: '2-digit',
                       minute: '2-digit'
-                    }) : 'Hiç giriş yapmadı'}
+                    }) : (t('users.neverLoggedIn') || 'Hiç giriş yapmadı')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
@@ -386,7 +390,7 @@ export function Users() {
                     <button
                       onClick={() => openPasswordModal(user)}
                       className="text-orange-600 hover:text-orange-900 mr-3"
-                      title="Parola Sıfırla"
+                      title={t('users.resetPassword') || 'Parola Sıfırla'}
                     >
                       <Key className="w-4 h-4 inline" />
                     </button>
@@ -407,8 +411,8 @@ export function Users() {
         {users.length === 0 && (
           <div className="p-12 text-center">
             <UsersIcon className="w-16 h-16 text-slate-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-white mb-2">Henüz kullanıcı yok</h3>
-            <p className="text-slate-400 mb-6">İlk kullanıcıyı oluşturarak başlayın</p>
+            <h3 className="text-lg font-medium text-white mb-2">{t('users.noUsers') || 'Henüz kullanıcı yok'}</h3>
+            <p className="text-slate-400 mb-6">{t('users.createFirstUser') || 'İlk kullanıcıyı oluşturarak başlayın'}</p>
           </div>
         )}
       </div>
@@ -418,7 +422,7 @@ export function Users() {
           <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 shadow-xl backdrop-blur-md max-w-md w-full">
             <div className="p-6 border-b border-slate-700">
               <h2 className="text-xl font-semibold text-white">
-                {editingId ? 'Kullanıcı Düzenle' : 'Yeni Kullanıcı'}
+                {editingId ? (t('users.editUser') || 'Kullanıcı Düzenle') : (t('users.addNew') || 'Yeni Kullanıcı')}
               </h2>
             </div>
 
@@ -443,7 +447,7 @@ export function Users() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Ad Soyad <span className="text-red-600">*</span>
+                  {t('users.fullName') || 'Ad Soyad'} <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="text"
@@ -456,7 +460,7 @@ export function Users() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  E-posta <span className="text-red-600">*</span>
+                  {t('users.email') || 'E-posta'} <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="email"
@@ -471,7 +475,7 @@ export function Users() {
               {!editingId && (
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-2">
-                    Şifre <span className="text-red-600">*</span>
+                    {t('users.password') || 'Şifre'} <span className="text-red-600">*</span>
                   </label>
                   <input
                     type="password"
@@ -481,13 +485,13 @@ export function Users() {
                     required
                     minLength={6}
                   />
-                  <p className="mt-1 text-xs text-slate-500">Minimum 6 karakter</p>
+                  <p className="mt-1 text-xs text-slate-500">{t('users.minCharacters') || 'Minimum 6 karakter'}</p>
                 </div>
               )}
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Rol <span className="text-red-600">*</span>
+                  {t('users.role') || 'Rol'} <span className="text-red-600">*</span>
                 </label>
                 <select
                   value={formData.role}
@@ -505,11 +509,11 @@ export function Users() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Lokasyonlar {formData.role !== 'admin' && <span className="text-red-600">*</span>}
+                  {t('users.locations') || 'Lokasyonlar'} {formData.role !== 'admin' && <span className="text-red-600">*</span>}
                 </label>
                 <div className="space-y-2 border border-slate-600 bg-slate-700 rounded-lg p-3 max-h-48 overflow-y-auto">
                   {locations.length === 0 ? (
-                    <p className="text-sm text-slate-500">Henüz lokasyon yok</p>
+                    <p className="text-sm text-slate-500">{t('users.noLocations') || 'Henüz lokasyon yok'}</p>
                   ) : (
                     locations.map((location) => (
                       <label key={location.id} className="flex items-center">
@@ -537,7 +541,7 @@ export function Users() {
                   )}
                 </div>
                 {formData.role !== 'admin' && formData.location_ids.length === 0 && (
-                  <p className="mt-1 text-xs text-amber-400">En az bir lokasyon seçiniz</p>
+                  <p className="mt-1 text-xs text-amber-400">{t('users.selectAtLeastOneLocation') || 'En az bir lokasyon seçiniz'}</p>
                 )}
               </div>
 
@@ -579,7 +583,7 @@ export function Users() {
           <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 shadow-xl backdrop-blur-md max-w-md w-full">
             <div className="p-6 border-b border-slate-700">
               <h2 className="text-xl font-semibold text-white">
-                Parola Sıfırla
+                {t('users.resetPassword') || 'Parola Sıfırla'}
               </h2>
               <p className="text-sm text-slate-400 mt-1">
                 {passwordResetUser.full_name} ({passwordResetUser.email})
@@ -607,22 +611,22 @@ export function Users() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Yeni Şifre <span className="text-red-600">*</span>
+                  {t('users.newPassword') || 'Yeni Şifre'} <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="password"
                   value={manualPassword}
                   onChange={(e) => setManualPassword(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="En az 6 karakter"
+                  placeholder={t('users.minCharactersPlaceholder') || 'En az 6 karakter'}
                   minLength={6}
                 />
-                <p className="mt-1 text-xs text-slate-500">Minimum 6 karakter</p>
+                <p className="mt-1 text-xs text-slate-500">{t('users.minCharacters') || 'Minimum 6 karakter'}</p>
               </div>
 
               <div className="bg-amber-50 border-l-4 border-amber-400 p-3">
                 <p className="text-xs text-amber-700">
-                  Kullanıcının parolası hemen değiştirilecektir. Bu işlem geri alınamaz.
+                  {t('users.passwordChangeWarning') || 'Kullanıcının parolası hemen değiştirilecektir. Bu işlem geri alınamaz.'}
                 </p>
               </div>
 
@@ -639,7 +643,7 @@ export function Users() {
                   onClick={handleManualPasswordReset}
                   className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
                 >
-                  {t('common.save') || 'Şifreyi Değiştir'}
+                  {t('users.changePassword') || t('common.save') || 'Şifreyi Değiştir'}
                 </button>
               </div>
             </div>

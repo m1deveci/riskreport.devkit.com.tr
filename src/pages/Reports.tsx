@@ -260,8 +260,8 @@ export function Reports() {
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <Lock className="w-16 h-16 text-amber-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-white mb-2">Erişim Kısıtlı</h2>
-            <p className="text-slate-400">Henüz hiçbir lokasyona yetki verilmemiştir. Sistem yöneticisine başvurunuz.</p>
+            <h2 className="text-2xl font-bold text-white mb-2">{t('dashboard.restrictedAccess') || 'Erişim Kısıtlı'}</h2>
+            <p className="text-slate-400">{t('dashboard.noAccessMessage') || 'Henüz hiçbir lokasyona yetki verilmemiştir. Sistem yöneticisine başvurunuz.'}</p>
           </div>
         </div>
       </div>
@@ -272,7 +272,7 @@ export function Reports() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 -my-6 px-6 py-6">
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-white">{t('reports.title')}</h1>
-        <p className="text-slate-400 text-lg mt-2">Tüm ramak kala bildirimlerini görüntüleyin ve yönetin</p>
+        <p className="text-slate-400 text-lg mt-2">{t('reports.subtitle') || 'Tüm ramak kala bildirimlerini görüntüleyin ve yönetin'}</p>
       </div>
 
       <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md p-4 space-y-4">
@@ -308,7 +308,7 @@ export function Reports() {
                 }
                 className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="">Tümü</option>
+                <option value="">{t('common.all') || 'Tümü'}</option>
                 {locations.map((loc) => (
                   <option key={loc.id} value={loc.id}>
                     {loc.name}
@@ -325,7 +325,7 @@ export function Reports() {
                 className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 disabled={!filters.location_id}
               >
-                <option value="">Tümü</option>
+                <option value="">{t('common.all') || 'Tümü'}</option>
                 {availableRegions.map((reg) => (
                   <option key={reg.id} value={reg.id}>
                     {reg.name}
@@ -341,7 +341,7 @@ export function Reports() {
                 onChange={(e) => setFilters({ ...filters, category: e.target.value })}
                 className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="">Tümü</option>
+                <option value="">{t('common.all') || 'Tümü'}</option>
                 {CATEGORIES.map((cat) => (
                   <option key={cat} value={cat}>
                     {cat}
@@ -357,7 +357,7 @@ export function Reports() {
                 onChange={(e) => setFilters({ ...filters, status: e.target.value })}
                 className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                <option value="">Tümü</option>
+                <option value="">{t('common.all') || 'Tümü'}</option>
                 {STATUSES.map((status) => (
                   <option key={status} value={status}>
                     {status}
@@ -393,7 +393,7 @@ export function Reports() {
                 onClick={clearFilters}
                 className="px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
               >
-                Filtreleri Temizle
+                {t('reports.clearFilters') || 'Filtreleri Temizle'}
               </button>
             </div>
           </div>
@@ -403,8 +403,7 @@ export function Reports() {
       <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md">
         <div className="p-4 border-b border-slate-700 flex items-center justify-between">
           <p className="text-sm text-slate-400">
-            <span className="font-medium text-slate-100">{filteredReports.length}</span> rapor
-            bulundu
+            <span className="font-medium text-slate-100">{filteredReports.length}</span> {t('reports.reportsFound') || 'rapor bulundu'}
           </p>
         </div>
 
@@ -413,25 +412,25 @@ export function Reports() {
             <thead className="bg-slate-900/50 border-b border-slate-600">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Olay No
+                  {t('dashboard.incidentNumber') || 'Olay No'}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Lokasyon / Bölge
+                  {t('reports.locationRegion') || 'Lokasyon / Bölge'}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Bildirim Yapan
+                  {t('dashboard.reporter') || 'Bildirim Yapan'}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Kategori
+                  {t('reports.category') || 'Kategori'}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Tarih
+                  {t('dashboard.date') || 'Tarih'}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Durum
+                  {t('reports.status') || 'Durum'}
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  İşlemler
+                  {t('common.actions') || 'İşlemler'}
                 </th>
               </tr>
             </thead>
@@ -482,7 +481,7 @@ export function Reports() {
                       className="text-blue-600 hover:text-blue-900 inline-flex items-center gap-1"
                     >
                       <Eye className="w-4 h-4" />
-                      Detay
+                      {t('reports.detail') || 'Detay'}
                     </button>
                   </td>
                 </tr>
@@ -494,8 +493,8 @@ export function Reports() {
         {filteredReports.length === 0 && (
           <div className="p-12 text-center">
             <AlertTriangle className="w-16 h-16 text-slate-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-white mb-2">Rapor bulunamadı</h3>
-            <p className="text-slate-400">Filtreleri değiştirerek tekrar deneyin</p>
+            <h3 className="text-lg font-medium text-white mb-2">{t('reports.noReportsFound') || 'Rapor bulunamadı'}</h3>
+            <p className="text-slate-400">{t('reports.tryDifferentFilters') || 'Filtreleri değiştirerek tekrar deneyin'}</p>
           </div>
         )}
       </div>
@@ -504,7 +503,7 @@ export function Reports() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 shadow-xl backdrop-blur-md max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-slate-700 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white">Rapor Detayı</h2>
+              <h2 className="text-xl font-semibold text-white">{t('reports.reportDetail') || 'Rapor Detayı'}</h2>
               <button
                 onClick={() => setShowDetailModal(false)}
                 className="text-slate-400 hover:text-slate-300"
@@ -516,12 +515,12 @@ export function Reports() {
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Olay Numarası</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">{t('reports.incidentNumber') || 'Olay Numarası'}</label>
                   <p className="text-lg font-semibold text-slate-100">{selectedReport.incident_number}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Tarih</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">{t('dashboard.date') || 'Tarih'}</label>
                   <p className="text-slate-100">
                     {new Date(selectedReport.created_at).toLocaleDateString('tr-TR', {
                       day: '2-digit',
@@ -534,36 +533,36 @@ export function Reports() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Lokasyon</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">{t('reports.location') || 'Lokasyon'}</label>
                   <p className="text-slate-100">
                     {selectedReport.location_name || (selectedReport.locations as unknown as { name: string })?.name}
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Bölge</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">{t('reports.region') || 'Bölge'}</label>
                   <p className="text-slate-100">
                     {selectedReport.region_name || (selectedReport.regions as unknown as { name: string })?.name}
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Bildirim Yapan</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">{t('dashboard.reporter') || 'Bildirim Yapan'}</label>
                   <p className="text-slate-100">{selectedReport.full_name}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Telefon</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">{t('reports.phone') || 'Telefon'}</label>
                   <p className="text-slate-100">{selectedReport.phone}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Kategori</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">{t('reports.category') || 'Kategori'}</label>
                   <p className="text-slate-100">{selectedReport.category}</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-1">Durum</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-1">{t('reports.status') || 'Durum'}</label>
                   <select
                     value={editStatus}
                     onChange={(e) => setEditStatus(e.target.value)}
@@ -579,22 +578,22 @@ export function Reports() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Açıklama</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">{t('reports.description') || 'Açıklama'}</label>
                 <div className="bg-slate-900/50 rounded-lg p-4">
                   <p className="text-slate-100 whitespace-pre-wrap">
-                    {selectedReport.description || 'Açıklama girilmemiş'}
+                    {selectedReport.description || (t('reports.noDescription') || 'Açıklama girilmemiş')}
                   </p>
                 </div>
               </div>
 
               {selectedReport.image_path && (
                 <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Yüklenen Görsel</label>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">{t('reports.uploadedImage') || 'Yüklenen Görsel'}</label>
                   <div className="bg-slate-900/50 rounded-lg p-4 flex flex-col items-center gap-4">
                     <div className="w-full max-h-96 flex items-center justify-center bg-slate-800 rounded border border-slate-600">
                       <img
                         src={selectedReport.image_path}
-                        alt="Rapor görseli"
+                        alt={t('reports.reportImage') || 'Rapor görseli'}
                         className="max-w-full max-h-96 object-contain"
                       />
                     </div>
@@ -605,7 +604,7 @@ export function Reports() {
                         className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                       >
                         <Download className="w-4 h-4" />
-                        Görseli İndir
+                        {t('reports.downloadImage') || 'Görseli İndir'}
                       </a>
                       <a
                         href={selectedReport.image_path}
@@ -614,7 +613,7 @@ export function Reports() {
                         className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
                       >
                         <ImageIcon className="w-4 h-4" />
-                        Tam Boyut
+                        {t('reports.fullSize') || 'Tam Boyut'}
                       </a>
                     </div>
                   </div>
@@ -630,7 +629,7 @@ export function Reports() {
                   onChange={(e) => setEditNotes(e.target.value)}
                   rows={4}
                   className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                  placeholder="Rapor hakkında notlarınızı buraya ekleyin..."
+                  placeholder={t('reports.notesPlaceholder') || 'Rapor hakkında notlarınızı buraya ekleyin...'}
                 />
               </div>
 
@@ -647,7 +646,7 @@ export function Reports() {
                   disabled={isDeleting}
                   className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {isDeleting ? 'Siliniyor...' : t('common.delete')}
+                  {isDeleting ? (t('common.deleting') || 'Siliniyor...') : t('common.delete')}
                 </button>
                 <button
                   onClick={handleUpdateReport}

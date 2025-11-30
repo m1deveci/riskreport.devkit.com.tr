@@ -238,7 +238,7 @@ export function Settings() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 -my-6 px-6 py-6">
       <div>
         <h1 className="text-4xl font-bold text-white">{t('settings.title')}</h1>
-        <p className="text-slate-400 text-lg mt-2">İSG Yönetim Paneli</p>
+        <p className="text-slate-400 text-lg mt-2">{t('settings.subtitle') || 'İSG Yönetim Paneli'}</p>
       </div>
 
       {/* Tab Navigation */}
@@ -252,7 +252,7 @@ export function Settings() {
           }`}
         >
           <Globe className="w-4 h-4" />
-          Genel Ayarlar
+          {t('settings.generalTab') || 'Genel Ayarlar'}
         </button>
         <button
           onClick={() => setActiveTab('smtp')}
@@ -263,7 +263,7 @@ export function Settings() {
           }`}
         >
           <Mail className="w-4 h-4" />
-          SMTP Ayarları
+          {t('settings.smtpTab') || 'SMTP Ayarları'}
         </button>
         <button
           onClick={() => setActiveTab('files')}
@@ -274,7 +274,7 @@ export function Settings() {
           }`}
         >
           <ImageIcon className="w-4 h-4" />
-          Dosyalar
+          {t('settings.filesTab') || 'Dosyalar'}
         </button>
         <button
           onClick={() => setActiveTab('backup')}
@@ -285,7 +285,7 @@ export function Settings() {
           }`}
         >
           <Download className="w-4 h-4" />
-          Yedek Alma
+          {t('settings.backupTab') || 'Yedek Alma'}
         </button>
       </div>
 
@@ -296,7 +296,7 @@ export function Settings() {
           <div className="p-6 border-b border-slate-700">
             <h2 className="text-xl font-semibold text-white flex items-center gap-2">
               <SettingsIcon className="w-5 h-5" />
-              Genel Ayarlar
+              {t('settings.generalTab') || 'Genel Ayarlar'}
             </h2>
           </div>
 
@@ -327,10 +327,10 @@ export function Settings() {
                 type="text"
                 value={formData.site_title}
                 onChange={(e) => setFormData({ ...formData, site_title: e.target.value })}
-                placeholder="Ramak Kala Sistemi"
+                placeholder={t('settings.siteTitlePlaceholder') || 'Ramak Kala Sistemi'}
                 className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white placeholder-slate-500 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-              <p className="mt-2 text-xs text-slate-400">Bu başlık, uygulamanın başında gösterilir</p>
+              <p className="mt-2 text-xs text-slate-400">{t('settings.siteTitleHelp') || 'Bu başlık, uygulamanın başında gösterilir'}</p>
             </div>
           </div>
         </div>
@@ -342,17 +342,17 @@ export function Settings() {
           <div className="p-6 border-b border-slate-700">
             <h2 className="text-xl font-semibold text-white flex items-center gap-2">
               <ImageIcon className="w-5 h-5" />
-              Tasarım Elemanları
+              {t('settings.designElements') || 'Tasarım Elemanları'}
             </h2>
             <p className="text-sm text-slate-400 mt-1">
-              Oturum açma sayfası ve başlık için logo, arka plan ve favicon yükleyin
+              {t('settings.designElementsDesc') || 'Oturum açma sayfası ve başlık için logo, arka plan ve favicon yükleyin'}
             </p>
           </div>
 
           <div className="p-6 space-y-6">
             {/* Logo Upload */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-3">Logo</label>
+              <label className="block text-sm font-medium text-slate-300 mb-3">{t('settings.logo') || 'Logo'}</label>
               <div className="flex items-center gap-4">
                 <div className="flex-1">
                   <label className="relative cursor-pointer">
@@ -360,7 +360,7 @@ export function Settings() {
                       <div className="flex flex-col items-center">
                         <Upload className="w-5 h-5 text-slate-400 mb-1" />
                         <span className="text-sm text-slate-300">
-                          {uploading.logo ? 'Yükleniyor...' : 'Logo seçin veya sürükleyin'}
+                          {uploading.logo ? (t('settings.uploading') || 'Yükleniyor...') : (t('settings.selectOrDragLogo') || 'Logo seçin veya sürükleyin')}
                         </span>
                       </div>
                       <input
@@ -381,7 +381,7 @@ export function Settings() {
                       className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors"
                     >
                       <Eye className="w-4 h-4" />
-                      Önizle
+                      {t('settings.preview') || 'Önizle'}
                     </button>
                     <button
                       type="button"
@@ -389,19 +389,19 @@ export function Settings() {
                       className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
-                      Sil
+                      {t('common.delete') || 'Sil'}
                     </button>
                   </div>
                 )}
               </div>
               {formData.logo_path && (
-                <p className="mt-2 text-xs text-slate-400">Yüklü dosya: {formData.logo_path.split('/').pop()}</p>
+                <p className="mt-2 text-xs text-slate-400">{t('settings.uploadedFile') || 'Yüklü dosya'}: {formData.logo_path.split('/').pop()}</p>
               )}
             </div>
 
             {/* Background Upload */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-3">Arka Plan Görseli</label>
+              <label className="block text-sm font-medium text-slate-300 mb-3">{t('settings.background') || 'Arka Plan Görseli'}</label>
               <div className="flex items-center gap-4">
                 <div className="flex-1">
                   <label className="relative cursor-pointer">
@@ -409,7 +409,7 @@ export function Settings() {
                       <div className="flex flex-col items-center">
                         <Upload className="w-5 h-5 text-slate-400 mb-1" />
                         <span className="text-sm text-slate-300">
-                          {uploading.background ? 'Yükleniyor...' : 'Arka plan seçin veya sürükleyin'}
+                          {uploading.background ? (t('settings.uploading') || 'Yükleniyor...') : (t('settings.selectOrDragBackground') || 'Arka plan seçin veya sürükleyin')}
                         </span>
                       </div>
                       <input
@@ -430,7 +430,7 @@ export function Settings() {
                       className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors"
                     >
                       <Eye className="w-4 h-4" />
-                      Önizle
+                      {t('settings.preview') || 'Önizle'}
                     </button>
                     <button
                       type="button"
@@ -438,19 +438,19 @@ export function Settings() {
                       className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
-                      Sil
+                      {t('common.delete') || 'Sil'}
                     </button>
                   </div>
                 )}
               </div>
               {formData.background_path && (
-                <p className="mt-2 text-xs text-slate-400">Yüklü dosya: {formData.background_path.split('/').pop()}</p>
+                <p className="mt-2 text-xs text-slate-400">{t('settings.uploadedFile') || 'Yüklü dosya'}: {formData.background_path.split('/').pop()}</p>
               )}
             </div>
 
             {/* Favicon Upload */}
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-3">Favicon (Sekme İkonu)</label>
+              <label className="block text-sm font-medium text-slate-300 mb-3">{t('settings.favicon') || 'Favicon (Sekme İkonu)'}</label>
               <div className="flex items-center gap-4">
                 <div className="flex-1">
                   <label className="relative cursor-pointer">
@@ -458,7 +458,7 @@ export function Settings() {
                       <div className="flex flex-col items-center">
                         <Upload className="w-5 h-5 text-slate-400 mb-1" />
                         <span className="text-sm text-slate-300">
-                          {uploading.favicon ? 'Yükleniyor...' : 'Favicon seçin veya sürükleyin'}
+                          {uploading.favicon ? (t('settings.uploading') || 'Yükleniyor...') : (t('settings.selectOrDragFavicon') || 'Favicon seçin veya sürükleyin')}
                         </span>
                       </div>
                       <input
@@ -479,7 +479,7 @@ export function Settings() {
                       className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors"
                     >
                       <Eye className="w-4 h-4" />
-                      Önizle
+                      {t('settings.preview') || 'Önizle'}
                     </button>
                     <button
                       type="button"
@@ -487,13 +487,13 @@ export function Settings() {
                       className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors"
                     >
                       <Trash2 className="w-4 h-4" />
-                      Sil
+                      {t('common.delete') || 'Sil'}
                     </button>
                   </div>
                 )}
               </div>
               {formData.favicon_path && (
-                <p className="mt-2 text-xs text-slate-400">Yüklü dosya: {formData.favicon_path.split('/').pop()}</p>
+                <p className="mt-2 text-xs text-slate-400">{t('settings.uploadedFile') || 'Yüklü dosya'}: {formData.favicon_path.split('/').pop()}</p>
               )}
             </div>
           </div>
@@ -506,28 +506,28 @@ export function Settings() {
           <div className="p-6 border-b border-slate-700">
             <h2 className="text-xl font-semibold text-white flex items-center gap-2">
               <Mail className="w-5 h-5" />
-              SMTP Ayarları
+              {t('settings.smtpTab') || 'SMTP Ayarları'}
             </h2>
             <p className="text-sm text-slate-400 mt-1">
-              E-posta bildirimleri için SMTP sunucu ayarları
+              {t('settings.smtpDesc') || 'E-posta bildirimleri için SMTP sunucu ayarları'}
             </p>
           </div>
 
           <div className="p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">SMTP Host</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">{t('settings.smtpHost') || 'SMTP Host'}</label>
                 <input
                   type="text"
                   value={formData.smtp_host}
                   onChange={(e) => setFormData({ ...formData, smtp_host: e.target.value })}
-                  placeholder="smtp.gmail.com"
+                  placeholder={t('settings.smtpHostPlaceholder') || 'smtp.gmail.com'}
                   className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">SMTP Port</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">{t('settings.smtpPort') || 'SMTP Port'}</label>
                 <input
                   type="number"
                   value={formData.smtp_port}
@@ -540,7 +540,7 @@ export function Settings() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  SMTP Kullanıcı Adı
+                  {t('settings.smtpUsername') || 'SMTP Kullanıcı Adı'}
                 </label>
                 <input
                   type="text"
@@ -551,7 +551,7 @@ export function Settings() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">SMTP Şifre</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">{t('settings.smtpPassword') || 'SMTP Şifre'}</label>
                 <input
                   type="password"
                   value={formData.smtp_password}
@@ -562,13 +562,13 @@ export function Settings() {
 
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Gönderen E-posta
+                  {t('settings.smtpFromEmail') || 'Gönderen E-posta'}
                 </label>
                 <input
                   type="email"
                   value={formData.smtp_from_email}
                   onChange={(e) => setFormData({ ...formData, smtp_from_email: e.target.value })}
-                  placeholder="noreply@sirket.com"
+                  placeholder={t('settings.smtpFromEmailPlaceholder') || 'noreply@sirket.com'}
                   className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
@@ -583,20 +583,20 @@ export function Settings() {
           <div className="p-6 border-b border-slate-700">
             <h2 className="text-xl font-semibold text-white flex items-center gap-2">
               <Download className="w-5 h-5" />
-              Yedekleme Ayarları
+              {t('settings.backupSettings') || 'Yedekleme Ayarları'}
             </h2>
           </div>
 
           <div className="p-6 space-y-4">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Yedek Hedef Yolu
+                {t('settings.backupTargetPath') || 'Yedek Hedef Yolu'}
               </label>
               <input
                 type="text"
                 value={formData.backup_target_path}
                 onChange={(e) => setFormData({ ...formData, backup_target_path: e.target.value })}
-                placeholder="/backups"
+                placeholder={t('settings.backupTargetPathPlaceholder') || '/backups'}
                 className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
@@ -610,12 +610,12 @@ export function Settings() {
               {backingUp ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Yedek Oluşturuluyor...
+                  {t('settings.creatingBackup') || 'Yedek Oluşturuluyor...'}
                 </>
               ) : (
                 <>
                   <Download className="w-5 h-5" />
-                  Veritabanı Yedeği Al
+                  {t('settings.downloadBackup') || 'Veritabanı Yedeği Al'}
                 </>
               )}
             </button>
@@ -640,9 +640,9 @@ export function Settings() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-slate-800 rounded-lg p-6 max-w-2xl w-full">
             <h3 className="text-xl font-semibold text-white mb-4">
-              {previewModal.type === 'logo' && 'Logo Önizlemesi'}
-              {previewModal.type === 'background' && 'Arka Plan Önizlemesi'}
-              {previewModal.type === 'favicon' && 'Favicon Önizlemesi'}
+              {previewModal.type === 'logo' && (t('settings.logoPreview') || 'Logo Önizlemesi')}
+              {previewModal.type === 'background' && (t('settings.backgroundPreview') || 'Arka Plan Önizlemesi')}
+              {previewModal.type === 'favicon' && (t('settings.faviconPreview') || 'Favicon Önizlemesi')}
             </h3>
             <div className="flex justify-center bg-slate-900 rounded-lg p-4 mb-4">
               {previewModal.type === 'favicon' ? (
@@ -655,7 +655,7 @@ export function Settings() {
               onClick={() => setPreviewModal({ type: null, src: '' })}
               className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
             >
-              Kapat
+              {t('common.close') || 'Kapat'}
             </button>
           </div>
         </div>
