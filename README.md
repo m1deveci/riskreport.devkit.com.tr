@@ -308,6 +308,124 @@ Bu proje özel kullanım içindir.
 
 Sorularınız için lütfen İSG ekibinizle iletişime geçin.
 
+## Sistem Loglaması
+
+Sistem loglaması, tüm önemli işlemlerin ve kullanıcı etkinliklerinin otomatik olarak kaydedilmesini sağlar. Loglar **Sistem Logları** sayfasında görüntülenebilir.
+
+### 📊 Loglanmış İşlemler
+
+#### 🔐 Kimlik Doğrulama İşlemleri
+- **LOGIN_SUCCESS**: Başarılı kullanıcı girişi
+  - Kaydedilen bilgiler: Kullanıcı ID, e-posta, tam ad
+  - Örnek: "mustafa.deveci@ravago.com başarıyla giriş yaptı"
+
+- **LOGIN_FAILED**: Başarısız giriş denemeleri
+  - Kaydedilen bilgiler: E-posta, hata sebebi (Email bulunamadı / Şifre hatalı)
+  - Örnek: "invalid@example.com - Şifre hatalı"
+
+- **LOGOUT**: Kullanıcı çıkış işlemi
+  - Kaydedilen bilgiler: Kullanıcı ID, e-posta, tam ad
+  - Örnek: "Mustafa Deveci çıkış yaptı"
+
+#### 📋 Rapor İşlemleri
+- **CREATE_NEARMISS**: Yeni ramak kala raporu oluşturma (QR kod ile)
+  - Kaydedilen bilgiler:
+    - Olay numarası (RK-2025-XXXXXX formatında)
+    - Bildirim yapan kişi adı
+    - Kategori
+    - Lokasyon ID
+    - Bölge ID
+    - Telefon numarası (varsa)
+  - Örnek: "RK-2025-456789 raporu - Bildirim yapan: Ahmet Yılmaz (Makine Güvenliği)"
+
+- **UPDATE_NEARMISS**: Rapor durumu veya notları güncelleme
+  - Kaydedilen bilgiler: Durum, dahili notlar
+  - Örnek: "RK-2025-456789 raporu 'İnceleniyor' durumuna güncellendi"
+
+- **DELETE_NEARMISS**: Rapor silme
+  - Kaydedilen bilgiler: Silinen raporun detayları
+  - Örnek: "RK-2025-456789 raporu silindi"
+
+#### 👥 Kullanıcı Yönetimi
+- **CREATE_USER**: Yeni kullanıcı oluşturma
+- **UPDATE_USER**: Kullanıcı bilgileri güncelleme
+- **DELETE_USER**: Kullanıcı silme
+
+#### 📍 Lokasyon Yönetimi
+- **CREATE_LOCATION**: Yeni lokasyon oluşturma
+- **UPDATE_LOCATION**: Lokasyon güncelleme
+- **DELETE_LOCATION**: Lokasyon silme
+
+#### 🗺️ Bölge Yönetimi
+- **CREATE_REGION**: Yeni bölge ve QR kod oluşturma
+- **UPDATE_REGION**: Bölge güncelleme
+- **DELETE_REGION**: Bölge silme
+
+#### 👨‍💼 İSG Uzmanı Yönetimi
+- **CREATE_ISG_EXPERT**: Yeni İSG uzmanı ekleme
+- **UPDATE_ISG_EXPERT**: İSG uzmanı bilgileri güncelleme
+- **DELETE_ISG_EXPERT**: İSG uzmanı silme
+
+#### ⚙️ Sistem Ayarları
+- **UPDATE_SETTINGS**: Sistem ayarlarını güncelleme (Site başlığı, SMTP, yedekleme)
+
+#### 💾 Yedekleme
+- **DOWNLOAD_BACKUP**: Veritabanı yedeği indirme
+
+### 🔍 Sistem Logları Sayfasını Kullanma
+
+1. **Admin Paneline Giriş Yapın**
+   - Admin yetkili hesabı ile https://riskreport.devkit.com.tr/#/logs sayfasına gidin
+
+2. **Logları Görüntüleyin**
+   - Tarih/Saat: İşlemin yapılma zamanı
+   - Kullanıcı: İşlemi yapan kişi (veya "Sistem")
+   - İşlem: Yapılan işlem türü (icon ve Türkçe açıklama)
+   - Detaylar: Genişletmek için satıra tıklayın
+
+3. **Arama Yapın**
+   - İşlem türü, kullanıcı adı, arama barında yazarak filtreleme yapabilirsiniz
+
+4. **Detayları Inceleyin**
+   - Her logun detaylı bilgilerini görüntülemek için satırını genişletin
+   - Raporlar için olay numarası, kategori, lokasyon bilgileri görüntülenebilir
+
+### 📝 Log Detayları Örneği
+
+```
+📊 Sistem Logları
+─────────────────────────────────────────────────────────────
+Tarih/Saat: 30 Kasım 2025 16:45:30
+Kullanıcı: -
+İşlem: ⚠️ Ramak Kala Raporu Oluşturuldu
+
+Detaylar (genişletilmiş):
+🔹 Olay Numarası: RK-2025-123456
+🔹 Bildirim Yapan: Ahmet Yılmaz
+🔹 Kategori: Makine Güvenliği
+🔹 Lokasyon ID: loc-001
+🔹 Bölge ID: reg-003
+🔹 Telefon: 0555 123 45 67
+─────────────────────────────────────────────────────────────
+```
+
+### 🔒 Güvenlik ve Gizlilik
+
+- Sadece **Admin** rolüne sahip kullanıcılar sistem loglarını görüntüleyebilir
+- Loglar **8 ay** saklanır (bkz: Sistem Ayarları)
+- Tüm hassas bilgiler (şifreler, tokens) hiçbir zaman loglanmaz
+- Loglar **denetim ve uyum** amaçlarıyla kullanılır
+
+### 📊 Loglama Veri Tabanında
+
+Loglar `system_logs` tablosunda aşağıdaki alanlarla saklanır:
+- `id`: Unique log ID
+- `user_id`: İşlemi yapan kullanıcı ID (anonim işlemler için NULL)
+- `action`: İşlem türü (LOGIN_SUCCESS, CREATE_NEARMISS vb.)
+- `details`: JSON formatında işlem detayları
+- `ip_address`: İsteği gönderen IP adresi
+- `created_at`: İşlemin yapılma tarihi ve saati
+
 ---
 
 **Not**: Uygulama Türkçe dilinde tasarlanmıştır ve Türkiye İş Sağlığı ve Güvenliği mevzuatına uygun ramak kala raporlama süreçlerini destekler.
