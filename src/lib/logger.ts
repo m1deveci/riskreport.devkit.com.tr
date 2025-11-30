@@ -68,18 +68,18 @@ export const ActionDescriptions: Record<string, { tr: string; icon: string }> = 
 };
 
 // Detay özelleştiricisi - detay alanlarını Türkçe ve okunabilir hale getir
-export function formatLogDetails(action: string, details: Record<string, unknown>): Array<{label: string, value: string}> {
-  const items: Array<{label: string, value: string}> = [];
+export function formatLogDetails(action: string, details: Record<string, unknown>): string {
+  const lines: string[] = [];
 
   // Genel alanları işle
   if (details.name) {
-    items.push({label: 'Ad', value: String(details.name)});
+    lines.push(`🔹 Ad: ${details.name}`);
   }
   if (details.full_name) {
-    items.push({label: 'Ad Soyad', value: String(details.full_name)});
+    lines.push(`🔹 Ad Soyad: ${details.full_name}`);
   }
   if (details.email) {
-    items.push({label: 'E-posta', value: String(details.email)});
+    lines.push(`🔹 E-posta: ${details.email}`);
   }
   if (details.role) {
     const roleMap: Record<string, string> = {
@@ -87,89 +87,88 @@ export function formatLogDetails(action: string, details: Record<string, unknown
       isg_expert: 'İSG Uzmanı',
       viewer: 'Görüntüleyici',
     };
-    items.push({label: 'Rol', value: roleMap[details.role as string] || String(details.role)});
+    lines.push(`🔹 Rol: ${roleMap[details.role as string] || details.role}`);
   }
 
   // Action-spesifik detaylar
   if (action.includes('LOCATION')) {
     if (details.location_id) {
-      items.push({label: 'Lokasyon ID', value: String(details.location_id)});
+      lines.push(`🔹 Lokasyon ID: ${details.location_id}`);
     }
     if (details.description) {
-      items.push({label: 'Açıklama', value: String(details.description)});
+      lines.push(`🔹 Açıklama: ${details.description}`);
     }
   }
 
   if (action.includes('REGION')) {
     if (details.region_id) {
-      items.push({label: 'Bölge ID', value: String(details.region_id)});
+      lines.push(`🔹 Bölge ID: ${details.region_id}`);
     }
     if (details.qr_token) {
-      items.push({label: 'QR Token', value: (details.qr_token as string).substring(0, 20) + '...'});
+      lines.push(`🔹 QR Token: ${(details.qr_token as string).substring(0, 20)}...`);
     }
   }
 
   if (action.includes('ISG_EXPERT')) {
     if (details.expert_id) {
-      items.push({label: 'Uzman ID', value: String(details.expert_id)});
+      lines.push(`🔹 Uzman ID: ${details.expert_id}`);
     }
     if (details.phone) {
-      items.push({label: 'Telefon', value: String(details.phone)});
+      lines.push(`🔹 Telefon: ${details.phone}`);
     }
     if (details.action === 'password_reset') {
-      items.push({label: 'İşlem Türü', value: 'Parola Sıfırlama'});
+      lines.push(`🔹 İşlem: Parola Sıfırlama`);
     }
     if (details.action === 'manual_password_reset') {
-      items.push({label: 'İşlem Türü', value: 'Manuel Parola Sıfırlama'});
+      lines.push(`🔹 İşlem: Manuel Parola Sıfırlama`);
     }
   }
 
   if (action.includes('NEARMISS')) {
     if (details.incident_number) {
-      items.push({label: 'Olay Numarası', value: String(details.incident_number)});
+      lines.push(`🔹 Olay Numarası: ${details.incident_number}`);
     }
     if (details.status) {
-      items.push({label: 'Durum', value: String(details.status)});
+      lines.push(`🔹 Durum: ${details.status}`);
     }
     if (details.category) {
-      items.push({label: 'Kategori', value: String(details.category)});
+      lines.push(`🔹 Kategori: ${details.category}`);
     }
   }
 
   if (action.includes('USER')) {
     if (details.user_id) {
-      items.push({label: 'Kullanıcı ID', value: String(details.user_id)});
+      lines.push(`🔹 Kullanıcı ID: ${details.user_id}`);
     }
     if (details.action === 'password_reset') {
-      items.push({label: 'İşlem Türü', value: 'Parola Sıfırlama Bağlantısı Gönderildi'});
+      lines.push(`🔹 İşlem: Parola Sıfırlama Bağlantısı Gönderildi`);
     }
     if (details.action === 'manual_password_reset') {
-      items.push({label: 'İşlem Türü', value: 'Manuel Parola Değiştirildi'});
+      lines.push(`🔹 İşlem: Manuel Parola Değiştirildi`);
     }
   }
 
   if (action.includes('SETTINGS')) {
     if (details.site_title) {
-      items.push({label: 'Site Başlığı', value: String(details.site_title)});
+      lines.push(`🔹 Site Başlığı: ${details.site_title}`);
     }
     if (details.changes) {
       const changes = details.changes as Record<string, unknown>;
       Object.entries(changes).forEach(([key, value]) => {
-        items.push({label: key, value: String(value)});
+        lines.push(`🔹 ${key}: ${value}`);
       });
     }
   }
 
-  // Eğer hiç item eklenmedi ise, raw details'ı göster
-  if (items.length === 0) {
+  // Eğer hiç line eklenmedi ise, raw details'ı göster
+  if (lines.length === 0) {
     if (Object.keys(details).length > 0) {
-      Object.entries(details).forEach(([key, value]) => {
-        items.push({label: key, value: String(value)});
-      });
-    } else {
-      items.push({label: 'Durum', value: 'Detay yok'});
+      return Object.entries(details)
+        .map(([key, value]) => `🔹 ${key}: ${value}`)
+        .join('\n');
     }
+    return 'Detay yok';
   }
 
-  return items;
+  return lines.join('\n');
 }

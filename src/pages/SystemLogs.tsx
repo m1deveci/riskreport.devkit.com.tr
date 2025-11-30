@@ -151,15 +151,10 @@ export function SystemLogs() {
                       <tr className="bg-slate-900/30 border-b border-slate-700">
                         <td colSpan={4} className="px-6 py-4">
                           <div className="bg-slate-800/50 rounded p-4 border border-slate-700">
-                            <h4 className="text-sm font-semibold text-white mb-4">📋 İşlem Detayları</h4>
-                            <div className="space-y-2">
-                              {detailsText.map((item, idx) => (
-                                <div key={idx} className="flex gap-3">
-                                  <span className="text-slate-400 min-w-[150px] font-medium">{item.label}:</span>
-                                  <span className="text-slate-200 break-all">{item.value}</span>
-                                </div>
-                              ))}
-                            </div>
+                            <h4 className="text-sm font-semibold text-white mb-3">📋 İşlem Detayları</h4>
+                            <pre className="text-xs text-slate-300 whitespace-pre-wrap font-mono leading-relaxed break-words">
+                              {detailsText}
+                            </pre>
                           </div>
                         </td>
                       </tr>
