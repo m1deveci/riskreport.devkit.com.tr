@@ -12,7 +12,7 @@ import multer from 'multer';
 import fs from 'fs';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { sendPasswordResetEmail, verifyEmailConnection, initializeEmailService } from './emailService.js';
+import { sendPasswordResetEmail, sendNearMissReportEmail, verifyEmailConnection, initializeEmailService } from './emailService.js';
 
 // Load environment variables
 dotenv.config();
@@ -784,18 +784,63 @@ app.post('/api/reports', async (req, res) => {
       [id, incidentNumber, location_id, region_id, full_name, phone || null, category, description || '', image_path || null]
     );
 
-    // Rapor oluşturmayı logla
+    // Get location information
+    const [locationRows] = await connection.query(
+      'SELECT name FROM locations WHERE id = ?',
+      [location_id]
+    );
+
+    const locationName = locationRows.length > 0 ? locationRows[0].name : 'Bilinmeyen Lokasyon';
+
+    // Get all isg_expert users assigned to this location
+    const [experts] = await connection.query(
+      `SELECT id, email, full_name FROM users
+       WHERE role = 'isg_expert' AND is_active = true
+       AND JSON_CONTAINS(COALESCE(location_ids, '[]'), JSON_QUOTE(?))`,
+      [location_id]
+    );
+
+    const recipientEmails = experts.map(user => user.email);
+    const recipientNames = experts.map(user => user.full_name);
+
+    // Send emails to isg_expert users
+    let emailSentCount = 0;
+    if (recipientEmails.length > 0) {
+      try {
+        await sendNearMissReportEmail(recipientEmails, {
+          incident_number: incidentNumber,
+          full_name,
+          phone,
+          category,
+          description
+        }, locationName);
+        emailSentCount = recipientEmails.length;
+      } catch (emailError) {
+        console.error('Failed to send near-miss report emails:', emailError);
+        // Continue execution even if email sending fails
+      }
+    }
+
+    // Rapor oluşturmayı logla (e-posta alıcıları hakkında bilgi ekle)
     await logAction(null, 'CREATE_NEARMISS', {
       incident_number: incidentNumber,
       location_id,
+      location_name: locationName,
       region_id,
       reporter_name: full_name,
       category,
-      phone: phone || 'Belirtilmemiş'
+      phone: phone || 'Belirtilmemiş',
+      email_recipients_count: emailSentCount,
+      email_recipients: recipientNames.length > 0 ? recipientNames.join(', ') : 'Yok'
     });
 
     connection.release();
-    res.json({ success: true, id, incident_number: incidentNumber });
+    res.json({
+      success: true,
+      id,
+      incident_number: incidentNumber,
+      email_sent_to: emailSentCount
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
