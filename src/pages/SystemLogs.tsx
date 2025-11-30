@@ -19,6 +19,7 @@ export function SystemLogs() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
+  const [usersMap, setUsersMap] = useState<Record<string, string>>({});
 
   useEffect(() => {
     loadLogs();
@@ -33,7 +34,7 @@ export function SystemLogs() {
           const userName = (log.users as unknown as { full_name: string })?.full_name || 'Sistem';
           // Parse details if it's a string (from database)
           const parsedDetails = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
-          const detailsText = formatLogDetails(log.action, parsedDetails).toLowerCase();
+          const detailsText = formatLogDetails(log.action, parsedDetails, usersMap).toLowerCase();
 
           return (
             log.action.toLowerCase().includes(term) ||
@@ -50,6 +51,19 @@ export function SystemLogs() {
 
   async function loadLogs() {
     try {
+      // Kullanıcı bilgilerini yükle
+      const users = await api.users.getList();
+      const userMap: Record<string, string> = {};
+      if (users) {
+        users.forEach((user: any) => {
+          if (user.id && user.email) {
+            userMap[user.id] = user.email;
+          }
+        });
+      }
+      setUsersMap(userMap);
+
+      // Logları yükle
       const data = await api.logs.getList();
       setLogs((data || []).slice(0, 500));
     } catch (err) {
@@ -112,7 +126,7 @@ export function SystemLogs() {
                 const isExpanded = expandedLogId === log.id;
                 // Parse details if it's a string (from database)
                 const parsedDetails = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
-                const detailsText = formatLogDetails(log.action, parsedDetails);
+                const detailsText = formatLogDetails(log.action, parsedDetails, usersMap);
 
                 return (
                   <>

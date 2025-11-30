@@ -68,7 +68,11 @@ export const ActionDescriptions: Record<string, { tr: string; icon: string }> = 
 };
 
 // Detay özelleştiricisi - detay alanlarını Türkçe ve okunabilir hale getir
-export function formatLogDetails(action: string, details: Record<string, unknown>): string {
+export function formatLogDetails(
+  action: string,
+  details: Record<string, unknown>,
+  usersMap?: Record<string, string>
+): string {
   const lines: string[] = [];
 
   // Genel alanları işle
@@ -111,7 +115,12 @@ export function formatLogDetails(action: string, details: Record<string, unknown
 
   if (action.includes('ISG_EXPERT')) {
     if (details.expert_id) {
-      lines.push(`🔹 Uzman ID: ${details.expert_id}`);
+      const expertEmail = usersMap?.[details.expert_id as string];
+      if (expertEmail) {
+        lines.push(`🔹 Uzman E-posta: ${expertEmail}`);
+      } else {
+        lines.push(`🔹 Uzman ID: ${details.expert_id}`);
+      }
     }
     if (details.phone) {
       lines.push(`🔹 Telefon: ${details.phone}`);
@@ -138,7 +147,12 @@ export function formatLogDetails(action: string, details: Record<string, unknown
 
   if (action.includes('USER')) {
     if (details.user_id) {
-      lines.push(`🔹 Kullanıcı ID: ${details.user_id}`);
+      const userEmail = usersMap?.[details.user_id as string];
+      if (userEmail) {
+        lines.push(`🔹 Kullanıcı E-posta: ${userEmail}`);
+      } else {
+        lines.push(`🔹 Kullanıcı ID: ${details.user_id}`);
+      }
     }
     if (details.action === 'password_reset') {
       lines.push(`🔹 İşlem: Parola Sıfırlama Bağlantısı Gönderildi`);
