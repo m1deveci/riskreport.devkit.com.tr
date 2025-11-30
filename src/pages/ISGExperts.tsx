@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { api, supabase } from '../lib/supabase';
 import { logAction, LogActions } from '../lib/logger';
-import { Plus, Edit2, Trash2, Users, AlertCircle, CheckCircle2, Lock } from 'lucide-react';
+import { getCurrentUser } from '../lib/auth';
+import { Plus, Edit2, Trash2, Users, AlertCircle, CheckCircle2, Lock, Key } from 'lucide-react';
+import type { UserProfile } from '../lib/auth';
 
 interface ISGExpert {
   id: string;
@@ -21,8 +23,12 @@ interface Location {
 export function ISGExperts() {
   const [experts, setExperts] = useState<ISGExpert[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordResetExpert, setPasswordResetExpert] = useState<ISGExpert | null>(null);
+  const [manualPassword, setManualPassword] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedLocationFilter, setSelectedLocationFilter] = useState<string>('');
   const [formData, setFormData] = useState({
@@ -42,6 +48,9 @@ export function ISGExperts() {
 
   async function loadData() {
     try {
+      const user = await getCurrentUser();
+      setCurrentUser(user);
+
       const [expertsData, locationsData] = await Promise.all([
         api.experts.getList(''),
         api.locations.getList(),
@@ -69,8 +78,10 @@ export function ISGExperts() {
       });
     } else {
       setEditingId(null);
+      // Admin olmayan kullanıcılar sadece kendi lokasyonlarını seçebilir
+      const defaultLocations = currentUser?.role === 'admin' ? [] : (currentUser?.location_ids || []);
       setFormData({
-        location_ids: [],
+        location_ids: defaultLocations,
         full_name: '',
         email: '',
         phone: '',
@@ -89,6 +100,15 @@ export function ISGExperts() {
     setSuccess('');
 
     try {
+      // Admin olmayan kullanıcılar sadece kendi lokasyonlarında işlem yapabilir
+      if (currentUser?.role !== 'admin') {
+        const userLocations = currentUser?.location_ids || [];
+        const isValidLocation = formData.location_ids.every(locId => userLocations.includes(locId));
+        if (!isValidLocation) {
+          throw new Error('Sadece kendi lokasyonlarınızda işlem yapabilirsiniz');
+        }
+      }
+
       if (editingId) {
         await api.experts.update(editingId, formData);
 
@@ -134,13 +154,16 @@ export function ISGExperts() {
         return;
       }
 
-      const response = await fetch(`/api/password-reset/admin/${expertId}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await fetch(
+        (import.meta.env.VITE_API_URL || 'http://localhost:6000') + `/api/password-reset/admin/${expertId}`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
       if (!response.ok) {
         const data = await response.json();
@@ -156,9 +179,71 @@ export function ISGExperts() {
     }
   }
 
+  function openPasswordModal(expert: ISGExpert) {
+    setPasswordResetExpert(expert);
+    setManualPassword('');
+    setError('');
+    setSuccess('');
+    setShowPasswordModal(true);
+  }
+
+  async function handleManualPasswordReset() {
+    if (!passwordResetExpert) return;
+
+    setError('');
+    setSuccess('');
+
+    if (!manualPassword || manualPassword.length < 6) {
+      setError('Şifre en az 6 karakter olmalıdır');
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        (import.meta.env.VITE_API_URL || 'http://localhost:6000') + `/api/isg-experts/${passwordResetExpert.id}/password`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+          body: JSON.stringify({ password: manualPassword }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Parola değiştirme başarısız oldu');
+      }
+
+      await logAction(LogActions.UPDATE_ISG_EXPERT, {
+        expert_id: passwordResetExpert.id,
+        action: 'manual_password_reset'
+      });
+
+      setSuccess('Parola başarıyla değiştirildi');
+      setTimeout(() => {
+        setShowPasswordModal(false);
+        setPasswordResetExpert(null);
+        setManualPassword('');
+      }, 1500);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Bir hata oluştu';
+      setError(errorMessage);
+    }
+  }
+
+  // Admin olmayan kullanıcılar sadece kendi lokasyonlarındaki uzmanları görebilir
+  const userCanSee = (expert: ISGExpert) => {
+    if (currentUser?.role === 'admin') return true;
+    return expert.location_ids?.some(locId => currentUser?.location_ids?.includes(locId)) || false;
+  };
+
+  const visibleExperts = currentUser?.role === 'admin' ? experts : experts.filter(userCanSee);
+
   const filteredExperts = selectedLocationFilter
-    ? experts.filter((e) => e.location_ids?.includes(selectedLocationFilter))
-    : experts;
+    ? visibleExperts.filter((e) => e.location_ids?.includes(selectedLocationFilter))
+    : visibleExperts;
 
   const expertsByLocation = locations.map((loc) => ({
     location: loc,
@@ -178,15 +263,21 @@ export function ISGExperts() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-4xl font-bold text-white">İSG Uzmanları</h1>
-          <p className="text-slate-400 text-lg mt-2">İş sağlığı ve güvenliği uzmanlarını yönetin</p>
+          <p className="text-slate-400 text-lg mt-2">
+            {currentUser?.role === 'admin'
+              ? 'İş sağlığı ve güvenliği uzmanlarını yönetin'
+              : 'Kendi lokasyonunuzdaki uzmanları yönetin'}
+          </p>
         </div>
-        <button
-          onClick={() => openModal()}
-          className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-        >
-          <Plus className="w-5 h-5" />
-          Yeni İSG Uzmanı
-        </button>
+        {(currentUser?.role === 'admin' || currentUser?.location_ids?.length > 0) && (
+          <button
+            onClick={() => openModal()}
+            className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Plus className="w-5 h-5" />
+            Yeni İSG Uzmanı
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -315,17 +406,28 @@ export function ISGExperts() {
                       <Lock className="w-4 h-4" />
                     </button>
                     <button
+                      onClick={() => openPasswordModal(expert)}
+                      title="Parola değiştir"
+                      className="text-orange-600 hover:text-orange-900 inline-block"
+                    >
+                      <Key className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => openModal(expert)}
                       className="text-blue-600 hover:text-blue-900 inline-block"
+                      title="Düzenle"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
-                    <button
-                      onClick={() => handleDelete(expert.id)}
-                      className="text-red-600 hover:text-red-900 inline-block"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
+                    {currentUser?.role === 'admin' && (
+                      <button
+                        onClick={() => handleDelete(expert.id)}
+                        className="text-red-600 hover:text-red-900 inline-block"
+                        title="Sil"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -494,6 +596,79 @@ export function ISGExperts() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showPasswordModal && passwordResetExpert && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 shadow-xl backdrop-blur-md max-w-md w-full">
+            <div className="p-6 border-b border-slate-700">
+              <h2 className="text-xl font-semibold text-white">
+                Parola Sıfırla
+              </h2>
+              <p className="text-sm text-slate-400 mt-1">
+                {passwordResetExpert.full_name} ({passwordResetExpert.email})
+              </p>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {error && (
+                <div className="bg-red-50 border-l-4 border-red-400 p-4">
+                  <div className="flex">
+                    <AlertCircle className="w-5 h-5 text-red-600 mr-3 flex-shrink-0" />
+                    <p className="text-sm text-red-700">{error}</p>
+                  </div>
+                </div>
+              )}
+
+              {success && (
+                <div className="bg-green-50 border-l-4 border-green-400 p-4">
+                  <div className="flex">
+                    <CheckCircle2 className="w-5 h-5 text-green-600 mr-3 flex-shrink-0" />
+                    <p className="text-sm text-green-700">{success}</p>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Yeni Şifre <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="password"
+                  value={manualPassword}
+                  onChange={(e) => setManualPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="En az 6 karakter"
+                  minLength={6}
+                />
+                <p className="mt-1 text-xs text-slate-500">Minimum 6 karakter</p>
+              </div>
+
+              <div className="bg-amber-50 border-l-4 border-amber-400 p-3">
+                <p className="text-xs text-amber-700">
+                  Uzmanın parolası hemen değiştirilecektir. Bu işlem geri alınamaz.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordModal(false)}
+                  className="flex-1 px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
+                >
+                  İptal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleManualPasswordReset}
+                  className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                >
+                  Şifreyi Değiştir
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

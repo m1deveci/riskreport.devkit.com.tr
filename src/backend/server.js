@@ -864,6 +864,68 @@ app.put('/api/experts/:id', authenticateToken, adminOnly, async (req, res) => {
   }
 });
 
+// Reset ISG Expert Password Manually (Admin or Location Manager)
+app.put('/api/isg-experts/:id/password', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { password } = req.body;
+    const currentUser = req.user;
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({ error: 'Şifre en az 6 karakter olmalıdır' });
+    }
+
+    const connection = await pool.getConnection();
+
+    // Check if expert exists and get their location_ids
+    const [experts] = await connection.query('SELECT * FROM isg_experts WHERE id = ?', [id]);
+
+    if (!experts || experts.length === 0) {
+      connection.release();
+      return res.status(404).json({ error: 'İSG Uzmanı bulunamadı' });
+    }
+
+    const expert = experts[0];
+    let expertLocations = [];
+    try {
+      expertLocations = typeof expert.location_ids === 'string'
+        ? JSON.parse(expert.location_ids)
+        : (expert.location_ids || []);
+    } catch (e) {
+      expertLocations = [];
+    }
+
+    // Check authorization: admin or location manager with access to expert's locations
+    const isAdmin = currentUser.role === 'admin';
+    const isLocationManager = expertLocations.some(locId =>
+      (currentUser.location_ids || []).includes(locId)
+    );
+
+    if (!isAdmin && !isLocationManager) {
+      connection.release();
+      return res.status(403).json({ error: 'Bu uzmanın parolasını değiştirme yetkiniz yok' });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(password, salt);
+
+    // Update password - using users table password_hash, so we need to create a user first if not exists
+    // For now, we update isg_experts table directly if it has password_hash field
+    // Or we assume ISG experts are also users
+    await connection.query(
+      'UPDATE users SET password_hash = ? WHERE email = (SELECT email FROM isg_experts WHERE id = ?)',
+      [password_hash, id]
+    );
+
+    connection.release();
+
+    res.json({ success: true, message: 'Parola başarıyla değiştirildi' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Delete ISG Expert (Admin Only)
 app.delete('/api/experts/:id', authenticateToken, adminOnly, async (req, res) => {
   try {

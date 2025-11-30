@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import {
   LayoutDashboard,
   MapPin,
@@ -34,6 +34,25 @@ const menuItems = [
 
 export function AdminLayout({ children, currentUser, currentPage, onNavigate }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [siteTitle, setSiteTitle] = useState('Ramak Kala Sistemi');
+
+  useEffect(() => {
+    // Site title'ı settings'ten yükle
+    async function loadSiteTitle() {
+      try {
+        const response = await fetch(
+          (import.meta.env.VITE_API_URL || 'http://localhost:6000') + '/api/settings'
+        );
+        const data = await response.json();
+        if (data.site_title) {
+          setSiteTitle(data.site_title);
+        }
+      } catch (err) {
+        console.error('Failed to load site title:', err);
+      }
+    }
+    loadSiteTitle();
+  }, []);
 
   async function handleLogout() {
     try {
@@ -61,7 +80,7 @@ export function AdminLayout({ children, currentUser, currentPage, onNavigate }: 
                 <Database className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-white">Ramak Kala Sistemi</h1>
+                <h1 className="text-lg font-bold text-white">{siteTitle}</h1>
                 <p className="text-xs text-slate-400">İSG Yönetim Paneli</p>
               </div>
             </div>
