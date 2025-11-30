@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { api, supabase } from '../lib/supabase';
 import { AlertCircle, CheckCircle2, Loader2, Camera, X } from 'lucide-react';
 import Turnstile from 'react-turnstile';
 
@@ -39,7 +38,7 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
   const [incidentNumber, setIncidentNumber] = useState('');
   const [region, setRegion] = useState<Region | null>(null);
   const [location, setLocation] = useState<Location | null>(null);
-  const [siteTitle, setSiteTitle] = useState('Ramak Kala Sistemi');
+  const [siteTitle, setSiteTitle] = useState('Ramakkala Raporlama Sistemi');
   const [turnstileToken, setTurnstileToken] = useState<string>('');
   const turnstileRef = useRef<any>(null);
 
@@ -228,7 +227,7 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
     setError('');
 
     if (!turnstileToken) {
-      setError('Lütfen Turnstile doğrulamasını tamamlayın');
+      setError('Lütfen güvenlik doğrulamasını tamamlayın');
       setLoading(false);
       return;
     }
@@ -343,7 +342,7 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
             <p className="text-2xl font-bold text-blue-600">{incidentNumber}</p>
           </div>
           <p className="text-gray-600 mb-6">
-            Ramak kala raporunuz başarıyla kaydedildi. İSG ekibi bilgilendirildi ve en kısa sürede
+            Ramakkala raporunuz başarıyla kaydedildi. İSG ekibi bilgilendirildi ve en kısa sürede
             incelenecektir.
           </p>
           <button
@@ -378,7 +377,7 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
               <AlertCircle className="w-5 h-5 text-yellow-600 mr-3 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm text-yellow-800 font-medium mb-1">
-                  Ramak Kala Nedir?
+                  RamakKala Nedir?
                 </p>
                 <p className="text-sm text-yellow-700">
                   Kaza olmadı ama olabilirdi. Bu tür durumları bildirerek iş güvenliğine katkıda
@@ -451,7 +450,7 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
                   <Camera className="w-6 h-6 text-gray-400" />
                   <div className="text-center">
                     <p className="text-sm font-medium text-gray-700">Fotoğraf Seç veya Çek</p>
-                    <p className="text-xs text-gray-500 mt-1">Mobil cihazdan kamera veya galeri</p>
+                    <p className="text-xs text-gray-500 mt-1">Mobil cihazdan kamera veya galeri ile görsel yükleyin.</p>
                   </div>
                 </label>
               </div>
