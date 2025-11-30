@@ -149,7 +149,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
             {settings?.site_title || 'Ramak Kala Sistemi'}
           </h1>
-          <p className="text-gray-600">{t('auth.selectLanguage')}</p>
+        
         </div>
 
         {error && (
