@@ -31,7 +31,9 @@ export function SystemLogs() {
         logs.filter((log) => {
           const actionDesc = ActionDescriptions[log.action]?.tr || log.action;
           const userName = (log.users as unknown as { full_name: string })?.full_name || 'Sistem';
-          const detailsText = formatLogDetails(log.action, log.details).toLowerCase();
+          // Parse details if it's a string (from database)
+          const parsedDetails = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
+          const detailsText = formatLogDetails(log.action, parsedDetails).toLowerCase();
 
           return (
             log.action.toLowerCase().includes(term) ||
@@ -108,7 +110,9 @@ export function SystemLogs() {
               {filteredLogs.map((log) => {
                 const actionDesc = ActionDescriptions[log.action];
                 const isExpanded = expandedLogId === log.id;
-                const detailsText = formatLogDetails(log.action, log.details);
+                // Parse details if it's a string (from database)
+                const parsedDetails = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
+                const detailsText = formatLogDetails(log.action, parsedDetails);
 
                 return (
                   <>
