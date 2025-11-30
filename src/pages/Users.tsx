@@ -160,13 +160,16 @@ export function Users() {
   async function handleResetPassword(id: string, email: string, fullName: string) {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/password-reset/admin/' + id, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        (import.meta.env.VITE_API_URL || 'http://localhost:6000') + `/api/password-reset/admin/${id}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -202,15 +205,18 @@ export function Users() {
     }
 
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`/api/users/${passwordResetUser.id}/password`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({ password: manualPassword }),
-      });
+      // Kullanıcı parolasını güncellemek için backend API'sini çağır
+      const response = await fetch(
+        (import.meta.env.VITE_API_URL || 'http://localhost:6000') + `/api/users/${passwordResetUser.id}/password`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          },
+          body: JSON.stringify({ password: manualPassword }),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
