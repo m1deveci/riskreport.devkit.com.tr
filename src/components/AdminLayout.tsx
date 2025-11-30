@@ -24,26 +24,35 @@ interface AdminLayoutProps {
   onNavigate: (page: string) => void;
 }
 
-const getMenuItems = (t: (key: string) => string) => [
-  { id: 'dashboard', label: t('sidebar.dashboard'), icon: LayoutDashboard },
-  { id: 'locations', label: t('sidebar.locations'), icon: MapPin },
-  { id: 'regions', label: t('sidebar.regions'), icon: Grid3x3 },
-  { id: 'reports', label: t('sidebar.reports'), icon: AlertTriangle },
-  { id: 'logs', label: t('sidebar.logs'), icon: FileText },
-  { id: 'users', label: t('sidebar.users'), icon: Users },
-  { id: 'settings', label: t('sidebar.settings'), icon: Settings },
-];
+const getMenuItems = (t: (key: string) => string, userRole?: string) => {
+  const allItems = [
+    { id: 'dashboard', label: t('sidebar.dashboard'), icon: LayoutDashboard },
+    { id: 'locations', label: t('sidebar.locations'), icon: MapPin },
+    { id: 'regions', label: t('sidebar.regions'), icon: Grid3x3 },
+    { id: 'reports', label: t('sidebar.reports'), icon: AlertTriangle },
+    { id: 'logs', label: t('sidebar.logs'), icon: FileText, adminOnly: true },
+    { id: 'users', label: t('sidebar.users'), icon: Users },
+    { id: 'settings', label: t('sidebar.settings'), icon: Settings, adminOnly: true },
+  ];
+
+  // ISG Expert kullanıcıları logs ve settings'i görmemeli
+  if (userRole === 'isg_expert') {
+    return allItems.filter(item => !item.adminOnly);
+  }
+
+  return allItems;
+};
 
 export function AdminLayout({ children, currentUser, currentPage, onNavigate }: AdminLayoutProps) {
   const { language, setLanguage, t } = useI18n();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [siteTitle, setSiteTitle] = useState('Ramak Kala Sistemi');
-  const [menuItems, setMenuItems] = useState(() => getMenuItems(t));
+  const [menuItems, setMenuItems] = useState(() => getMenuItems(t, currentUser.role));
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
 
   // Dil değiştiğinde menu itemleri güncelle
   useLanguageChange(() => {
-    setMenuItems(getMenuItems(t));
+    setMenuItems(getMenuItems(t, currentUser.role));
   });
 
   useEffect(() => {

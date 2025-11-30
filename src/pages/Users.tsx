@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { api, supabase } from '../lib/supabase';
-import { signUp } from '../lib/auth';
+import { signUp, getCurrentUser } from '../lib/auth';
 import { logAction, LogActions } from '../lib/logger';
 import { Plus, Edit2, Trash2, Users as UsersIcon, AlertCircle, CheckCircle2, Key } from 'lucide-react';
 import { useI18n, useLanguageChange } from '../lib/i18n';
+import type { UserProfile } from '../lib/auth';
 
 interface User {
   id: string;
@@ -41,6 +42,7 @@ export function Users() {
   const [passwordResetUser, setPasswordResetUser] = useState<User | null>(null);
   const [manualPassword, setManualPassword] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [formData, setFormData] = useState({
     full_name: '',
     email: '',
@@ -60,14 +62,16 @@ export function Users() {
 
   async function loadData() {
     try {
-      const [usersData, locationsData] = await Promise.all([
+      const [usersData, locationsData, user] = await Promise.all([
         api.users.getList(),
         api.locations.getList(),
+        getCurrentUser(),
       ]);
 
       // Ensure data is array
       setUsers(Array.isArray(usersData) ? usersData : []);
       setLocations(Array.isArray(locationsData) ? locationsData : []);
+      setCurrentUser(user);
     } catch (err) {
       console.error('Failed to load data:', err);
       const errorMessage = err instanceof Error ? err.message : 'Veri yüklenirken hata oluştu';
@@ -112,6 +116,16 @@ export function Users() {
     setSuccess('');
 
     try {
+      // ISG Expert validation: cannot assign locations outside of their own
+      if (currentUser?.role === 'isg_expert') {
+        const invalidLocations = formData.location_ids.filter(
+          (locId) => !currentUser.location_ids?.includes(locId)
+        );
+        if (invalidLocations.length > 0) {
+          throw new Error('Sadece kendi lokasyonlarınıza kullanıcı atayabilirsiniz');
+        }
+      }
+
       if (editingId) {
         const updateData: {
           full_name: string;
@@ -132,6 +146,11 @@ export function Users() {
       } else {
         if (!formData.password || formData.password.length < 6) {
           throw new Error('Şifre en az 6 karakter olmalıdır');
+        }
+
+        // ISG Expert cannot create admin users
+        if (currentUser?.role === 'isg_expert' && formData.role === 'admin') {
+          throw new Error('İSG Uzmanları admin kullanıcı oluşturamazlar');
         }
 
         await signUp(
@@ -158,6 +177,12 @@ export function Users() {
   }
 
   async function handleDelete(id: string) {
+    // ISG Expert kullanıcılar diğer kullanıcıları silemezler
+    if (currentUser?.role === 'isg_expert') {
+      setError('İSG Uzmanları kullanıcı silemezler');
+      return;
+    }
+
     if (!confirm(t('messages.confirmDeleteUser') || 'Bu kullanıcıyı silmek istediğinize emin misiniz?')) return;
 
     try {
@@ -262,6 +287,19 @@ export function Users() {
     );
   }
 
+  // Filter users based on current user's role and assigned locations
+  const filteredUsers = currentUser?.role === 'isg_expert'
+    ? users.filter(user => {
+        // isg_expert can only see users from their assigned locations
+        if (!currentUser.location_ids || currentUser.location_ids.length === 0) {
+          return false;
+        }
+        // Show users that have at least one location in common with isg_expert's locations
+        const userLocations = user.location_ids || [];
+        return userLocations.some(locId => currentUser.location_ids?.includes(locId));
+      })
+    : users;
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 -my-6 px-6 py-6">
       {error && (
@@ -318,7 +356,7 @@ export function Users() {
               </tr>
             </thead>
             <tbody className="bg-transparent divide-y divide-slate-700">
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <tr key={user.id} className="hover:bg-slate-900/50 border-b border-slate-700">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-slate-100">{user.full_name}</div>
@@ -394,13 +432,15 @@ export function Users() {
                     >
                       <Key className="w-4 h-4 inline" />
                     </button>
-                    <button
-                      onClick={() => handleDelete(user.id)}
-                      className="text-red-600 hover:text-red-900"
-                      title={t('common.delete')}
-                    >
-                      <Trash2 className="w-4 h-4 inline" />
-                    </button>
+                    {currentUser?.role === 'admin' && (
+                      <button
+                        onClick={() => handleDelete(user.id)}
+                        className="text-red-600 hover:text-red-900"
+                        title={t('common.delete')}
+                      >
+                        <Trash2 className="w-4 h-4 inline" />
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -408,11 +448,19 @@ export function Users() {
           </table>
         </div>
 
-        {users.length === 0 && (
+        {filteredUsers.length === 0 && (
           <div className="p-12 text-center">
             <UsersIcon className="w-16 h-16 text-slate-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-white mb-2">{t('users.noUsers') || 'Henüz kullanıcı yok'}</h3>
-            <p className="text-slate-400 mb-6">{t('users.createFirstUser') || 'İlk kullanıcıyı oluşturarak başlayın'}</p>
+            <h3 className="text-lg font-medium text-white mb-2">
+              {currentUser?.role === 'isg_expert'
+                ? (t('users.noUsersInLocations') || 'Kendi lokasyonlarında henüz kullanıcı yok')
+                : (t('users.noUsers') || 'Henüz kullanıcı yok')}
+            </h3>
+            <p className="text-slate-400 mb-6">
+              {currentUser?.role === 'isg_expert'
+                ? (t('users.addUserToLocation') || 'Yeni kullanıcı ekleyerek başlayın')
+                : (t('users.createFirstUser') || 'İlk kullanıcıyı oluşturarak başlayın')}
+            </p>
           </div>
         )}
       </div>
@@ -515,31 +563,43 @@ export function Users() {
                   {locations.length === 0 ? (
                     <p className="text-sm text-slate-500">{t('users.noLocations') || 'Henüz lokasyon yok'}</p>
                   ) : (
-                    locations.map((location) => (
-                      <label key={location.id} className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={formData.location_ids.includes(location.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setFormData({
-                                ...formData,
-                                location_ids: [...formData.location_ids, location.id],
-                              });
-                            } else {
-                              setFormData({
-                                ...formData,
-                                location_ids: formData.location_ids.filter((id) => id !== location.id),
-                              });
-                            }
-                          }}
-                          className="w-4 h-4 text-blue-600 border-slate-600 rounded focus:ring-blue-500"
-                        />
-                        <span className="ml-2 text-sm text-slate-300">{location.name}</span>
-                      </label>
-                    ))
+                    locations
+                      .filter((location) => {
+                        // isg_expert can only select locations they are assigned to
+                        if (currentUser?.role === 'isg_expert') {
+                          return currentUser.location_ids?.includes(location.id);
+                        }
+                        // Admin can see all locations
+                        return true;
+                      })
+                      .map((location) => (
+                        <label key={location.id} className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={formData.location_ids.includes(location.id)}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setFormData({
+                                  ...formData,
+                                  location_ids: [...formData.location_ids, location.id],
+                                });
+                              } else {
+                                setFormData({
+                                  ...formData,
+                                  location_ids: formData.location_ids.filter((id) => id !== location.id),
+                                });
+                              }
+                            }}
+                            className="w-4 h-4 text-blue-600 border-slate-600 rounded focus:ring-blue-500"
+                          />
+                          <span className="ml-2 text-sm text-slate-300">{location.name}</span>
+                        </label>
+                      ))
                   )}
                 </div>
+                {currentUser?.role === 'isg_expert' && (
+                  <p className="mt-1 text-xs text-slate-400">{t('users.canOnlyAssignOwnLocations') || 'Sadece kendi lokasyonlarınıza kullanıcı atayabilirsiniz'}</p>
+                )}
                 {formData.role !== 'admin' && formData.location_ids.length === 0 && (
                   <p className="mt-1 text-xs text-amber-400">{t('users.selectAtLeastOneLocation') || 'En az bir lokasyon seçiniz'}</p>
                 )}

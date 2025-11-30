@@ -105,6 +105,14 @@ const adminOnly = (req, res, next) => {
   next();
 };
 
+// Admin veya ISG Expert Kontrolü Middleware'i
+const adminOrExpert = (req, res, next) => {
+  if (req.user.role !== 'admin' && req.user.role !== 'isg_expert') {
+    return res.status(403).json({ error: 'Bu işlem için yetki gereklidir' });
+  }
+  next();
+};
+
 // ==================== LOGGING HELPER ====================
 
 // Sistem loglarına kayıt yapmak için yardımcı fonksiyon
@@ -302,12 +310,35 @@ app.get('/api/users', authenticateToken, adminOnly, async (req, res) => {
 });
 
 // Create User (Admin Only)
-app.post('/api/users', authenticateToken, adminOnly, async (req, res) => {
+app.post('/api/users', authenticateToken, adminOrExpert, async (req, res) => {
   try {
     const { full_name, email, password, role, location_ids } = req.body;
 
     if (!full_name || !email || !password) {
       return res.status(400).json({ error: 'Tüm alanlar zorunludur' });
+    }
+
+    // ISG Expert permission checks
+    if (req.user.role === 'isg_expert') {
+      // ISG Expert cannot create admin users
+      if (role === 'admin') {
+        await logAction(req.user.id, 'CREATE_USER_FAILED', { email, reason: 'isg_expert cannot create admin users' });
+        return res.status(403).json({ error: 'İSG Uzmanları admin kullanıcı oluşturamazlar' });
+      }
+
+      // ISG Expert can only assign users to their own locations
+      if (!location_ids || location_ids.length === 0) {
+        await logAction(req.user.id, 'CREATE_USER_FAILED', { email, reason: 'no locations specified' });
+        return res.status(400).json({ error: 'En az bir lokasyon seçiniz' });
+      }
+
+      // Verify all locations belong to isg_expert
+      const userLocations = req.user.location_ids || [];
+      const invalidLocations = location_ids.filter(locId => !userLocations.includes(locId));
+      if (invalidLocations.length > 0) {
+        await logAction(req.user.id, 'CREATE_USER_FAILED', { email, reason: 'unauthorized locations' });
+        return res.status(403).json({ error: 'Sadece kendi lokasyonlarınıza kullanıcı atayabilirsiniz' });
+      }
     }
 
     // Şifreyi bcrypt ile hash'le
@@ -324,6 +355,9 @@ app.post('/api/users', authenticateToken, adminOnly, async (req, res) => {
       [id, full_name, email, password_hash, role || 'viewer', locationIdsJson]
     );
     connection.release();
+
+    // Log successful user creation
+    await logAction(req.user.id, 'CREATE_USER', { email, full_name, role });
 
     res.json({
       success: true,
@@ -399,20 +433,51 @@ app.delete('/api/users/:id', authenticateToken, adminOnly, async (req, res) => {
     const [result] = await connection.query('DELETE FROM users WHERE id = ?', [id]);
     connection.release();
 
+    // Log successful deletion
+    await logAction(req.user.id, 'DELETE_USER', { user_id: id });
+
     res.json({ success: true, message: 'Kullanıcı silindi' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Reset User Password Manually (Admin Only)
-app.put('/api/users/:id/password', authenticateToken, adminOnly, async (req, res) => {
+// Reset User Password Manually (Admin or ISG Expert)
+app.put('/api/users/:id/password', authenticateToken, adminOrExpert, async (req, res) => {
   try {
     const { id } = req.params;
     const { password } = req.body;
 
     if (!password || password.length < 6) {
       return res.status(400).json({ error: 'Şifre en az 6 karakter olmalıdır' });
+    }
+
+    // ISG Expert permission check - can only reset password for users in their assigned locations
+    if (req.user.role === 'isg_expert') {
+      const connection = await pool.getConnection();
+      const [userRows] = await connection.query(
+        'SELECT location_ids FROM users WHERE id = ?',
+        [id]
+      );
+      connection.release();
+
+      if (userRows.length === 0) {
+        await logAction(req.user.id, 'RESET_PASSWORD_FAILED', { user_id: id, reason: 'user not found' });
+        return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+      }
+
+      const targetUserLocations = userRows[0].location_ids
+        ? (typeof userRows[0].location_ids === 'string' ? JSON.parse(userRows[0].location_ids) : userRows[0].location_ids)
+        : [];
+
+      const requestUserLocations = req.user.location_ids || [];
+
+      // Check if target user has at least one location in common with request user
+      const hasCommonLocation = targetUserLocations.some(locId => requestUserLocations.includes(locId));
+      if (!hasCommonLocation) {
+        await logAction(req.user.id, 'RESET_PASSWORD_FAILED', { user_id: id, reason: 'unauthorized location' });
+        return res.status(403).json({ error: 'Bu kullanıcının şifresini sıfırlama yetkisi yoktur' });
+      }
     }
 
     // Hash new password
@@ -429,6 +494,9 @@ app.put('/api/users/:id/password', authenticateToken, adminOnly, async (req, res
     if (result.affectedRows === 0) {
       return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
     }
+
+    // Log successful password reset
+    await logAction(req.user.id, 'RESET_PASSWORD', { user_id: id });
 
     res.json({ success: true, message: 'Parola başarıyla değiştirildi' });
   } catch (error) {
@@ -1327,7 +1395,7 @@ app.post('/api/password-reset/verify', async (req, res) => {
 });
 
 // Admin: Reset User Password (send reset email)
-app.post('/api/password-reset/admin/:id', authenticateToken, adminOnly, async (req, res) => {
+app.post('/api/password-reset/admin/:id', authenticateToken, adminOrExpert, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -1335,16 +1403,34 @@ app.post('/api/password-reset/admin/:id', authenticateToken, adminOnly, async (r
 
     // Check if user exists
     const [rows] = await connection.query(
-      'SELECT id, email, full_name FROM users WHERE id = ?',
+      'SELECT id, email, full_name, location_ids FROM users WHERE id = ?',
       [id]
     );
 
     if (rows.length === 0) {
       connection.release();
+      await logAction(req.user.id, 'PASSWORD_RESET_FAILED', { user_id: id, reason: 'user not found' });
       return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
     }
 
     const user = rows[0];
+
+    // ISG Expert permission check - can only reset password for users in their assigned locations
+    if (req.user.role === 'isg_expert') {
+      const targetUserLocations = user.location_ids
+        ? (typeof user.location_ids === 'string' ? JSON.parse(user.location_ids) : user.location_ids)
+        : [];
+
+      const requestUserLocations = req.user.location_ids || [];
+
+      // Check if target user has at least one location in common with request user
+      const hasCommonLocation = targetUserLocations.some(locId => requestUserLocations.includes(locId));
+      if (!hasCommonLocation) {
+        connection.release();
+        await logAction(req.user.id, 'PASSWORD_RESET_FAILED', { user_id: id, reason: 'unauthorized location' });
+        return res.status(403).json({ error: 'Bu kullanıcının şifresini sıfırlama yetkisi yoktur' });
+      }
+    }
 
     // Generate reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
@@ -1366,6 +1452,9 @@ app.post('/api/password-reset/admin/:id', authenticateToken, adminOnly, async (r
       console.error('Failed to send email:', emailError);
       return res.status(500).json({ error: 'E-posta gönderme başarısız oldu' });
     }
+
+    // Log successful password reset request
+    await logAction(req.user.id, 'PASSWORD_RESET_REQUEST', { user_id: id });
 
     res.json({
       success: true,
