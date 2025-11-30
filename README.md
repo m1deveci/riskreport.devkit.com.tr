@@ -428,4 +428,123 @@ Loglar `system_logs` tablosunda aşağıdaki alanlarla saklanır:
 
 ---
 
+## 🔐 İSG Uzmanları İçin Rol Tabanlı Erişim Kontrolü
+
+İSG Uzmanı (isg_expert) rolüne sahip kullanıcılar için özel yetkilendirme sistemi:
+
+### Sidebar Menüsü
+- İSG Uzmanları **"Sistem Logları"** ve **"Ayarlar"** menülerini görmez
+- Sadece erişim yetkilerine sahip oldukları menüleri görebilirler
+
+### Kullanıcı Yönetimi Sayfası
+- **Görüntüleme**: Sadece kendi lokasyonlarına atanmış kullanıcıları görebilir
+- **Yeni Kullanıcı Ekleme**: Sadece kendi lokasyonlarına yeni kullanıcı ekleyebilir
+- **Parola Sıfırlama**: Kendi lokasyonlarındaki kullanıcıların parolalarını sıfırlayabilir
+- **Silme Yetkisi Yok**: İSG Uzmanları kullanıcı silemez
+
+### Lokasyon Filtreleme
+- Her İSG Uzmanı yalnızca kendisine atanmış lokasyonlarda yetkilendirme sahibi
+- Lokasyon seçimi sınırlandırılmıştır
+- Backend'de tüm operasyonlarda lokasyon doğrulaması yapılır
+
+---
+
+## 📧 Ramak Kala Formu Bildirim Sistemi
+
+QR kod ile yeni ramak kala formu gönderildiğinde, o lokasyondaki tüm isg_expert rolüne sahip kullanıcılara otomatik e-posta gönderilir.
+
+### Bildirim Özellikleri
+- **Otomatik Gönderim**: Form gönderilir gönderilmez e-posta hazırlanır
+- **Hedef Alıcılar**: Lokasyonda yetkili tüm aktif İSG Uzmanları
+- **SMTP Ayarları**: Sistem Ayarları sayfasından yapılandırılan SMTP bilgileri kullanılır
+- **E-posta İçeriği**:
+  - Olay numarası
+  - Lokasyon adı
+  - Bildirim yapan kişi adı
+  - Kategori
+  - Telefon numarası
+  - Açıklama
+  - Sistem Logları sayfasına yönlendirme linki
+
+### Sistem Logları Kaydı
+```
+E-posta Alıcıları:
+- email_recipients_count: Kaç İSG Uzmanına e-posta gönderildiği
+- email_recipients: E-posta alan İSG Uzmanların adları (virgülle ayrılmış)
+```
+
+### SMTP Yapılandırması
+Sistem Ayarları sayfasından aşağıdaki bilgileri girin:
+- SMTP Host (örn: smtp.gmail.com)
+- SMTP Port (varsayılan: 587)
+- SMTP Kullanıcı Adı
+- SMTP Şifresi
+- Gönderen E-posta Adresi
+
+---
+
+## 📋 Rapor Değişiklik Geçmişi ve Denetim İzleri
+
+Reports sayfasındaki rapor detaylarında yapılan tüm değişiklikleri kaydeden kapsamlı audit trail sistemi.
+
+### Takip Edilen Değişiklikler
+- **Rapor Oluşturma**: Kimin ne zaman rapor oluşturduğu
+- **Durum Değişikliği**: Eski durum → Yeni durum (Yeni → İnceleniyor → Kapatıldı)
+- **Not Eklemeleri**: Dahili notlara yapılan eklemeler ve değişiklikler
+- **Tüm Detaylar**: Eski değer, yeni değer, değişen alan adı
+
+### Geçmiş Görüntüleme
+
+#### Reports Sayfasında
+1. Rapor detayı modalını açın
+2. **"Geçmiş"** butonuna tıklayın
+3. Değişiklik geçmişi modalını görüntüleyin
+
+#### Geçmiş Modal'ında Gösterilen Bilgiler
+- **Değişikliği Yapan Kişi**: Kullanıcı adı
+- **Tarih ve Saat**: İşlemin yapılma tarihi (saniyeye kadar)
+- **İşlem Türü**: Oluşturuldu (yeşil) / Güncellendi (mavi)
+- **Değişiklik Açıklaması**: İnsan okunabilir format
+- **Alan Detayları**:
+  - Hangi alan değiştiğini
+  - Eski değeri (kırmızı, çizili)
+  - Yeni değeri (yeşil)
+
+### Sistem Logları'nda Görüntüleme
+
+Tüm rapor güncellemeleri Sistem Logları sayfasında `UPDATE_REPORT` olarak kaydedilir:
+
+```
+İşlem: 📊 Rapor Güncellendi
+Detaylar:
+- Rapor ID: report-xxxxx
+- Kullanıcı: Mustafa Deveci
+- Değişiklikler: [
+    "Durum değiştirildi: Yeni → İnceleniyor",
+    "Not eklendi/değiştirildi"
+  ]
+```
+
+### Veritabanı Tablosu
+
+Değişiklik geçmişi `report_history` tablosunda aşağıdaki alanlarla saklanır:
+- `id`: Unique history ID
+- `report_id`: İlişkili rapor ID
+- `changed_by_user_id`: Değişikliği yapan kullanıcı ID (sistem işlemleri için NULL)
+- `changed_by_user_name`: Değişikliği yapan kişi adı
+- `action`: CREATE (Oluşturuldu) veya UPDATE (Güncellendi)
+- `field_name`: Değişen alan adı (status, internal_notes vb.)
+- `old_value`: Eski değer
+- `new_value`: Yeni değer
+- `change_description`: İnsan okunabilir değişiklik açıklaması
+- `created_at`: Değişiklik tarihi ve saati
+
+### Güvenlik ve Denetim
+- **Tam Denetim İzleri**: Her değişiklik tam detaylarıyla kaydedilir
+- **Sorumluluğu Net**: Kimin ne yaptığını açıkça belli olur
+- **Geri Dönüş**: Değişikliklerin tarihçesi korunur
+- **Uyumluluğu**: İş Sağlığı ve Güvenliği mevzuatına uyumlu belgelendirme
+
+---
+
 **Not**: Uygulama Türkçe dilinde tasarlanmıştır ve Türkiye İş Sağlığı ve Güvenliği mevzuatına uygun ramak kala raporlama süreçlerini destekler.
