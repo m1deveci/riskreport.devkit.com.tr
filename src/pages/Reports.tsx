@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, supabase } from '../lib/supabase';
 import { logAction, LogActions } from '../lib/logger';
-import { Search, Filter, X, AlertTriangle, Eye, Download, Image as ImageIcon, Lock } from 'lucide-react';
+import { Search, Filter, X, AlertTriangle, Eye, Download, Image as ImageIcon, Lock, History } from 'lucide-react';
 import type { UserProfile } from '../lib/auth';
 import { useI18n, useLanguageChange } from '../lib/i18n';
 
@@ -35,6 +35,19 @@ interface Region {
   location_id: string;
 }
 
+interface ReportHistory {
+  id: string;
+  report_id: string;
+  changed_by_user_id: string | null;
+  changed_by_user_name: string;
+  action: string;
+  field_name: string | null;
+  old_value: string | null;
+  new_value: string | null;
+  change_description: string | null;
+  created_at: string;
+}
+
 const CATEGORIES = [
   'Kayma/Düşme',
   'Elektrik',
@@ -57,8 +70,10 @@ export function Reports() {
   const [regions, setRegions] = useState<Region[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+  const [reportHistory, setReportHistory] = useState<ReportHistory[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [filters, setFilters] = useState({
@@ -176,6 +191,8 @@ export function Reports() {
     setEditNotes(report.internal_notes);
     setEditStatus(report.status);
     setShowDetailModal(true);
+    setShowHistoryModal(false);
+    loadReportHistory(report.id);
   }
 
   async function handleUpdateReport() {
@@ -206,6 +223,20 @@ export function Reports() {
     } catch (err) {
       console.error('Failed to update report:', err);
       alert(t('messages.errorUpdate'));
+    }
+  }
+
+  async function loadReportHistory(reportId: string) {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:6000'}/api/reports/${reportId}/history`);
+      if (!response.ok) {
+        throw new Error('Failed to load history');
+      }
+      const history = await response.json();
+      setReportHistory(history);
+    } catch (err) {
+      console.error('Failed to load report history:', err);
+      setReportHistory([]);
     }
   }
 
@@ -642,6 +673,13 @@ export function Reports() {
                   {t('common.cancel') || 'Kapat'}
                 </button>
                 <button
+                  onClick={() => setShowHistoryModal(true)}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
+                >
+                  <History className="w-4 h-4" />
+                  {t('reports.history') || 'Geçmiş'}
+                </button>
+                <button
                   onClick={handleDeleteReport}
                   disabled={isDeleting}
                   className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
@@ -656,6 +694,103 @@ export function Reports() {
                   {t('common.save')}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showHistoryModal && selectedReport && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 shadow-xl backdrop-blur-md max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-slate-700 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <History className="w-6 h-6 text-blue-400" />
+                <div>
+                  <h2 className="text-xl font-semibold text-white">{t('reports.changeHistory') || 'Değişiklik Geçmişi'}</h2>
+                  <p className="text-sm text-slate-400">{selectedReport.incident_number}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowHistoryModal(false)}
+                className="text-slate-400 hover:text-slate-300"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {reportHistory.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-slate-400">{t('reports.noHistoryFound') || 'Değişiklik geçmişi bulunamadı'}</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {reportHistory.map((item) => (
+                    <div key={item.id} className="bg-slate-900/50 rounded-lg p-4 border border-slate-700">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <p className="font-semibold text-slate-100">
+                            {item.changed_by_user_name}
+                          </p>
+                          <p className="text-sm text-slate-400">
+                            {new Date(item.created_at).toLocaleDateString('tr-TR', {
+                              day: '2-digit',
+                              month: 'long',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit',
+                            })}
+                          </p>
+                        </div>
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          item.action === 'CREATE'
+                            ? 'bg-green-100 text-green-800'
+                            : item.action === 'UPDATE'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {item.action === 'CREATE' ? t('reports.created') || 'Oluşturuldu' :
+                           item.action === 'UPDATE' ? t('reports.updated') || 'Güncellendi' : item.action}
+                        </span>
+                      </div>
+
+                      <p className="text-slate-100 mb-2">
+                        {item.change_description}
+                      </p>
+
+                      {item.field_name && (
+                        <div className="text-sm space-y-1 bg-slate-800/50 p-2 rounded border border-slate-700">
+                          <p className="text-slate-400">
+                            <span className="font-medium">{t('reports.field') || 'Alan'}:</span> {item.field_name}
+                          </p>
+                          {item.old_value && (
+                            <p className="text-slate-400">
+                              <span className="font-medium">{t('reports.oldValue') || 'Eski Değer'}:</span>{' '}
+                              <span className="text-red-400 line-through">{item.old_value}</span>
+                            </p>
+                          )}
+                          {item.new_value && (
+                            <p className="text-slate-400">
+                              <span className="font-medium">{t('reports.newValue') || 'Yeni Değer'}:</span>{' '}
+                              <span className="text-green-400">{item.new_value}</span>
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t border-slate-700 flex gap-3">
+              <button
+                onClick={() => setShowHistoryModal(false)}
+                className="flex-1 px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
+              >
+                {t('common.close') || 'Kapat'}
+              </button>
             </div>
           </div>
         </div>

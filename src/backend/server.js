@@ -130,6 +130,23 @@ async function logAction(userId, action, details = {}) {
   }
 }
 
+// Rapor değişiklik geçmişini kayıt etmek için yardımcı fonksiyon
+async function recordReportHistory(reportId, userId, userName, action, fieldName, oldValue, newValue, description = null) {
+  try {
+    const connection = await pool.getConnection();
+    await connection.query(
+      `INSERT INTO report_history
+       (id, report_id, changed_by_user_id, changed_by_user_name, action, field_name, old_value, new_value, change_description)
+       VALUES (UUID(), ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [reportId, userId, userName, action, fieldName, oldValue, newValue, description]
+    );
+    connection.release();
+  } catch (error) {
+    console.error('Rapor geçmiş kayıt hatası:', error);
+    // Geçmiş kaydının başarısız olması işlemi durdurmamalı
+  }
+}
+
 // ==================== TURNSTILE VERIFICATION ====================
 
 // Cloudflare Turnstile token doğrulama
@@ -834,6 +851,10 @@ app.post('/api/reports', async (req, res) => {
       email_recipients: recipientNames.length > 0 ? recipientNames.join(', ') : 'Yok'
     });
 
+    // Rapor oluşturma geçmişini kaydet (sistem tarafından oluşturuldu)
+    await recordReportHistory(id, null, 'Sistem', 'CREATE', null, null, null,
+      `Rapor oluşturuldu - Başlayan: ${full_name}, Kategori: ${category}`);
+
     connection.release();
     res.json({
       success: true,
@@ -853,13 +874,78 @@ app.put('/api/reports/:id', authenticateToken, adminOnly, async (req, res) => {
     const { status, internal_notes } = req.body;
 
     const connection = await pool.getConnection();
+
+    // Rapor güncellemeden önce eski değerleri al
+    const [oldReportRows] = await connection.query(
+      'SELECT status, internal_notes FROM near_miss_reports WHERE id = ?',
+      [id]
+    );
+
+    if (oldReportRows.length === 0) {
+      connection.release();
+      return res.status(404).json({ error: 'Rapor bulunamadı' });
+    }
+
+    const oldReport = oldReportRows[0];
+    const changes = [];
+
+    // Durum değişikliğini takip et
+    if (status !== undefined && status !== oldReport.status) {
+      changes.push({
+        field: 'status',
+        old: oldReport.status,
+        new: status,
+        description: `Durum değiştirildi: ${oldReport.status} → ${status}`
+      });
+    }
+
+    // Notlar değişikliğini takip et
+    if (internal_notes !== undefined && internal_notes !== oldReport.internal_notes) {
+      changes.push({
+        field: 'internal_notes',
+        old: oldReport.internal_notes || '',
+        new: internal_notes || '',
+        description: `Not eklendi/değiştirildi`
+      });
+    }
+
+    // Rapor güncelle
     const [result] = await connection.query(
       'UPDATE near_miss_reports SET status = ?, internal_notes = ? WHERE id = ?',
       [status, internal_notes, id]
     );
+
+    // Her değişiklik için geçmiş kaydı oluştur
+    for (const change of changes) {
+      await recordReportHistory(
+        id,
+        req.user.id,
+        req.user.full_name,
+        'UPDATE',
+        change.field,
+        change.old,
+        change.new,
+        change.description
+      );
+    }
+
+    // Sistem loglarına kaydet
+    if (changes.length > 0) {
+      await logAction(req.user.id, 'UPDATE_REPORT', {
+        report_id: id,
+        user_name: req.user.full_name,
+        changes: changes.map(c => c.description)
+      });
+    }
+
     connection.release();
 
-    res.json({ success: true, changes: result.affectedRows });
+    res.json({
+      success: true,
+      changes: result.affectedRows,
+      changeCount: changes.length,
+      changeDetails: changes
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -897,6 +983,28 @@ app.delete('/api/reports/:id', authenticateToken, adminOnly, async (req, res) =>
     connection.release();
 
     res.json({ success: true, message: 'Rapor başarıyla silindi' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get Report History
+app.get('/api/reports/:id/history', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const connection = await pool.getConnection();
+    const [history] = await connection.query(
+      `SELECT id, report_id, changed_by_user_id, changed_by_user_name, action,
+              field_name, old_value, new_value, change_description, created_at
+       FROM report_history
+       WHERE report_id = ?
+       ORDER BY created_at DESC`,
+      [id]
+    );
+    connection.release();
+
+    res.json(history);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
