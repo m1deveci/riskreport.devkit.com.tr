@@ -261,7 +261,14 @@ export function Reports() {
         throw new Error(t('messages.errorDelete'));
       }
 
-      await logAction(LogActions.DELETE_NEARMISS, { report_id: selectedReport.id });
+      // Detaylı bilgileri logla
+      await logAction(LogActions.DELETE_NEARMISS, {
+        report_id: selectedReport.id,
+        incident_number: selectedReport.incident_number,
+        report_title: selectedReport.title || `${selectedReport.category} - ${selectedReport.reporter_name}`,
+        category: selectedReport.category,
+        reporter_name: selectedReport.reporter_name,
+      });
       await loadData();
       setShowDetailModal(false);
     } catch (err) {

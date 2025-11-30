@@ -101,9 +101,16 @@ export function Locations() {
     if (!confirm(t('messages.confirmDeleteLocation'))) return;
 
     try {
+      // Silmeden önce lokasyon bilgilerini al
+      const locationToDelete = locations.find(l => l.id === id);
+
       await api.locations.delete(id);
 
-      await logAction(LogActions.DELETE_LOCATION, { location_id: id });
+      // Detaylı bilgileri logla
+      await logAction(LogActions.DELETE_LOCATION, {
+        location_id: id,
+        location_name: locationToDelete?.name,
+      });
       await loadLocations();
     } catch (err) {
       console.error('Failed to delete location:', err);

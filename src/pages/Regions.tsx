@@ -138,9 +138,18 @@ export function Regions() {
     if (!confirm(t('messages.confirmDeleteRegion'))) return;
 
     try {
+      // Silmeden önce bölge bilgilerini al
+      const regionToDelete = regions.find(r => r.id === id);
+
       await api.regions.delete(id);
 
-      await logAction(LogActions.DELETE_REGION, { region_id: id });
+      // Detaylı bilgileri logla
+      await logAction(LogActions.DELETE_REGION, {
+        region_id: id,
+        region_name: regionToDelete?.name,
+        location_id: regionToDelete?.location_id,
+        location_name: (regionToDelete?.locations as unknown as { name: string })?.name,
+      });
       await loadData();
     } catch (err) {
       console.error('Failed to delete region:', err);

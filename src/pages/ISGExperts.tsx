@@ -136,9 +136,17 @@ export function ISGExperts() {
     if (!confirm('Bu İSG uzmanını silmek istediğinize emin misiniz?')) return;
 
     try {
+      // Silmeden önce uzman bilgilerini al
+      const expertToDelete = experts.find(e => e.id === id);
+
       await api.experts.delete(id);
 
-      await logAction(LogActions.DELETE_ISG_EXPERT, { expert_id: id });
+      // Detaylı bilgileri logla
+      await logAction(LogActions.DELETE_ISG_EXPERT, {
+        expert_id: id,
+        expert_name: expertToDelete?.full_name,
+        expert_email: expertToDelete?.email,
+      });
       await loadData();
     } catch (err) {
       console.error('Failed to delete expert:', err);

@@ -186,9 +186,18 @@ export function Users() {
     if (!confirm(t('messages.confirmDeleteUser') || 'Bu kullanıcıyı silmek istediğinize emin misiniz?')) return;
 
     try {
+      // Silmeden önce kullanıcı bilgilerini al
+      const userToDelete = users.find(u => u.id === id);
+
       await api.users.delete(id);
 
-      await logAction(LogActions.DELETE_USER, { user_id: id });
+      // Detaylı bilgileri logla
+      await logAction(LogActions.DELETE_USER, {
+        user_id: id,
+        user_name: userToDelete?.full_name,
+        user_email: userToDelete?.email,
+        user_role: userToDelete?.role,
+      });
       await loadData();
     } catch (err) {
       console.error('Failed to delete user:', err);
