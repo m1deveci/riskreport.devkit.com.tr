@@ -133,50 +133,83 @@ export async function sendNearMissReportEmail(recipients, reportData, locationNa
       to: recipients.join(','),
       subject: `Ramak Kala Bildirim - ${reportData.incident_number}`,
       html: `
-        <div style="font-family: Arial, sans-serif; direction: rtl; text-align: right;">
-          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 5px; margin-bottom: 20px;">
-            <h2 style="color: #d9534f; margin: 0 0 15px 0;">🚨 Yeni Ramak Kala Bildirimi</h2>
-            <p style="margin: 5px 0; color: #666;">Lokasyon: <strong>${locationName}</strong></p>
-            <p style="margin: 5px 0; color: #666;">Olay No: <strong>${reportData.incident_number}</strong></p>
-          </div>
-
-          <div style="border: 1px solid #ddd; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-            <h3 style="color: #333; margin-top: 0;">Bildirim Detayları</h3>
-
-            <div style="margin-bottom: 15px;">
-              <p style="margin: 5px 0; font-weight: bold; color: #333;">Başlayan Kişi:</p>
-              <p style="margin: 5px 0; color: #666;">${reportData.full_name}</p>
-            </div>
-
-            <div style="margin-bottom: 15px;">
-              <p style="margin: 5px 0; font-weight: bold; color: #333;">İletişim:</p>
-              <p style="margin: 5px 0; color: #666;">${reportData.phone || 'Belirtilmemiş'}</p>
-            </div>
-
-            <div style="margin-bottom: 15px;">
-              <p style="margin: 5px 0; font-weight: bold; color: #333;">Kategori:</p>
-              <p style="margin: 5px 0; color: #666;">${reportData.category}</p>
-            </div>
-
-            <div style="margin-bottom: 15px;">
-              <p style="margin: 5px 0; font-weight: bold; color: #333;">Açıklama:</p>
-              <p style="margin: 5px 0; color: #666; white-space: pre-wrap;">${reportData.description || '-'}</p>
-            </div>
-
-            <div style="margin-bottom: 15px;">
-              <p style="margin: 5px 0; font-weight: bold; color: #333;">Bildirim Tarihi:</p>
-              <p style="margin: 5px 0; color: #666;">${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTimeString('tr-TR')}</p>
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; direction: rtl; text-align: right; line-height: 1.6; color: #2c3e50; margin: 0; padding: 0;">
+          <!-- Header -->
+          <div style="background: linear-gradient(135deg, #d32f2f 0%, #e53935 100%); padding: 40px 30px; border-radius: 8px 8px 0 0; margin-bottom: 0;">
+            <div style="max-width: 600px; margin: 0 auto;">
+              <p style="margin: 0 0 10px 0; font-size: 13px; color: rgba(255,255,255,0.9); text-transform: uppercase; letter-spacing: 1px;">🚨 Acil Bildirim</p>
+              <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: white;">Yeni Ramak Kala Bildirimi</h1>
             </div>
           </div>
 
-          <div style="background-color: #e8f4f8; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-            <p style="margin: 0;">Lütfen <a href="https://riskreport.devkit.com.tr/#/logs" style="color: #0275d8; text-decoration: none; font-weight: bold;">Sistem Logları</a> sayfasında bu bildirim hakkında detaylı bilgileri görebilirsiniz.</p>
-          </div>
+          <!-- Main Container -->
+          <div style="background-color: #ffffff; max-width: 600px; margin: 0 auto; padding: 0; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
 
-          <hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">
-          <p style="color: #999; font-size: 12px; margin: 10px 0;">
-            Risk Report Sistemi - Ramak Kala Yönetimi
-          </p>
+            <!-- Location & Incident Info -->
+            <div style="background: linear-gradient(90deg, #f5f7fa 0%, #ffffff 100%); padding: 25px 30px; border-bottom: 2px solid #f0f0f0;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                  <td style="padding: 8px 0; border-bottom: 1px solid #eee;">
+                    <p style="margin: 0; font-size: 12px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px;">📍 Lokasyon</p>
+                    <p style="margin: 5px 0 0 0; font-size: 16px; font-weight: 600; color: #2c3e50;">${locationName}</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding: 8px 0;">
+                    <p style="margin: 0; font-size: 12px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px;">🔢 Olay No</p>
+                    <p style="margin: 5px 0 0 0; font-size: 16px; font-weight: 600; color: #d32f2f; font-family: 'Courier New', monospace;">${reportData.incident_number}</p>
+                  </td>
+                </tr>
+              </table>
+            </div>
+
+            <!-- Details Cards -->
+            <div style="padding: 30px;">
+              <!-- Başlayan Kişi -->
+              <div style="margin-bottom: 20px; background: #fafbfc; padding: 15px; border-right: 4px solid #d32f2f; border-radius: 4px;">
+                <p style="margin: 0 0 8px 0; font-size: 11px; color: #95a5a6; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">👤 Başlayan Kişi</p>
+                <p style="margin: 0; font-size: 15px; color: #2c3e50; font-weight: 500;">${reportData.full_name}</p>
+              </div>
+
+              <!-- İletişim -->
+              <div style="margin-bottom: 20px; background: #fafbfc; padding: 15px; border-right: 4px solid #f39c12; border-radius: 4px;">
+                <p style="margin: 0 0 8px 0; font-size: 11px; color: #95a5a6; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">📞 İletişim</p>
+                <p style="margin: 0; font-size: 15px; color: #2c3e50; font-weight: 500;">${reportData.phone || 'Belirtilmemiş'}</p>
+              </div>
+
+              <!-- Kategori -->
+              <div style="margin-bottom: 20px; background: #fafbfc; padding: 15px; border-right: 4px solid #3498db; border-radius: 4px;">
+                <p style="margin: 0 0 8px 0; font-size: 11px; color: #95a5a6; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">📋 Kategori</p>
+                <p style="margin: 0; font-size: 15px; color: #2c3e50; font-weight: 500; background: #e8f4f8; padding: 8px 12px; border-radius: 4px; display: inline-block;">${reportData.category}</p>
+              </div>
+
+              <!-- Açıklama -->
+              <div style="margin-bottom: 20px; background: #fafbfc; padding: 15px; border-right: 4px solid #27ae60; border-radius: 4px;">
+                <p style="margin: 0 0 8px 0; font-size: 11px; color: #95a5a6; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">📝 Açıklama</p>
+                <p style="margin: 0; font-size: 14px; color: #34495e; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;">${reportData.description || '-'}</p>
+              </div>
+
+              <!-- Tarih -->
+              <div style="background: #fafbfc; padding: 15px; border-right: 4px solid #9b59b6; border-radius: 4px;">
+                <p style="margin: 0 0 8px 0; font-size: 11px; color: #95a5a6; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">⏰ Bildirim Tarihi</p>
+                <p style="margin: 0; font-size: 15px; color: #2c3e50; font-weight: 500;">${new Date().toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' })} - ${new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</p>
+              </div>
+            </div>
+
+            <!-- CTA Section -->
+            <div style="background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%); padding: 25px 30px; border-top: 2px solid #f0f0f0; text-align: center;">
+              <p style="margin: 0 0 15px 0; font-size: 14px; color: #2c3e50;">Detaylı bilgi ve yönetim için Sistem Logları sayfasını ziyaret edin:</p>
+              <a href="https://riskreport.devkit.com.tr/#/logs" style="display: inline-block; background: linear-gradient(135deg, #d32f2f 0%, #e53935 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: 600; font-size: 14px; box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);">
+                → Detayları Göster
+              </a>
+            </div>
+
+            <!-- Footer -->
+            <div style="background-color: #2c3e50; color: rgba(255,255,255,0.8); padding: 20px 30px; text-align: center; border-radius: 0 0 8px 8px;">
+              <p style="margin: 0 0 5px 0; font-size: 12px;">Risk Report Sistemi</p>
+              <p style="margin: 0; font-size: 11px; opacity: 0.7;">Ramak Kala (Near-Miss) Yönetim Platformu</p>
+            </div>
+          </div>
         </div>
       `,
       text: `Yeni Ramak Kala Bildirimi\n\nOlay No: ${reportData.incident_number}\nLokasyon: ${locationName}\nBaşlayan Kişi: ${reportData.full_name}\nKategori: ${reportData.category}\n\nDetaylı bilgi için: https://riskreport.devkit.com.tr/#/logs`,
