@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { signIn } from '../lib/auth';
 import { useI18n, LANGUAGES } from '../lib/i18n';
 import { Loader2, AlertCircle, Globe } from 'lucide-react';
+import Turnstile from 'react-turnstile';
 
 interface LoginPageProps {
   onLogin: () => void;
@@ -20,6 +21,8 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string>('');
+  const turnstileRef = useRef<any>(null);
 
   useEffect(() => {
     fetchSettings();
@@ -40,13 +43,24 @@ export function LoginPage({ onLogin }: LoginPageProps) {
     setLoading(true);
     setError('');
 
+    if (!turnstileToken) {
+      setError('Lütfen Turnstile doğrulamasını tamamlayın');
+      setLoading(false);
+      return;
+    }
+
     try {
-      await signIn(email, password);
+      await signIn(email, password, turnstileToken);
       onLogin();
     } catch (err: unknown) {
       const errorMessage =
         err instanceof Error ? err.message : t('auth.loginError');
       setError(errorMessage);
+      // Reset Turnstile on error
+      if (turnstileRef.current) {
+        turnstileRef.current.reset();
+      }
+      setTurnstileToken('');
     } finally {
       setLoading(false);
     }
@@ -158,9 +172,22 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             </div>
           </div>
 
+          <div className="flex justify-center">
+            <Turnstile
+              ref={turnstileRef}
+              sitekey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+              onVerify={(token) => setTurnstileToken(token)}
+              onError={() => {
+                setTurnstileToken('');
+                setError('Turnstile doğrulaması başarısız oldu');
+              }}
+              theme="light"
+            />
+          </div>
+
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || !turnstileToken}
             className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
             {loading ? (

@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { api, supabase } from '../lib/supabase';
 import { AlertCircle, CheckCircle2, Loader2, Camera, X } from 'lucide-react';
+import Turnstile from 'react-turnstile';
 
 interface NearMissFormProps {
   locationId: string;
@@ -39,6 +40,8 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
   const [region, setRegion] = useState<Region | null>(null);
   const [location, setLocation] = useState<Location | null>(null);
   const [siteTitle, setSiteTitle] = useState('Ramak Kala Sistemi');
+  const [turnstileToken, setTurnstileToken] = useState<string>('');
+  const turnstileRef = useRef<any>(null);
 
   const [formData, setFormData] = useState({
     full_name: '',
@@ -224,6 +227,12 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
     setLoading(true);
     setError('');
 
+    if (!turnstileToken) {
+      setError('Lütfen Turnstile doğrulamasını tamamlayın');
+      setLoading(false);
+      return;
+    }
+
     try {
       if (!formData.full_name.trim()) {
         throw new Error('Ad Soyad alanı zorunludur');
@@ -276,6 +285,7 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
           description: formData.description.trim(),
           image_path: imagePath,
           status: 'Yeni',
+          turnstileToken,
         }),
       });
 
@@ -289,6 +299,11 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Bir hata oluştu';
       setError(errorMessage);
+      // Reset Turnstile on error
+      if (turnstileRef.current) {
+        turnstileRef.current.reset();
+      }
+      setTurnstileToken('');
     } finally {
       setLoading(false);
     }
@@ -497,9 +512,22 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
               </p>
             </div>
 
+            <div className="flex justify-center">
+              <Turnstile
+                ref={turnstileRef}
+                sitekey={import.meta.env.VITE_TURNSTILE_SITE_KEY}
+                onVerify={(token) => setTurnstileToken(token)}
+                onError={() => {
+                  setTurnstileToken('');
+                  setError('Turnstile doğrulaması başarısız oldu');
+                }}
+                theme="light"
+              />
+            </div>
+
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !turnstileToken}
               className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg hover:bg-blue-700 transition-colors font-medium text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
             >
               {loading ? (

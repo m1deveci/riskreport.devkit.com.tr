@@ -9,12 +9,12 @@ export interface UserProfile {
   location_ids?: string[];
 }
 
-export async function signIn(email: string, password: string) {
+export async function signIn(email: string, password: string, turnstileToken?: string) {
   try {
     const res = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, turnstileToken }),
     });
 
     if (!res.ok) {

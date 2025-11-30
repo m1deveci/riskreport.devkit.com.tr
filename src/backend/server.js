@@ -122,15 +122,58 @@ async function logAction(userId, action, details = {}) {
   }
 }
 
+// ==================== TURNSTILE VERIFICATION ====================
+
+// Cloudflare Turnstile token doğrulama
+async function verifyTurnstile(token) {
+  try {
+    const secretKey = process.env.TURNSTILE_SECRET_KEY;
+    if (!secretKey) {
+      console.warn('TURNSTILE_SECRET_KEY ortam değişkeni ayarlanmamış');
+      return false;
+    }
+
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        secret: secretKey,
+        response: token,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('Turnstile doğrulama hatası:', response.status);
+      return false;
+    }
+
+    const data = await response.json();
+    return data.success === true;
+  } catch (error) {
+    console.error('Turnstile doğrulama hatası:', error);
+    return false;
+  }
+}
+
 // ==================== AUTH ENDPOINTS ====================
 
 // Login Endpoint - JWT Token Oluştur
 app.post('/api/auth/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, turnstileToken } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email ve şifre gereklidir' });
+    }
+
+    // Turnstile doğrulaması
+    if (turnstileToken) {
+      const isTurnstileValid = await verifyTurnstile(turnstileToken);
+      if (!isTurnstileValid) {
+        return res.status(400).json({ error: 'Turnstile doğrulaması başarısız oldu. Lütfen tekrar deneyin.' });
+      }
     }
 
     const connection = await pool.getConnection();
@@ -635,10 +678,18 @@ app.get('/api/reports/:locationId', async (req, res) => {
 
 app.post('/api/reports', async (req, res) => {
   try {
-    const { location_id, region_id, full_name, phone, category, description, image_path } = req.body;
+    const { location_id, region_id, full_name, phone, category, description, image_path, turnstileToken } = req.body;
 
     if (!location_id || !region_id || !full_name || !category) {
       return res.status(400).json({ error: 'Gerekli alanlar eksik' });
+    }
+
+    // Turnstile doğrulaması
+    if (turnstileToken) {
+      const isTurnstileValid = await verifyTurnstile(turnstileToken);
+      if (!isTurnstileValid) {
+        return res.status(400).json({ error: 'Turnstile doğrulaması başarısız oldu. Lütfen tekrar deneyin.' });
+      }
     }
 
     const connection = await pool.getConnection();
