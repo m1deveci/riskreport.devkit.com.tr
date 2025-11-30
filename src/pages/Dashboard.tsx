@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api, supabase } from '../lib/supabase';
+import { useI18n, useLanguageChange } from '../lib/i18n';
 import { MapPin, AlertTriangle, TrendingUp, Calendar, Zap, Building2, BarChart3, Clock, Lock } from 'lucide-react';
 import type { UserProfile } from '../lib/auth';
 
@@ -20,6 +21,7 @@ interface Stats {
 }
 
 export function Dashboard() {
+  const { t } = useI18n();
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [stats, setStats] = useState<Stats>({
     totalLocations: 0,
@@ -34,6 +36,9 @@ export function Dashboard() {
   useEffect(() => {
     loadStats();
   }, []);
+
+  // Dil değişiminde sayfayı yeniden render et
+  useLanguageChange();
 
   async function loadStats() {
     try {

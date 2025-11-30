@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import tr from './translations/tr.json';
 import en from './translations/en.json';
 import de from './translations/de.json';
@@ -70,11 +70,19 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useLanguageChange(callback: (lang: Language) => void) {
+export function useLanguageChange(callback?: (lang: Language) => void) {
+  const [, setTrigger] = useState(0);
+
   useEffect(() => {
     const handleLanguageChange = (event: Event) => {
       if (event instanceof CustomEvent) {
-        callback(event.detail.language);
+        const newLang = event.detail.language as Language;
+        // Force re-render
+        setTrigger(prev => prev + 1);
+        // Call custom callback if provided
+        if (callback) {
+          callback(newLang);
+        }
       }
     };
 
