@@ -56,10 +56,16 @@ export function Users() {
         api.users.getList(),
         api.locations.getList(),
       ]);
-      setUsers(usersData || []);
-      setLocations(locationsData || []);
+
+      // Ensure data is array
+      setUsers(Array.isArray(usersData) ? usersData : []);
+      setLocations(Array.isArray(locationsData) ? locationsData : []);
     } catch (err) {
       console.error('Failed to load data:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Veri yüklenirken hata oluştu';
+      setError(errorMessage);
+      setUsers([]);
+      setLocations([]);
     } finally {
       setLoading(false);
     }
@@ -250,6 +256,14 @@ export function Users() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 -my-6 px-6 py-6">
+      {error && (
+        <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4 rounded">
+          <div className="flex">
+            <AlertCircle className="w-5 h-5 text-red-600 mr-3 flex-shrink-0" />
+            <p className="text-sm text-red-700">{error}</p>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-bold text-white">Kullanıcı Yönetimi</h1>

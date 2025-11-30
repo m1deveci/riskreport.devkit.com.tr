@@ -25,6 +25,11 @@ async function apiFetch(endpoint: string, options: RequestInit = {}) {
     headers,
   });
 
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+    throw new Error(error.error || `API Error: ${response.status}`);
+  }
+
   return response;
 }
 
