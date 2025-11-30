@@ -13,7 +13,11 @@
     "success": "Başarılı",
     "close": "Kapat",
     "active": "Aktif",
-    "inactive": "Pasif"
+    "inactive": "Pasif",
+    "actions": "İşlemler",
+    "all": "Tümü",
+    "unknown": "Bilinmiyor",
+    "deleting": "Siliniyor..."
   },
   "auth": {
     "login": "Giriş",
@@ -62,6 +66,7 @@
   },
   "users": {
     "title": "Kullanıcılar ve İSG Uzmanları",
+    "subtitle": "Sistem kullanıcılarını yönetin",
     "addNew": "Yeni Kullanıcı Ekle",
     "fullName": "Ad Soyad",
     "email": "E-posta",
@@ -71,11 +76,27 @@
     "admin": "Admin",
     "isgExpert": "İSG Uzmanı",
     "viewer": "Görüntüleyici",
-    "resetPassword": "Parolayı Sıfırla",
+    "resetPassword": "Parola Sıfırla",
     "manualReset": "Manuel Sıfırla",
     "password": "Parola",
     "locations": "Lokasyonlar",
-    "isActive": "Aktif"
+    "isActive": "Aktif",
+    "registrationDate": "Kayıt Tarihi",
+    "noLocationsAssigned": "Hiç lokasyon atanmamış",
+    "neverLoggedIn": "Hiç giriş yapmadı",
+    "noUsers": "Henüz kullanıcı yok",
+    "createFirstUser": "İlk kullanıcıyı oluşturarak başlayın",
+    "editUser": "Kullanıcıyı Düzenle",
+    "roleAdmin": "Admin",
+    "roleExpert": "İSG Uzmanı",
+    "roleViewer": "Görüntüleyici",
+    "minCharacters": "En az 8 karakter",
+    "minCharactersPlaceholder": "(Minimum 8 karakter)",
+    "selectAtLeastOneLocation": "En az bir lokasyon seçiniz",
+    "newPassword": "Yeni Parola",
+    "passwordChangeWarning": "Yeni parola otomatik olarak oluşturulacak ve kullanıcı e-posta ile bilgilendirilecektir",
+    "changePassword": "Parola Değiştir",
+    "noLocations": "Hiç Lokasyon Yok"
   },
   "logs": {
     "title": "Sistem Logları",
@@ -155,22 +176,32 @@
     "confirmDeleteLocation": "Bu lokasyonu silmek istediğinize emin misiniz?",
     "confirmDeleteRegion": "Bu bölgeyi silmek istediğinize emin misiniz?",
     "confirmDeleteReport": "Bu raporu silmek istediğinize emin misiniz?",
+    "confirmDeleteUser": "Bu kullanıcıyı silmek istediğinize emin misiniz?",
     "qrCodeError": "QR kod oluşturulurken bir hata oluştu",
     "backupDownloaded": "Veritabanı yedeği başarıyla indirildi: {filename}",
     "backupInProgress": "Yedekleme işlemi devam ediyor..."
   },
   "regions": {
     "title": "Bölgeler",
+    "subtitle": "QR kodlu bölgeleri yönetin",
     "addNew": "Yeni Bölge Ekle",
     "name": "Ad",
     "location": "Lokasyon",
     "description": "Açıklama",
     "active": "Aktif",
     "qrCode": "QR Kod",
-    "created": "Oluşturuldu"
+    "created": "Oluşturuldu",
+    "filterByLocation": "Lokasyona Göre Filtrele",
+    "allLocations": "Tüm Lokasyonlar",
+    "noRegions": "Henüz bölge yok",
+    "createFirstRegion": "İlk bölgenizi oluşturarak başlayın",
+    "selectLocation": "Lokasyon Seçin",
+    "qrCodeUrl": "QR Kod URL",
+    "downloadQr": "QR Kodu İndir"
   },
   "reports": {
     "title": "Ramak Kala Raporları",
+    "subtitle": "Tüm ramak kala bildirimlerini görüntüleyin ve yönetin",
     "search": "Rapor ara...",
     "filter": "Filtrele",
     "category": "Kategori",
@@ -186,6 +217,19 @@
     "phone": "Telefon",
     "description": "Açıklama",
     "viewDetails": "Detayları Gör",
-    "name": "Ad Soyad"
+    "name": "Ad Soyad",
+    "clearFilters": "Filtreleri Temizle",
+    "reportsFound": "rapor bulundu",
+    "locationRegion": "Lokasyon / Bölge",
+    "noReportsFound": "Rapor bulunamadı",
+    "tryDifferentFilters": "Filtreleri değiştirerek tekrar deneyin",
+    "reportDetail": "Rapor Detayı",
+    "incidentNumber": "Olay No",
+    "reportImage": "Rapor Görseli",
+    "uploadedImage": "Yüklü Görsel",
+    "downloadImage": "Görseli İndir",
+    "fullSize": "Tam Boyut",
+    "noDescription": "Açıklama yok",
+    "notesPlaceholder": "Rapor hakkında notlarınızı buraya ekleyin..."
   }
 }

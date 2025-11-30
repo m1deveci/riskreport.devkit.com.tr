@@ -13,7 +13,11 @@
     "success": "Succes",
     "close": "Sluiten",
     "active": "Actief",
-    "inactive": "Inactief"
+    "inactive": "Inactief",
+    "actions": "Acties",
+    "all": "Alles",
+    "unknown": "Onbekend",
+    "deleting": "Wordt verwijderd..."
   },
   "auth": {
     "login": "Aanmelden",
@@ -62,6 +66,7 @@
   },
   "users": {
     "title": "Gebruikers en ISG-Experts",
+    "subtitle": "Systeemgebruikers beheren",
     "addNew": "Nieuwe Gebruiker Toevoegen",
     "fullName": "Volledige Naam",
     "email": "E-mail",
@@ -75,7 +80,23 @@
     "manualReset": "Handmatig Herstellen",
     "password": "Wachtwoord",
     "locations": "Locaties",
-    "isActive": "Actief"
+    "isActive": "Actief",
+    "registrationDate": "Registratiedatum",
+    "noLocationsAssigned": "Geen locaties toegewezen",
+    "neverLoggedIn": "Nooit aangemeld",
+    "noUsers": "Nog geen gebruikers",
+    "createFirstUser": "Maak uw eerste gebruiker aan om te beginnen",
+    "editUser": "Gebruiker bewerken",
+    "roleAdmin": "Beheerder",
+    "roleExpert": "ISG-Expert",
+    "roleViewer": "Viewer",
+    "minCharacters": "Minimaal 8 tekens",
+    "minCharactersPlaceholder": "(Minimaal 8 tekens)",
+    "selectAtLeastOneLocation": "Selecteer minstens één locatie",
+    "newPassword": "Nieuw wachtwoord",
+    "passwordChangeWarning": "Er wordt automatisch een nieuw wachtwoord gegenereerd en de gebruiker wordt per e-mail op de hoogte gesteld",
+    "changePassword": "Wachtwoord wijzigen",
+    "noLocations": "Geen locaties"
   },
   "logs": {
     "title": "Systeemlogboeken",
@@ -155,22 +176,32 @@
     "confirmDeleteLocation": "Weet u zeker dat u deze locatie wilt verwijderen?",
     "confirmDeleteRegion": "Weet u zeker dat u deze regio wilt verwijderen?",
     "confirmDeleteReport": "Weet u zeker dat u dit rapport wilt verwijderen?",
+    "confirmDeleteUser": "Weet u zeker dat u deze gebruiker wilt verwijderen?",
     "qrCodeError": "Fout bij het genereren van QR-code",
     "backupDownloaded": "Databaseback-up succesvol gedownload: {filename}",
     "backupInProgress": "Back-up wordt gemaakt..."
   },
   "regions": {
     "title": "Regio's",
+    "subtitle": "Beheer regio's met QR-codes",
     "addNew": "Nieuwe Regio Toevoegen",
     "name": "Naam",
     "location": "Locatie",
     "description": "Beschrijving",
     "active": "Actief",
     "qrCode": "QR-Code",
-    "created": "Gemaakt"
+    "created": "Gemaakt",
+    "filterByLocation": "Filteren op locatie",
+    "allLocations": "Alle locaties",
+    "noRegions": "Nog geen regio's",
+    "createFirstRegion": "Maak uw eerste regio aan om te beginnen",
+    "selectLocation": "Locatie selecteren",
+    "qrCodeUrl": "QR-Code URL",
+    "downloadQr": "QR-code downloaden"
   },
   "reports": {
     "title": "Bijna-Ongevallen Rapporten",
+    "subtitle": "Bekijk en beheer alle bijna-ongelukken",
     "search": "Rapporten zoeken...",
     "filter": "Filteren",
     "category": "Categorie",
@@ -186,6 +217,19 @@
     "phone": "Telefoon",
     "description": "Beschrijving",
     "viewDetails": "Details Bekijken",
-    "name": "Volledige Naam"
+    "name": "Volledige Naam",
+    "clearFilters": "Filters wissen",
+    "reportsFound": "rapporten gevonden",
+    "locationRegion": "Locatie / Regio",
+    "noReportsFound": "Geen rapporten gevonden",
+    "tryDifferentFilters": "Probeer andere filters",
+    "reportDetail": "Rapportdetails",
+    "incidentNumber": "Incident-nr.",
+    "reportImage": "Rapportafbeelding",
+    "uploadedImage": "Geüploade afbeelding",
+    "downloadImage": "Afbeelding downloaden",
+    "fullSize": "Volledige grootte",
+    "noDescription": "Geen beschrijving",
+    "notesPlaceholder": "Voeg uw notities over dit rapport hier in..."
   }
 }

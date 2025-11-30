@@ -13,7 +13,11 @@
     "success": "Success",
     "close": "Close",
     "active": "Active",
-    "inactive": "Inactive"
+    "inactive": "Inactive",
+    "actions": "Actions",
+    "all": "All",
+    "unknown": "Unknown",
+    "deleting": "Deleting..."
   },
   "auth": {
     "login": "Login",
@@ -62,6 +66,7 @@
   },
   "users": {
     "title": "Users and ISG Experts",
+    "subtitle": "Manage system users",
     "addNew": "Add New User",
     "fullName": "Full Name",
     "email": "Email",
@@ -75,7 +80,23 @@
     "manualReset": "Manual Reset",
     "password": "Password",
     "locations": "Locations",
-    "isActive": "Active"
+    "isActive": "Active",
+    "registrationDate": "Registration Date",
+    "noLocationsAssigned": "No locations assigned",
+    "neverLoggedIn": "Never logged in",
+    "noUsers": "No users yet",
+    "createFirstUser": "Create your first user to start",
+    "editUser": "Edit User",
+    "roleAdmin": "Admin",
+    "roleExpert": "ISG Expert",
+    "roleViewer": "Viewer",
+    "minCharacters": "At least 8 characters",
+    "minCharactersPlaceholder": "(Minimum 8 characters)",
+    "selectAtLeastOneLocation": "Select at least one location",
+    "newPassword": "New Password",
+    "passwordChangeWarning": "A new password will be auto-generated and the user will be notified via email",
+    "changePassword": "Change Password",
+    "noLocations": "No Locations"
   },
   "logs": {
     "title": "System Logs",
@@ -155,22 +176,32 @@
     "confirmDeleteLocation": "Are you sure you want to delete this location?",
     "confirmDeleteRegion": "Are you sure you want to delete this region?",
     "confirmDeleteReport": "Are you sure you want to delete this report?",
+    "confirmDeleteUser": "Are you sure you want to delete this user?",
     "qrCodeError": "An error occurred while generating QR code",
     "backupDownloaded": "Database backup successfully downloaded: {filename}",
     "backupInProgress": "Backup in progress..."
   },
   "regions": {
     "title": "Regions",
+    "subtitle": "Manage regions with QR codes",
     "addNew": "Add New Region",
     "name": "Name",
     "location": "Location",
     "description": "Description",
     "active": "Active",
     "qrCode": "QR Code",
-    "created": "Created"
+    "created": "Created",
+    "filterByLocation": "Filter by Location",
+    "allLocations": "All Locations",
+    "noRegions": "No regions yet",
+    "createFirstRegion": "Create your first region to start",
+    "selectLocation": "Select Location",
+    "qrCodeUrl": "QR Code URL",
+    "downloadQr": "Download QR Code"
   },
   "reports": {
     "title": "Near-Miss Reports",
+    "subtitle": "View and manage all near-miss reports",
     "search": "Search reports...",
     "filter": "Filter",
     "category": "Category",
@@ -186,6 +217,19 @@
     "phone": "Phone",
     "description": "Description",
     "viewDetails": "View Details",
-    "name": "Full Name"
+    "name": "Full Name",
+    "clearFilters": "Clear Filters",
+    "reportsFound": "reports found",
+    "locationRegion": "Location / Region",
+    "noReportsFound": "No reports found",
+    "tryDifferentFilters": "Try different filters",
+    "reportDetail": "Report Details",
+    "incidentNumber": "Incident No",
+    "reportImage": "Report Image",
+    "uploadedImage": "Uploaded Image",
+    "downloadImage": "Download Image",
+    "fullSize": "Full Size",
+    "noDescription": "No description",
+    "notesPlaceholder": "Add your notes about this report here..."
   }
 }

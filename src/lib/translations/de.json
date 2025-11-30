@@ -13,7 +13,11 @@
     "success": "Erfolg",
     "close": "Schließen",
     "active": "Aktiv",
-    "inactive": "Inaktiv"
+    "inactive": "Inaktiv",
+    "actions": "Aktionen",
+    "all": "Alles",
+    "unknown": "Unbekannt",
+    "deleting": "Wird gelöscht..."
   },
   "auth": {
     "login": "Anmelden",
@@ -62,6 +66,7 @@
   },
   "users": {
     "title": "Benutzer und ISG-Experten",
+    "subtitle": "Systembenutzerobjekt verwalten",
     "addNew": "Neuen Benutzer Hinzufügen",
     "fullName": "Vollständiger Name",
     "email": "E-Mail",
@@ -75,7 +80,23 @@
     "manualReset": "Manuelles Zurücksetzen",
     "password": "Passwort",
     "locations": "Standorte",
-    "isActive": "Aktiv"
+    "isActive": "Aktiv",
+    "registrationDate": "Registrierungsdatum",
+    "noLocationsAssigned": "Keine Standorte zugewiesen",
+    "neverLoggedIn": "Nie angemeldet",
+    "noUsers": "Noch keine Benutzer",
+    "createFirstUser": "Erstellen Sie Ihren ersten Benutzer, um zu beginnen",
+    "editUser": "Benutzer bearbeiten",
+    "roleAdmin": "Administrator",
+    "roleExpert": "ISG-Experte",
+    "roleViewer": "Betrachter",
+    "minCharacters": "Mindestens 8 Zeichen",
+    "minCharactersPlaceholder": "(Mindestens 8 Zeichen)",
+    "selectAtLeastOneLocation": "Wählen Sie mindestens einen Standort",
+    "newPassword": "Neues Passwort",
+    "passwordChangeWarning": "Ein neues Passwort wird automatisch generiert und der Benutzer wird per E-Mail benachrichtigt",
+    "changePassword": "Passwort ändern",
+    "noLocations": "Keine Standorte"
   },
   "logs": {
     "title": "Systemprotokolle",
@@ -155,22 +176,32 @@
     "confirmDeleteLocation": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",
     "confirmDeleteRegion": "Sind Sie sicher, dass Sie diese Region löschen möchten?",
     "confirmDeleteReport": "Sind Sie sicher, dass Sie diesen Bericht löschen möchten?",
+    "confirmDeleteUser": "Sind Sie sicher, dass Sie diesen Benutzer löschen möchten?",
     "qrCodeError": "Fehler beim Generieren des QR-Codes",
     "backupDownloaded": "Datenbanksicherung erfolgreich heruntergeladen: {filename}",
     "backupInProgress": "Sicherung läuft..."
   },
   "regions": {
     "title": "Regionen",
+    "subtitle": "Verwalten Sie Regionen mit QR-Codes",
     "addNew": "Neue Region Hinzufügen",
     "name": "Name",
     "location": "Standort",
     "description": "Beschreibung",
     "active": "Aktiv",
     "qrCode": "QR-Code",
-    "created": "Erstellt"
+    "created": "Erstellt",
+    "filterByLocation": "Nach Standort filtern",
+    "allLocations": "Alle Standorte",
+    "noRegions": "Noch keine Regionen",
+    "createFirstRegion": "Erstellen Sie Ihre erste Region, um zu beginnen",
+    "selectLocation": "Standort wählen",
+    "qrCodeUrl": "QR-Code-URL",
+    "downloadQr": "QR-Code herunterladen"
   },
   "reports": {
     "title": "Beinahe-Unfälle-Berichte",
+    "subtitle": "Alle Beinahe-Unfälle anzeigen und verwalten",
     "search": "Berichte suchen...",
     "filter": "Filtern",
     "category": "Kategorie",
@@ -186,6 +217,19 @@
     "phone": "Telefon",
     "description": "Beschreibung",
     "viewDetails": "Details anzeigen",
-    "name": "Vollständiger Name"
+    "name": "Vollständiger Name",
+    "clearFilters": "Filter löschen",
+    "reportsFound": "Berichte gefunden",
+    "locationRegion": "Standort / Region",
+    "noReportsFound": "Keine Berichte gefunden",
+    "tryDifferentFilters": "Versuchen Sie verschiedene Filter",
+    "reportDetail": "Berichtdetails",
+    "incidentNumber": "Vorfall-Nr.",
+    "reportImage": "Berichtbild",
+    "uploadedImage": "Hochgeladenes Bild",
+    "downloadImage": "Bild herunterladen",
+    "fullSize": "Vollständige Größe",
+    "noDescription": "Keine Beschreibung",
+    "notesPlaceholder": "Fügen Sie Ihre Notizen zu diesem Bericht hier ein..."
   }
 }
