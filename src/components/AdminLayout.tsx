@@ -14,7 +14,7 @@ import {
   Globe
 } from 'lucide-react';
 import { signOut } from '../lib/auth';
-import { useI18n, LANGUAGES } from '../lib/i18n';
+import { useI18n, LANGUAGES, useLanguageChange } from '../lib/i18n';
 import type { UserProfile } from '../lib/auth';
 
 interface AdminLayoutProps {
@@ -24,20 +24,26 @@ interface AdminLayoutProps {
   onNavigate: (page: string) => void;
 }
 
-const menuItems = [
-  { id: 'dashboard', label: 'Gösterge Paneli', icon: LayoutDashboard },
-  { id: 'locations', label: 'Lokasyonlar', icon: MapPin },
-  { id: 'regions', label: 'Bölgeler', icon: Grid3x3 },
-  { id: 'reports', label: 'Ramak Kala Raporları', icon: AlertTriangle },
-  { id: 'logs', label: 'Sistem Logları', icon: FileText },
-  { id: 'users', label: 'Kullanıcılar ve Uzmanlar', icon: Users },
-  { id: 'settings', label: 'Ayarlar', icon: Settings },
+const getMenuItems = (t: (key: string) => string) => [
+  { id: 'dashboard', label: t('sidebar.dashboard'), icon: LayoutDashboard },
+  { id: 'locations', label: t('sidebar.locations'), icon: MapPin },
+  { id: 'regions', label: t('sidebar.regions'), icon: Grid3x3 },
+  { id: 'reports', label: t('sidebar.reports'), icon: AlertTriangle },
+  { id: 'logs', label: t('sidebar.logs'), icon: FileText },
+  { id: 'users', label: t('sidebar.users'), icon: Users },
+  { id: 'settings', label: t('sidebar.settings'), icon: Settings },
 ];
 
 export function AdminLayout({ children, currentUser, currentPage, onNavigate }: AdminLayoutProps) {
-  const { language, setLanguage } = useI18n();
+  const { language, setLanguage, t } = useI18n();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [siteTitle, setSiteTitle] = useState('Ramak Kala Sistemi');
+  const [menuItems, setMenuItems] = useState(() => getMenuItems(t));
+
+  // Dil değiştiğinde menu itemleri güncelle
+  useLanguageChange(() => {
+    setMenuItems(getMenuItems(t));
+  });
 
   useEffect(() => {
     // Site title'ı settings'ten yükle
@@ -120,7 +126,7 @@ export function AdminLayout({ children, currentUser, currentPage, onNavigate }: 
               className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-600/20 text-red-300 hover:bg-red-600/30 transition-colors border border-red-500/20"
             >
               <LogOut className="w-4 h-4" />
-              <span className="hidden sm:inline text-sm font-medium">Çıkış</span>
+              <span className="hidden sm:inline text-sm font-medium">{t('common.logout')}</span>
             </button>
           </div>
         </div>
