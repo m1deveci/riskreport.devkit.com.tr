@@ -73,5 +73,53 @@
     "title": "Einstellungen",
     "siteTitle": "Webseitentitel",
     "save": "Speichern"
+  },
+  "messages": {
+    "successCreated": "erfolgreich erstellt",
+    "successUpdated": "erfolgreich aktualisiert",
+    "successDeleted": "erfolgreich gelöscht",
+    "successUpload": "erfolgreich hochgeladen",
+    "successPassword": "Passwort erfolgreich geändert",
+    "errorGeneric": "Ein Fehler ist aufgetreten",
+    "errorDelete": "Fehler beim Löschen",
+    "errorUpdate": "Fehler beim Aktualisieren",
+    "errorUpload": "Upload fehlgeschlagen",
+    "errorPassword": "Passwortänderung fehlgeschlagen",
+    "confirmDelete": "Sind Sie sicher, dass Sie diesen {item} löschen möchten?",
+    "location": "Standort",
+    "region": "Region",
+    "report": "Bericht",
+    "expert": "ISG-Experte",
+    "file": "Datei",
+    "searchPlaceholder": "Nach Aktion oder Benutzername suchen...",
+    "confirmDeleteLocation": "Sind Sie sicher, dass Sie diesen Standort löschen möchten?",
+    "confirmDeleteRegion": "Sind Sie sicher, dass Sie diese Region löschen möchten?",
+    "confirmDeleteReport": "Sind Sie sicher, dass Sie diesen Bericht löschen möchten?",
+    "qrCodeError": "Fehler beim Generieren des QR-Codes",
+    "backupDownloaded": "Datenbanksicherung erfolgreich heruntergeladen: {filename}",
+    "backupInProgress": "Sicherung läuft..."
+  },
+  "regions": {
+    "title": "Regionen",
+    "addNew": "Neue Region Hinzufügen",
+    "name": "Name",
+    "location": "Standort",
+    "description": "Beschreibung",
+    "active": "Aktiv",
+    "qrCode": "QR-Code",
+    "created": "Erstellt"
+  },
+  "reports": {
+    "title": "Beinahe-Unfälle-Berichte",
+    "search": "Berichte suchen...",
+    "filter": "Filtern",
+    "category": "Kategorie",
+    "status": "Status",
+    "location": "Standort",
+    "region": "Region",
+    "from": "Startdatum",
+    "to": "Enddatum",
+    "internalNotes": "Interne Notizen",
+    "created": "Erstellt"
   }
 }

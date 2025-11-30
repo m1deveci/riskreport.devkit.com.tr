@@ -3,6 +3,7 @@ import { api, supabase } from '../lib/supabase';
 import { logAction, LogActions } from '../lib/logger';
 import { Search, Filter, X, AlertTriangle, Eye, Download, Image as ImageIcon, Lock } from 'lucide-react';
 import type { UserProfile } from '../lib/auth';
+import { useI18n, useLanguageChange } from '../lib/i18n';
 
 interface Report {
   id: string;
@@ -48,6 +49,7 @@ const CATEGORIES = [
 const STATUSES = ['Yeni', 'İnceleniyor', 'Kapatıldı'];
 
 export function Reports() {
+  const { t } = useI18n();
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [reports, setReports] = useState<Report[]>([]);
   const [filteredReports, setFilteredReports] = useState<Report[]>([]);
@@ -77,6 +79,8 @@ export function Reports() {
   useEffect(() => {
     applyFilters();
   }, [reports, filters, searchTerm]);
+
+  useLanguageChange();
 
   async function loadData() {
     try {
@@ -193,7 +197,7 @@ export function Reports() {
       });
 
       if (!response.ok) {
-        throw new Error('Rapor güncellenirken hata oluştu');
+        throw new Error(t('messages.errorUpdate'));
       }
 
       await logAction(LogActions.UPDATE_NEARMISS, { report_id: selectedReport.id });
@@ -201,14 +205,14 @@ export function Reports() {
       setShowDetailModal(false);
     } catch (err) {
       console.error('Failed to update report:', err);
-      alert('Rapor güncellenirken bir hata oluştu');
+      alert(t('messages.errorUpdate'));
     }
   }
 
   async function handleDeleteReport() {
     if (!selectedReport) return;
 
-    if (!confirm('Bu raporu silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) {
+    if (!confirm(t('messages.confirmDeleteReport'))) {
       return;
     }
 
@@ -223,7 +227,7 @@ export function Reports() {
       });
 
       if (!response.ok) {
-        throw new Error('Rapor silinirken hata oluştu');
+        throw new Error(t('messages.errorDelete'));
       }
 
       await logAction(LogActions.DELETE_NEARMISS, { report_id: selectedReport.id });
@@ -231,7 +235,7 @@ export function Reports() {
       setShowDetailModal(false);
     } catch (err) {
       console.error('Failed to delete report:', err);
-      alert('Rapor silinirken bir hata oluştu');
+      alert(t('messages.errorDelete'));
     } finally {
       setIsDeleting(false);
     }
@@ -267,7 +271,7 @@ export function Reports() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 -my-6 px-6 py-6">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-white">Ramak Kala Raporları</h1>
+        <h1 className="text-4xl font-bold text-white">{t('reports.title')}</h1>
         <p className="text-slate-400 text-lg mt-2">Tüm ramak kala bildirimlerini görüntüleyin ve yönetin</p>
       </div>
 
@@ -279,7 +283,7 @@ export function Reports() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Olay no, ad soyad veya açıklamada ara..."
+              placeholder={t('reports.search')}
               className="w-full pl-10 pr-4 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -288,7 +292,7 @@ export function Reports() {
             className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
           >
             <Filter className="w-5 h-5" />
-            Filtreler
+            {t('reports.filter')}
             {showFilters && <X className="w-4 h-4" />}
           </button>
         </div>
@@ -296,7 +300,7 @@ export function Reports() {
         {showFilters && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t border-slate-700">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Lokasyon</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">{t('reports.location')}</label>
               <select
                 value={filters.location_id}
                 onChange={(e) =>
@@ -314,7 +318,7 @@ export function Reports() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Bölge</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">{t('reports.region')}</label>
               <select
                 value={filters.region_id}
                 onChange={(e) => setFilters({ ...filters, region_id: e.target.value })}
@@ -331,7 +335,7 @@ export function Reports() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Kategori</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">{t('reports.category')}</label>
               <select
                 value={filters.category}
                 onChange={(e) => setFilters({ ...filters, category: e.target.value })}
@@ -347,7 +351,7 @@ export function Reports() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Durum</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">{t('reports.status')}</label>
               <select
                 value={filters.status}
                 onChange={(e) => setFilters({ ...filters, status: e.target.value })}
@@ -364,7 +368,7 @@ export function Reports() {
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Başlangıç Tarihi
+                {t('reports.from')}
               </label>
               <input
                 type="date"
@@ -375,7 +379,7 @@ export function Reports() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">Bitiş Tarihi</label>
+              <label className="block text-sm font-medium text-slate-300 mb-2">{t('reports.to')}</label>
               <input
                 type="date"
                 value={filters.date_to}
@@ -619,7 +623,7 @@ export function Reports() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Dahili Notlar (Sadece yöneticiler görebilir)
+                  {t('reports.internalNotes')}
                 </label>
                 <textarea
                   value={editNotes}
@@ -636,21 +640,21 @@ export function Reports() {
                   disabled={isDeleting}
                   className="flex-1 px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Kapat
+                  {t('common.cancel') || 'Kapat'}
                 </button>
                 <button
                   onClick={handleDeleteReport}
                   disabled={isDeleting}
                   className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  {isDeleting ? 'Siliniyor...' : 'Sil'}
+                  {isDeleting ? 'Siliniyor...' : t('common.delete')}
                 </button>
                 <button
                   onClick={handleUpdateReport}
                   disabled={isDeleting}
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Değişiklikleri Kaydet
+                  {t('common.save')}
                 </button>
               </div>
             </div>

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, supabase } from '../lib/supabase';
 import { logAction, LogActions } from '../lib/logger';
 import { Settings as SettingsIcon, Save, AlertCircle, CheckCircle2, Download, Upload, Trash2, Eye, Globe, Mail, Image as ImageIcon } from 'lucide-react';
+import { useI18n, useLanguageChange } from '../lib/i18n';
 
 interface SystemSettings {
   id: string;
@@ -18,6 +19,7 @@ interface SystemSettings {
 }
 
 export function Settings() {
+  const { t } = useI18n();
   const [settings, setSettings] = useState<SystemSettings | null>(null);
   const [formData, setFormData] = useState({
     site_title: '',
@@ -50,6 +52,8 @@ export function Settings() {
   useEffect(() => {
     loadSettings();
   }, []);
+
+  useLanguageChange();
 
   async function loadSettings() {
     try {
@@ -154,12 +158,12 @@ export function Settings() {
       await api.settings.update(formData);
 
       await logAction(LogActions.UPDATE_SETTINGS);
-      setSuccess('Ayarlar başarıyla kaydedildi');
+      setSuccess(t('messages.successUpdated') || 'Ayarlar başarıyla kaydedildi');
       await loadSettings();
 
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Bir hata oluştu';
+      const errorMessage = err instanceof Error ? err.message : t('messages.errorGeneric');
       setError(errorMessage);
     } finally {
       setSaving(false);
@@ -233,7 +237,7 @@ export function Settings() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 -my-6 px-6 py-6">
       <div>
-        <h1 className="text-4xl font-bold text-white">Ramak Kala Sistemi</h1>
+        <h1 className="text-4xl font-bold text-white">{t('settings.title')}</h1>
         <p className="text-slate-400 text-lg mt-2">İSG Yönetim Paneli</p>
       </div>
 
@@ -317,7 +321,7 @@ export function Settings() {
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
-                Site Başlığı
+                {t('settings.siteTitle')}
               </label>
               <input
                 type="text"
@@ -626,7 +630,7 @@ export function Settings() {
             className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Save className="w-5 h-5" />
-            {saving ? 'Kaydediliyor...' : 'Ayarları Kaydet'}
+            {saving ? 'Kaydediliyor...' : t('settings.save')}
           </button>
         </div>
       </form>

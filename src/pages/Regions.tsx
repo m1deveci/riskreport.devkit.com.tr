@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, supabase } from '../lib/supabase';
 import { logAction, LogActions } from '../lib/logger';
 import { Plus, Edit2, Trash2, QrCode, Download, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { useI18n, useLanguageChange } from '../lib/i18n';
 import QRCode from 'qrcode';
 
 interface Region {
@@ -22,6 +23,7 @@ interface Location {
 }
 
 export function Regions() {
+  const { t } = useI18n();
   const [regions, setRegions] = useState<Region[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +42,8 @@ export function Regions() {
   useEffect(() => {
     loadData();
   }, []);
+
+  useLanguageChange();
 
   async function loadData() {
     try {
@@ -94,7 +98,7 @@ export function Regions() {
         await api.regions.update(editingId, formData);
 
         await logAction(LogActions.UPDATE_REGION, { region_id: editingId });
-        setSuccess('Bölge başarıyla güncellendi');
+        setSuccess(`${t('messages.region')} ${t('messages.successUpdated')}`);
       } else {
         const token = generateToken();
 
@@ -116,7 +120,7 @@ export function Regions() {
         await api.regions.update(newRegion.id, { qr_code_url: finalQrUrl });
 
         await logAction(LogActions.CREATE_REGION, { name: formData.name });
-        setSuccess('Bölge başarıyla oluşturuldu');
+        setSuccess(`${t('messages.region')} ${t('messages.successCreated')}`);
       }
 
       await loadData();
@@ -125,13 +129,13 @@ export function Regions() {
         setSuccess('');
       }, 1500);
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Bir hata oluştu';
+      const errorMessage = err instanceof Error ? err.message : t('messages.errorGeneric');
       setError(errorMessage);
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Bu bölgeyi silmek istediğinize emin misiniz?')) return;
+    if (!confirm(t('messages.confirmDeleteRegion'))) return;
 
     try {
       await api.regions.delete(id);
@@ -140,7 +144,7 @@ export function Regions() {
       await loadData();
     } catch (err) {
       console.error('Failed to delete region:', err);
-      alert('Bölge silinirken bir hata oluştu');
+      alert(t('messages.errorDelete'));
     }
   }
 
@@ -182,7 +186,7 @@ export function Regions() {
       link.click();
     } catch (err) {
       console.error('Failed to generate QR code:', err);
-      alert('QR kod oluşturulurken bir hata oluştu');
+      alert(t('messages.qrCodeError') || 'QR kod oluşturulurken bir hata oluştu');
     }
   }
 
@@ -202,7 +206,7 @@ export function Regions() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 -my-6 px-6 py-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-white">Bölgeler</h1>
+          <h1 className="text-4xl font-bold text-white">{t('regions.title')}</h1>
           <p className="text-slate-400 text-lg mt-2">QR kodlu bölgeleri yönetin</p>
         </div>
         <button
@@ -210,7 +214,7 @@ export function Regions() {
           className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-5 h-5" />
-          Yeni Bölge
+          {t('regions.addNew')}
         </button>
       </div>
 
@@ -247,7 +251,7 @@ export function Regions() {
                         : 'bg-gray-100 text-gray-800'
                     }`}
                   >
-                    {region.is_active ? 'Aktif' : 'Pasif'}
+                    {region.is_active ? t('common.active') : 'Pasif'}
                   </span>
                 </div>
                 <QrCode className="w-8 h-8 text-blue-600" />
@@ -274,7 +278,7 @@ export function Regions() {
                     className="flex-1 flex items-center justify-center gap-2 bg-slate-700 text-slate-300 px-3 py-2 rounded-lg hover:bg-slate-600 transition-colors text-sm"
                   >
                     <Edit2 className="w-4 h-4" />
-                    Düzenle
+                    {t('common.edit')}
                   </button>
                   <button
                     onClick={() => handleDelete(region.id)}
@@ -299,7 +303,7 @@ export function Regions() {
             className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
             <Plus className="w-5 h-5" />
-            Yeni Bölge
+            {t('regions.addNew')}
           </button>
         </div>
       )}
@@ -309,7 +313,7 @@ export function Regions() {
           <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 shadow-xl backdrop-blur-md max-w-md w-full">
             <div className="p-6 border-b border-slate-700">
               <h2 className="text-xl font-semibold text-white">
-                {editingId ? 'Bölge Düzenle' : 'Yeni Bölge'}
+                {editingId ? `${t('regions.title')} ${t('common.edit')}` : t('regions.addNew')}
               </h2>
             </div>
 
@@ -334,7 +338,7 @@ export function Regions() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Lokasyon <span className="text-red-600">*</span>
+                  {t('regions.location')} <span className="text-red-600">*</span>
                 </label>
                 <select
                   value={formData.location_id}
@@ -354,7 +358,7 @@ export function Regions() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Bölge Adı <span className="text-red-600">*</span>
+                  {t('regions.name')} <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="text"
@@ -366,7 +370,7 @@ export function Regions() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Açıklama</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">{t('regions.description')}</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -384,7 +388,7 @@ export function Regions() {
                   className="w-4 h-4 text-blue-600 border-slate-600 rounded focus:ring-blue-500"
                 />
                 <label htmlFor="is_active" className="ml-2 text-sm text-slate-300">
-                  Aktif
+                  {t('common.active')}
                 </label>
               </div>
 
@@ -394,13 +398,13 @@ export function Regions() {
                   onClick={() => setShowModal(false)}
                   className="flex-1 px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
                 >
-                  İptal
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  {editingId ? 'Güncelle' : 'Oluştur'}
+                  {editingId ? t('common.save') : t('common.add')}
                 </button>
               </div>
             </form>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, supabase } from '../lib/supabase';
 import { logAction, LogActions } from '../lib/logger';
+import { useI18n, useLanguageChange } from '../lib/i18n';
 import { Plus, Edit2, Trash2, MapPin, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 interface Location {
@@ -13,6 +14,7 @@ interface Location {
 }
 
 export function Locations() {
+  const { t } = useI18n();
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -29,6 +31,8 @@ export function Locations() {
   useEffect(() => {
     loadLocations();
   }, []);
+
+  useLanguageChange();
 
   async function loadLocations() {
     try {
@@ -74,12 +78,12 @@ export function Locations() {
         await api.locations.update(editingId, formData);
 
         await logAction(LogActions.UPDATE_LOCATION, { location_id: editingId });
-        setSuccess('Lokasyon başarıyla güncellendi');
+        setSuccess(`${t('messages.location')} ${t('messages.successUpdated')}`);
       } else {
         await api.locations.create(formData);
 
         await logAction(LogActions.CREATE_LOCATION, { name: formData.name });
-        setSuccess('Lokasyon başarıyla oluşturuldu');
+        setSuccess(`${t('messages.location')} ${t('messages.successCreated')}`);
       }
 
       await loadLocations();
@@ -88,13 +92,13 @@ export function Locations() {
         setSuccess('');
       }, 1500);
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Bir hata oluştu';
+      const errorMessage = err instanceof Error ? err.message : t('messages.errorGeneric');
       setError(errorMessage);
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Bu lokasyonu silmek istediğinize emin misiniz?')) return;
+    if (!confirm(t('messages.confirmDeleteLocation'))) return;
 
     try {
       await api.locations.delete(id);
@@ -103,7 +107,7 @@ export function Locations() {
       await loadLocations();
     } catch (err) {
       console.error('Failed to delete location:', err);
-      alert('Lokasyon silinirken bir hata oluştu');
+      alert(`${t('messages.location')} ${t('messages.errorDelete')}`);
     }
   }
 
@@ -119,15 +123,15 @@ export function Locations() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 -my-6 px-6 py-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-bold text-white">Lokasyonlar</h1>
-          <p className="text-slate-400 text-lg mt-2">Fabrika ve işyeri lokasyonlarını yönetin</p>
+          <h1 className="text-4xl font-bold text-white">{t('locations.title')}</h1>
+          <p className="text-slate-400 text-lg mt-2">{t('locations.addNew')}</p>
         </div>
         <button
           onClick={() => openModal()}
           className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-5 h-5" />
-          Yeni Lokasyon
+          {t('locations.addNew')}
         </button>
       </div>
 
@@ -149,7 +153,7 @@ export function Locations() {
                           : 'bg-gray-100 text-gray-800'
                       }`}
                     >
-                      {location.is_active ? 'Aktif' : 'Pasif'}
+                      {location.is_active ? t('common.active') : t('common.inactive')}
                     </span>
                   </div>
                 </div>
@@ -158,7 +162,7 @@ export function Locations() {
               <p className="text-sm text-slate-400 mb-3 line-clamp-2">{location.description}</p>
 
               <div className="text-sm text-slate-400 mb-4">
-                <p className="font-medium">E-posta:</p>
+                <p className="font-medium">{t('locations.email')}:</p>
                 <p className="truncate">{location.main_email}</p>
               </div>
 
@@ -168,7 +172,7 @@ export function Locations() {
                   className="flex-1 flex items-center justify-center gap-2 bg-slate-700 text-slate-300 px-3 py-2 rounded-lg hover:bg-slate-600 transition-colors text-sm"
                 >
                   <Edit2 className="w-4 h-4" />
-                  Düzenle
+                  {t('common.edit')}
                 </button>
                 <button
                   onClick={() => handleDelete(location.id)}
@@ -185,14 +189,14 @@ export function Locations() {
       {locations.length === 0 && (
         <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md p-12 text-center">
           <MapPin className="w-16 h-16 text-slate-500 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">Henüz lokasyon yok</h3>
-          <p className="text-slate-400 mb-6">İlk lokasyonunuzu oluşturarak başlayın</p>
+          <h3 className="text-lg font-medium text-white mb-2">{t('locations.noLocations') || 'Henüz lokasyon yok'}</h3>
+          <p className="text-slate-400 mb-6">{t('locations.noLocationsDesc') || 'İlk lokasyonunuzu oluşturarak başlayın'}</p>
           <button
             onClick={() => openModal()}
             className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
           >
             <Plus className="w-5 h-5" />
-            Yeni Lokasyon
+            {t('locations.addNew')}
           </button>
         </div>
       )}
@@ -202,7 +206,7 @@ export function Locations() {
           <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 shadow-xl backdrop-blur-md max-w-md w-full">
             <div className="p-6 border-b border-slate-700">
               <h2 className="text-xl font-semibold text-white">
-                {editingId ? 'Lokasyon Düzenle' : 'Yeni Lokasyon'}
+                {editingId ? `${t('locations.title')} ${t('common.edit')}` : `${t('common.add')} ${t('locations.title')}`}
               </h2>
             </div>
 
@@ -227,7 +231,7 @@ export function Locations() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  Lokasyon Adı <span className="text-red-600">*</span>
+                  {t('locations.name')} <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="text"
@@ -239,7 +243,7 @@ export function Locations() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Açıklama</label>
+                <label className="block text-sm font-medium text-slate-300 mb-2">{t('locations.description')}</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -250,7 +254,7 @@ export function Locations() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">
-                  İSG E-posta <span className="text-red-600">*</span>
+                  {t('locations.email')} <span className="text-red-600">*</span>
                 </label>
                 <input
                   type="email"
@@ -270,7 +274,7 @@ export function Locations() {
                   className="w-4 h-4 text-blue-600 border-slate-600 rounded focus:ring-blue-500"
                 />
                 <label htmlFor="is_active" className="ml-2 text-sm text-slate-300">
-                  Aktif
+                  {t('locations.active')}
                 </label>
               </div>
 
@@ -280,13 +284,13 @@ export function Locations() {
                   onClick={() => setShowModal(false)}
                   className="flex-1 px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
                 >
-                  İptal
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  {editingId ? 'Güncelle' : 'Oluştur'}
+                  {editingId ? t('common.save') : t('common.add')}
                 </button>
               </div>
             </form>

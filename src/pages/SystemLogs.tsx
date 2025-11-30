@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, supabase } from '../lib/supabase';
 import { ActionDescriptions, formatLogDetails } from '../lib/logger';
 import { FileText, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { useI18n, useLanguageChange } from '../lib/i18n';
 
 interface SystemLog {
   id: string;
@@ -14,6 +15,7 @@ interface SystemLog {
 }
 
 export function SystemLogs() {
+  const { t } = useI18n();
   const [logs, setLogs] = useState<SystemLog[]>([]);
   const [filteredLogs, setFilteredLogs] = useState<SystemLog[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,6 +50,8 @@ export function SystemLogs() {
       setFilteredLogs(logs);
     }
   }, [logs, searchTerm]);
+
+  useLanguageChange();
 
   async function loadLogs() {
     try {
@@ -84,8 +88,8 @@ export function SystemLogs() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 -my-6 px-6 py-6">
       <div>
-        <h1 className="text-4xl font-bold text-white">Sistem Logları</h1>
-        <p className="text-slate-400 text-lg mt-2">Tüm sistem aktivitelerini görüntüleyin</p>
+        <h1 className="text-4xl font-bold text-white">{t('logs.title')}</h1>
+        <p className="text-slate-400 text-lg mt-2">{t('logs.subtitle')}</p>
       </div>
 
       <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md p-4">
@@ -107,16 +111,16 @@ export function SystemLogs() {
             <thead className="bg-slate-900/50 border-b border-slate-600">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Tarih/Saat
+                  {t('logs.date')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Kullanıcı
+                  {t('logs.user')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  İşlem
+                  {t('logs.action')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
-                  Detaylar
+                  {t('logs.details')}
                 </th>
               </tr>
             </thead>
@@ -187,8 +191,8 @@ export function SystemLogs() {
         {filteredLogs.length === 0 && (
           <div className="p-12 text-center">
             <FileText className="w-16 h-16 text-slate-500 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-white mb-2">Log bulunamadı</h3>
-            <p className="text-slate-400">Henüz sistem aktivitesi kaydedilmemiş</p>
+            <h3 className="text-lg font-medium text-white mb-2">{t('logs.notFound')}</h3>
+            <p className="text-slate-400">{t('logs.noActivity')}</p>
           </div>
         )}
       </div>

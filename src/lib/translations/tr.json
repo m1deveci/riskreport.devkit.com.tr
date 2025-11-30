@@ -73,5 +73,53 @@
     "title": "Ayarlar",
     "siteTitle": "Site Başlığı",
     "save": "Kaydet"
+  },
+  "messages": {
+    "successCreated": "başarıyla oluşturuldu",
+    "successUpdated": "başarıyla güncellendi",
+    "successDeleted": "başarıyla silindi",
+    "successUpload": "başarıyla yüklendi",
+    "successPassword": "Parola başarıyla değiştirildi",
+    "errorGeneric": "Bir hata oluştu",
+    "errorDelete": "silinirken bir hata oluştu",
+    "errorUpdate": "güncellenirken hata oluştu",
+    "errorUpload": "Yükleme başarısız",
+    "errorPassword": "Parola değiştirme başarısız oldu",
+    "confirmDelete": "Bu {item} silmek istediğinize emin misiniz?",
+    "location": "Lokasyon",
+    "region": "Bölge",
+    "report": "Rapor",
+    "expert": "İSG uzmanı",
+    "file": "Dosya",
+    "searchPlaceholder": "İşlem veya kullanıcı adında ara...",
+    "confirmDeleteLocation": "Bu lokasyonu silmek istediğinize emin misiniz?",
+    "confirmDeleteRegion": "Bu bölgeyi silmek istediğinize emin misiniz?",
+    "confirmDeleteReport": "Bu raporu silmek istediğinize emin misiniz?",
+    "qrCodeError": "QR kod oluşturulurken bir hata oluştu",
+    "backupDownloaded": "Veritabanı yedeği başarıyla indirildi: {filename}",
+    "backupInProgress": "Yedekleme işlemi devam ediyor..."
+  },
+  "regions": {
+    "title": "Bölgeler",
+    "addNew": "Yeni Bölge Ekle",
+    "name": "Ad",
+    "location": "Lokasyon",
+    "description": "Açıklama",
+    "active": "Aktif",
+    "qrCode": "QR Kod",
+    "created": "Oluşturuldu"
+  },
+  "reports": {
+    "title": "Ramak Kala Raporları",
+    "search": "Rapor ara...",
+    "filter": "Filtrele",
+    "category": "Kategori",
+    "status": "Durum",
+    "location": "Lokasyon",
+    "region": "Bölge",
+    "from": "Başlangıç Tarihi",
+    "to": "Bitiş Tarihi",
+    "internalNotes": "İç Notlar",
+    "created": "Oluşturuldu"
   }
 }

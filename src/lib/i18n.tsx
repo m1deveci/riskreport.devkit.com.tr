@@ -33,22 +33,19 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     return saved || 'tr'; // Varsayılan Türkçe
   });
 
-  const setLanguage = useCallback((lang: Language) => {
-    setLanguageState(lang);
-    // LocalStorage'a kaydet
-    localStorage.setItem('language', lang);
-    // HTML lang atributunu güncelle
-    document.documentElement.lang = lang;
-    // Event göndər tüm listeners'a bildir
-    languageChangeEvent.dispatchEvent(new CustomEvent(LANGUAGE_CHANGE_EVENT, { detail: { language: lang } }));
-  }, []);
-
+  // Language değiştiğinde localStorage ve HTML'yi güncelle
   useEffect(() => {
-    // İlk yüklemede HTML lang'ı ayarla
+    localStorage.setItem('language', language);
     document.documentElement.lang = language;
-  }, []);
+    // Event dispatch et tüm listeners'a bildir
+    languageChangeEvent.dispatchEvent(new CustomEvent(LANGUAGE_CHANGE_EVENT, { detail: { language } }));
+  }, [language]);
 
-  const t = useCallback((key: string): string => {
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang);
+  };
+
+  const t = (key: string): string => {
     const keys = key.split('.');
     let value: any = translations[language];
 
@@ -61,7 +58,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     }
 
     return typeof value === 'string' ? value : key;
-  }, [language]);
+  };
 
   return (
     <I18nContext.Provider value={{ language, setLanguage, t }}>

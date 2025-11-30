@@ -73,5 +73,53 @@
     "title": "Instellingen",
     "siteTitle": "Sitertitel",
     "save": "Opslaan"
+  },
+  "messages": {
+    "successCreated": "succesvol aangemaakt",
+    "successUpdated": "succesvol bijgewerkt",
+    "successDeleted": "succesvol verwijderd",
+    "successUpload": "succesvol geüpload",
+    "successPassword": "Wachtwoord succesvol gewijzigd",
+    "errorGeneric": "Er is een fout opgetreden",
+    "errorDelete": "fout bij verwijderen",
+    "errorUpdate": "fout bij bijwerken",
+    "errorUpload": "Upload mislukt",
+    "errorPassword": "Wachtwoordwijziging mislukt",
+    "confirmDelete": "Weet u zeker dat u deze {item} wilt verwijderen?",
+    "location": "Locatie",
+    "region": "Regio",
+    "report": "Rapport",
+    "expert": "ISG-Expert",
+    "file": "Bestand",
+    "searchPlaceholder": "Zoeken op actie of gebruikersnaam...",
+    "confirmDeleteLocation": "Weet u zeker dat u deze locatie wilt verwijderen?",
+    "confirmDeleteRegion": "Weet u zeker dat u deze regio wilt verwijderen?",
+    "confirmDeleteReport": "Weet u zeker dat u dit rapport wilt verwijderen?",
+    "qrCodeError": "Fout bij het genereren van QR-code",
+    "backupDownloaded": "Databaseback-up succesvol gedownload: {filename}",
+    "backupInProgress": "Back-up wordt gemaakt..."
+  },
+  "regions": {
+    "title": "Regio's",
+    "addNew": "Nieuwe Regio Toevoegen",
+    "name": "Naam",
+    "location": "Locatie",
+    "description": "Beschrijving",
+    "active": "Actief",
+    "qrCode": "QR-Code",
+    "created": "Gemaakt"
+  },
+  "reports": {
+    "title": "Bijna-Ongevallen Rapporten",
+    "search": "Rapporten zoeken...",
+    "filter": "Filteren",
+    "category": "Categorie",
+    "status": "Status",
+    "location": "Locatie",
+    "region": "Regio",
+    "from": "Begindatum",
+    "to": "Einddatum",
+    "internalNotes": "Interne Opmerkingen",
+    "created": "Gemaakt"
   }
 }

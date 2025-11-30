@@ -3,6 +3,7 @@ import { api, supabase } from '../lib/supabase';
 import { signUp } from '../lib/auth';
 import { logAction, LogActions } from '../lib/logger';
 import { Plus, Edit2, Trash2, Users as UsersIcon, AlertCircle, CheckCircle2, Key } from 'lucide-react';
+import { useI18n, useLanguageChange } from '../lib/i18n';
 
 interface User {
   id: string;
@@ -27,6 +28,7 @@ const ROLES = [
 ];
 
 export function Users() {
+  const { t } = useI18n();
   const [users, setUsers] = useState<User[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,6 +51,8 @@ export function Users() {
   useEffect(() => {
     loadData();
   }, []);
+
+  useLanguageChange();
 
   async function loadData() {
     try {
@@ -120,7 +124,7 @@ export function Users() {
         await api.users.update(editingId, updateData);
 
         await logAction(LogActions.UPDATE_USER, { user_id: editingId });
-        setSuccess('Kullanıcı başarıyla güncellendi');
+        setSuccess(t('messages.successUpdated'));
       } else {
         if (!formData.password || formData.password.length < 6) {
           throw new Error('Şifre en az 6 karakter olmalıdır');
@@ -135,7 +139,7 @@ export function Users() {
         );
 
         await logAction(LogActions.CREATE_USER, { email: formData.email });
-        setSuccess('Kullanıcı başarıyla oluşturuldu');
+        setSuccess(t('messages.successCreated'));
       }
 
       await loadData();
@@ -144,13 +148,13 @@ export function Users() {
         setSuccess('');
       }, 1500);
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Bir hata oluştu';
+      const errorMessage = err instanceof Error ? err.message : t('messages.errorGeneric');
       setError(errorMessage);
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm('Bu kullanıcıyı silmek istediğinize emin misiniz?')) return;
+    if (!confirm(t('messages.confirmDeleteUser') || 'Bu kullanıcıyı silmek istediğinize emin misiniz?')) return;
 
     try {
       await api.users.delete(id);
@@ -159,7 +163,7 @@ export function Users() {
       await loadData();
     } catch (err) {
       console.error('Failed to delete user:', err);
-      alert('Kullanıcı silinirken bir hata oluştu');
+      alert(t('messages.errorDelete'));
     }
   }
 
@@ -234,14 +238,14 @@ export function Users() {
         action: 'manual_password_reset'
       });
 
-      setSuccess('Parola başarıyla değiştirildi');
+      setSuccess(t('messages.successPassword'));
       setTimeout(() => {
         setShowPasswordModal(false);
         setPasswordResetUser(null);
         setManualPassword('');
       }, 1500);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Bir hata oluştu';
+      const errorMessage = err instanceof Error ? err.message : t('messages.errorGeneric');
       setError(errorMessage);
     }
   }
@@ -350,7 +354,7 @@ export function Users() {
                           : 'bg-gray-100 text-gray-800'
                       }`}
                     >
-                      {user.is_active ? 'Aktif' : 'Pasif'}
+                      {user.is_active ? t('common.active') : 'Pasif'}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
@@ -375,7 +379,7 @@ export function Users() {
                     <button
                       onClick={() => openModal(user)}
                       className="text-blue-600 hover:text-blue-900 mr-3"
-                      title="Düzenle"
+                      title={t('common.edit')}
                     >
                       <Edit2 className="w-4 h-4 inline" />
                     </button>
@@ -389,7 +393,7 @@ export function Users() {
                     <button
                       onClick={() => handleDelete(user.id)}
                       className="text-red-600 hover:text-red-900"
-                      title="Sil"
+                      title={t('common.delete')}
                     >
                       <Trash2 className="w-4 h-4 inline" />
                     </button>
@@ -546,7 +550,7 @@ export function Users() {
                   className="w-4 h-4 text-blue-600 border-slate-600 rounded focus:ring-blue-500"
                 />
                 <label htmlFor="is_active" className="ml-2 text-sm text-slate-300">
-                  Aktif
+                  {t('common.active')}
                 </label>
               </div>
 
@@ -556,13 +560,13 @@ export function Users() {
                   onClick={() => setShowModal(false)}
                   className="flex-1 px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
                 >
-                  İptal
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  {editingId ? 'Güncelle' : 'Oluştur'}
+                  {editingId ? t('common.save') : t('common.add')}
                 </button>
               </div>
             </form>
@@ -628,14 +632,14 @@ export function Users() {
                   onClick={() => setShowPasswordModal(false)}
                   className="flex-1 px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
                 >
-                  İptal
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="button"
                   onClick={handleManualPasswordReset}
                   className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
                 >
-                  Şifreyi Değiştir
+                  {t('common.save') || 'Şifreyi Değiştir'}
                 </button>
               </div>
             </div>
