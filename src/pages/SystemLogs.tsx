@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api, supabase } from '../lib/supabase';
-import { FileText, Search } from 'lucide-react';
+import { ActionDescriptions, formatLogDetails } from '../lib/logger';
+import { FileText, Search, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface SystemLog {
   id: string;
@@ -17,6 +18,7 @@ export function SystemLogs() {
   const [filteredLogs, setFilteredLogs] = useState<SystemLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
 
   useEffect(() => {
     loadLogs();
@@ -26,11 +28,18 @@ export function SystemLogs() {
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       setFilteredLogs(
-        logs.filter(
-          (log) =>
+        logs.filter((log) => {
+          const actionDesc = ActionDescriptions[log.action]?.tr || log.action;
+          const userName = (log.users as unknown as { full_name: string })?.full_name || 'Sistem';
+          const detailsText = formatLogDetails(log.action, log.details).toLowerCase();
+
+          return (
             log.action.toLowerCase().includes(term) ||
-            (log.users as unknown as { full_name: string })?.full_name?.toLowerCase().includes(term)
-        )
+            actionDesc.toLowerCase().includes(term) ||
+            userName.toLowerCase().includes(term) ||
+            detailsText.includes(term)
+          );
+        })
       );
     } else {
       setFilteredLogs(logs);
@@ -96,24 +105,63 @@ export function SystemLogs() {
               </tr>
             </thead>
             <tbody className="bg-transparent divide-y divide-slate-700">
-              {filteredLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-slate-900/50 border-b border-slate-700">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
-                    {new Date(log.created_at).toLocaleString('tr-TR')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
-                    {(log.users as unknown as { full_name: string })?.full_name || 'Sistem'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-100">
-                    {log.action}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-slate-400">
-                    <pre className="text-xs max-w-md overflow-x-auto">
-                      {JSON.stringify(log.details, null, 2)}
-                    </pre>
-                  </td>
-                </tr>
-              ))}
+              {filteredLogs.map((log) => {
+                const actionDesc = ActionDescriptions[log.action];
+                const isExpanded = expandedLogId === log.id;
+                const detailsText = formatLogDetails(log.action, log.details);
+
+                return (
+                  <>
+                    <tr
+                      key={log.id}
+                      className={`hover:bg-slate-900/50 cursor-pointer transition-colors ${
+                        isExpanded ? 'bg-slate-900/50' : ''
+                      }`}
+                    >
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
+                        {new Date(log.created_at).toLocaleString('tr-TR', {
+                          year: 'numeric',
+                          month: '2-digit',
+                          day: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit',
+                        })}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-300">
+                        {(log.users as unknown as { full_name: string })?.full_name || 'Sistem'}
+                      </td>
+                      <td
+                        colSpan={2}
+                        className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-100"
+                        onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{actionDesc?.icon || '•'}</span>
+                          <span className="flex-1">{actionDesc?.tr || log.action}</span>
+                          {isExpanded ? (
+                            <ChevronUp className="w-4 h-4 text-blue-400" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4 text-slate-500" />
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                    {isExpanded && (
+                      <tr className="bg-slate-900/30 border-b border-slate-700">
+                        <td colSpan={4} className="px-6 py-4">
+                          <div className="bg-slate-800/50 rounded p-4 border border-slate-700">
+                            <h4 className="text-sm font-semibold text-white mb-3">📋 İşlem Detayları</h4>
+                            <div className="text-sm text-slate-300 space-y-1 whitespace-pre-wrap font-mono">
+                              {detailsText}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </>
+                );
+              })}
             </tbody>
           </table>
         </div>
