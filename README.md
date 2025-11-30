@@ -547,4 +547,35 @@ Değişiklik geçmişi `report_history` tablosunda aşağıdaki alanlarla saklan
 
 ---
 
+## 🔄 Son Güncellemeler (30 Kasım 2025)
+
+### ✨ Ramak Kala E-Posta Tasarımı Modernize Edildi
+- Gradient başlık tasarımı eklendi (kırmızı renk gradiyenti)
+- Card-based layout ile bilgiler renklendirildi
+- Her bilgi alanı için farklı renk kodları (Başlayan Kişi, İletişim, Kategori, Açıklama, Tarih)
+- Modern ikonlar ve typography
+- CTA butonu daha belirgin hale getirildi
+- Professional footer eklendi
+- Email client uyumluluğu sağlandı
+
+### 🧹 Kod Temizliği
+- Kullanılmayan `supabase` import'u NearMissForm.tsx'ten kaldırıldı
+- Tüm API çağrıları `fetch()` kullanıyorsa, import gerekli değildir
+
+### 🔧 Parola Sıfırlama Linki Hatası Düzeltildi
+- Hash routing'te token parametresi doğru şekilde alınmıyor sorunu çözüldü
+- `window.location.search` yerine `window.location.hash`'ten token alınıyor
+- Parola sıfırlama e-posta linki `/#/reset-password?token=...` formatında çalışıyor
+
+### ✨ Login Sayfasında Dil Seçimi İyileştirildi
+- **Hover-based dropdown → Click-based dropdown**: Dil seçimi artık tıkla/aç-kapat ile yapılıyor
+- **Dışarıya tıklanırsa dropdown kapatılıyor**: UX iyileştirildi
+- **Daha geniş menü**: Dropdown alanı `w-48` olarak genişletildi
+- **Seçili dili göster**: Check ikonu ile seçili dil gösterilir
+- **Chevron animasyonu**: Dropdown açılı dönen Chevron ikonu
+- **Gradient buton**: Mavi-indigo gradient ile modern tasarım
+- **Mobile-friendly**: Tüm cihazlarda sorunsuz çalışır
+
+---
+
 **Not**: Uygulama Türkçe dilinde tasarlanmıştır ve Türkiye İş Sağlığı ve Güvenliği mevzuatına uygun ramak kala raporlama süreçlerini destekler.
