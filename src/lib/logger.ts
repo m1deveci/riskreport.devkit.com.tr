@@ -137,11 +137,23 @@ export function formatLogDetails(
     if (details.incident_number) {
       lines.push(`🔹 Olay Numarası: ${details.incident_number}`);
     }
-    if (details.status) {
-      lines.push(`🔹 Durum: ${details.status}`);
+    if (details.reporter_name) {
+      lines.push(`🔹 Bildirim Yapan: ${details.reporter_name}`);
     }
     if (details.category) {
       lines.push(`🔹 Kategori: ${details.category}`);
+    }
+    if (details.phone && details.phone !== 'Belirtilmemiş') {
+      lines.push(`🔹 Telefon: ${details.phone}`);
+    }
+    if (details.location_id) {
+      lines.push(`🔹 Lokasyon ID: ${details.location_id}`);
+    }
+    if (details.region_id) {
+      lines.push(`🔹 Bölge ID: ${details.region_id}`);
+    }
+    if (details.status) {
+      lines.push(`🔹 Durum: ${details.status}`);
     }
   }
 

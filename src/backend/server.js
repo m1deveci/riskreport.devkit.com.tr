@@ -105,6 +105,23 @@ const adminOnly = (req, res, next) => {
   next();
 };
 
+// ==================== LOGGING HELPER ====================
+
+// Sistem loglarına kayıt yapmak için yardımcı fonksiyon
+async function logAction(userId, action, details = {}) {
+  try {
+    const connection = await pool.getConnection();
+    await connection.query(
+      'INSERT INTO system_logs (id, user_id, action, details, ip_address) VALUES (UUID(), ?, ?, ?, ?)',
+      [userId || null, action, JSON.stringify(details), '']
+    );
+    connection.release();
+  } catch (error) {
+    console.error('Logging hatası:', error);
+    // Loglamanın başarısız olması işlemi durdurmamalı
+  }
+}
+
 // ==================== AUTH ENDPOINTS ====================
 
 // Login Endpoint - JWT Token Oluştur
@@ -124,6 +141,8 @@ app.post('/api/auth/login', async (req, res) => {
     connection.release();
 
     if (rows.length === 0) {
+      // Başarısız giriş denemesini logla
+      await logAction(null, 'LOGIN_FAILED', { email, reason: 'Email bulunamadı' });
       return res.status(401).json({ error: 'Email veya şifre hatalı' });
     }
 
@@ -133,14 +152,18 @@ app.post('/api/auth/login', async (req, res) => {
     const passwordMatch = await bcrypt.compare(password, user.password_hash);
 
     if (!passwordMatch) {
+      // Başarısız giriş denemesini logla
+      await logAction(null, 'LOGIN_FAILED', { email, reason: 'Şifre hatalı' });
       return res.status(401).json({ error: 'Email veya şifre hatalı' });
     }
 
     // Update last_login
-    await connection.query(
+    const updateConnection = await pool.getConnection();
+    await updateConnection.query(
       'UPDATE users SET last_login = NOW() WHERE id = ?',
       [user.id]
     );
+    updateConnection.release();
 
     // Parse location_ids from JSON
     let locationIds = [];
@@ -165,6 +188,9 @@ app.post('/api/auth/login', async (req, res) => {
       { expiresIn: JWT_EXPIRY }
     );
 
+    // Başarılı girişi logla
+    await logAction(user.id, 'LOGIN_SUCCESS', { email: user.email, full_name: user.full_name });
+
     res.json({
       success: true,
       token,
@@ -183,10 +209,15 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // Logout Endpoint
-app.post('/api/auth/logout', authenticateToken, (req, res) => {
-  // JWT'de logout için backend'de cache kullanılabilir
-  // Şimdilik client tarafında token sil yeterli
-  res.json({ success: true, message: 'Başarıyla çıkış yapıldı' });
+app.post('/api/auth/logout', authenticateToken, async (req, res) => {
+  try {
+    // Logout'ı logla
+    await logAction(req.user.id, 'LOGOUT', { email: req.user.email, full_name: req.user.full_name });
+    res.json({ success: true, message: 'Başarıyla çıkış yapıldı' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // Token Doğrula Endpoint
@@ -633,6 +664,16 @@ app.post('/api/reports', async (req, res) => {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [id, incidentNumber, location_id, region_id, full_name, phone || null, category, description || '', image_path || null]
     );
+
+    // Rapor oluşturmayı logla
+    await logAction(null, 'CREATE_NEARMISS', {
+      incident_number: incidentNumber,
+      location_id,
+      region_id,
+      reporter_name: full_name,
+      category,
+      phone: phone || 'Belirtilmemiş'
+    });
 
     connection.release();
     res.json({ success: true, id, incident_number: incidentNumber });
