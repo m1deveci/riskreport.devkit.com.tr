@@ -136,6 +136,12 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Email veya şifre hatalı' });
     }
 
+    // Update last_login
+    await connection.query(
+      'UPDATE users SET last_login = NOW() WHERE id = ?',
+      [user.id]
+    );
+
     // Parse location_ids from JSON
     let locationIds = [];
     try {
@@ -198,7 +204,7 @@ app.get('/api/users', authenticateToken, adminOnly, async (req, res) => {
   try {
     const connection = await pool.getConnection();
     const [rows] = await connection.query(
-      'SELECT id, full_name, email, role, is_active, location_ids, created_at FROM users'
+      'SELECT id, full_name, email, role, is_active, location_ids, created_at, last_login FROM users'
     );
     connection.release();
 
@@ -320,6 +326,37 @@ app.delete('/api/users/:id', authenticateToken, adminOnly, async (req, res) => {
     connection.release();
 
     res.json({ success: true, message: 'Kullanıcı silindi' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Reset User Password Manually (Admin Only)
+app.put('/api/users/:id/password', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { password } = req.body;
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({ error: 'Şifre en az 6 karakter olmalıdır' });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const password_hash = await bcrypt.hash(password, salt);
+
+    const connection = await pool.getConnection();
+    const [result] = await connection.query(
+      'UPDATE users SET password_hash = ? WHERE id = ?',
+      [password_hash, id]
+    );
+    connection.release();
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+    }
+
+    res.json({ success: true, message: 'Parola başarıyla değiştirildi' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

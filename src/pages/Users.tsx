@@ -12,6 +12,7 @@ interface User {
   is_active: boolean;
   location_ids?: string[];
   created_at: string;
+  last_login?: string | null;
 }
 
 interface Location {
@@ -30,6 +31,9 @@ export function Users() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordResetUser, setPasswordResetUser] = useState<User | null>(null);
+  const [manualPassword, setManualPassword] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     full_name: '',
@@ -178,6 +182,58 @@ export function Users() {
     }
   }
 
+  function openPasswordModal(user: User) {
+    setPasswordResetUser(user);
+    setManualPassword('');
+    setError('');
+    setSuccess('');
+    setShowPasswordModal(true);
+  }
+
+  async function handleManualPasswordReset() {
+    if (!passwordResetUser) return;
+
+    setError('');
+    setSuccess('');
+
+    if (!manualPassword || manualPassword.length < 6) {
+      setError('Şifre en az 6 karakter olmalıdır');
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/users/${passwordResetUser.id}/password`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ password: manualPassword }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Parola değiştirme başarısız oldu');
+      }
+
+      await logAction(LogActions.UPDATE_USER, {
+        user_id: passwordResetUser.id,
+        action: 'manual_password_reset'
+      });
+
+      setSuccess('Parola başarıyla değiştirildi');
+      setTimeout(() => {
+        setShowPasswordModal(false);
+        setPasswordResetUser(null);
+        setManualPassword('');
+      }, 1500);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Bir hata oluştu';
+      setError(errorMessage);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -224,6 +280,9 @@ export function Users() {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   Kayıt Tarihi
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                  Son Giriş
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">
                   İşlemler
@@ -283,6 +342,15 @@ export function Users() {
                       minute: '2-digit'
                     }) : 'Bilinmiyor'}
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
+                    {user.last_login ? new Date(user.last_login).toLocaleDateString('tr-TR', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) : 'Hiç giriş yapmadı'}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
                       onClick={() => openModal(user)}
@@ -292,7 +360,7 @@ export function Users() {
                       <Edit2 className="w-4 h-4 inline" />
                     </button>
                     <button
-                      onClick={() => handleResetPassword(user.id, user.email, user.full_name)}
+                      onClick={() => openPasswordModal(user)}
                       className="text-orange-600 hover:text-orange-900 mr-3"
                       title="Parola Sıfırla"
                     >
@@ -478,6 +546,79 @@ export function Users() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {showPasswordModal && passwordResetUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 shadow-xl backdrop-blur-md max-w-md w-full">
+            <div className="p-6 border-b border-slate-700">
+              <h2 className="text-xl font-semibold text-white">
+                Parola Sıfırla
+              </h2>
+              <p className="text-sm text-slate-400 mt-1">
+                {passwordResetUser.full_name} ({passwordResetUser.email})
+              </p>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {error && (
+                <div className="bg-red-50 border-l-4 border-red-400 p-4">
+                  <div className="flex">
+                    <AlertCircle className="w-5 h-5 text-red-600 mr-3 flex-shrink-0" />
+                    <p className="text-sm text-red-700">{error}</p>
+                  </div>
+                </div>
+              )}
+
+              {success && (
+                <div className="bg-green-50 border-l-4 border-green-400 p-4">
+                  <div className="flex">
+                    <CheckCircle2 className="w-5 h-5 text-green-600 mr-3 flex-shrink-0" />
+                    <p className="text-sm text-green-700">{success}</p>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Yeni Şifre <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="password"
+                  value={manualPassword}
+                  onChange={(e) => setManualPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="En az 6 karakter"
+                  minLength={6}
+                />
+                <p className="mt-1 text-xs text-slate-500">Minimum 6 karakter</p>
+              </div>
+
+              <div className="bg-amber-50 border-l-4 border-amber-400 p-3">
+                <p className="text-xs text-amber-700">
+                  Kullanıcının parolası hemen değiştirilecektir. Bu işlem geri alınamaz.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowPasswordModal(false)}
+                  className="flex-1 px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
+                >
+                  İptal
+                </button>
+                <button
+                  type="button"
+                  onClick={handleManualPasswordReset}
+                  className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                >
+                  Şifreyi Değiştir
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

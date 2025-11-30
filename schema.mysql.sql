@@ -93,11 +93,13 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash VARCHAR(255),
   role VARCHAR(50) NOT NULL DEFAULT 'viewer',
   is_active BOOLEAN DEFAULT true,
+  last_login DATETIME DEFAULT NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   INDEX idx_users_email (email),
   INDEX idx_users_role (role),
-  INDEX idx_users_is_active (is_active)
+  INDEX idx_users_is_active (is_active),
+  INDEX idx_users_last_login (last_login)
 );
 
 -- Create system logs table
