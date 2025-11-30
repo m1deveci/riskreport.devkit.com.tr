@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { signIn } from '../lib/auth';
 import { useI18n, LANGUAGES } from '../lib/i18n';
-import { Loader2, AlertCircle, Globe } from 'lucide-react';
+import { Loader2, AlertCircle, Globe, ChevronDown, Check } from 'lucide-react';
 import Turnstile from 'react-turnstile';
 
 interface LoginPageProps {
@@ -23,10 +23,26 @@ export function LoginPage({ onLogin }: LoginPageProps) {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [turnstileToken, setTurnstileToken] = useState<string>('');
   const turnstileRef = useRef<any>(null);
+  const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
+  const languageDropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchSettings();
   }, []);
+
+  // Close language dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (languageDropdownRef.current && !languageDropdownRef.current.contains(event.target as Node)) {
+        setLanguageDropdownOpen(false);
+      }
+    }
+
+    if (languageDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [languageDropdownOpen]);
 
   async function fetchSettings() {
     try {
@@ -82,27 +98,39 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
       <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl p-8 w-full max-w-md relative z-10">
         {/* Dil Seçeci */}
-        <div className="absolute top-4 right-4">
-          <div className="relative group">
-            <button className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition-colors">
-              <Globe className="w-4 h-4" />
-              <span>{language.toUpperCase()}</span>
+        <div className="absolute top-4 right-4" ref={languageDropdownRef}>
+          <div className="relative">
+            <button
+              onClick={() => setLanguageDropdownOpen(!languageDropdownOpen)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 border border-blue-200 text-gray-700 text-sm font-medium transition-all"
+            >
+              <Globe className="w-4 h-4 text-blue-600" />
+              <span className="font-semibold text-blue-700">{language.toUpperCase()}</span>
+              <ChevronDown className={`w-4 h-4 text-blue-600 transition-transform ${languageDropdownOpen ? 'rotate-180' : ''}`} />
             </button>
-            <div className="absolute hidden group-hover:block right-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-              {LANGUAGES.map((lang) => (
-                <button
-                  key={lang.code}
-                  onClick={() => setLanguage(lang.code)}
-                  className={`block w-full text-left px-4 py-2 text-sm ${
-                    language === lang.code
-                      ? 'bg-blue-50 text-blue-600 font-medium'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  {lang.nativeName}
-                </button>
-              ))}
-            </div>
+            {languageDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-300 rounded-lg shadow-xl z-50 overflow-hidden">
+                <div className="py-1">
+                  {LANGUAGES.map((lang) => (
+                    <button
+                      key={lang.code}
+                      onClick={() => {
+                        setLanguage(lang.code);
+                        setLanguageDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-4 py-3 text-sm transition-colors ${
+                        language === lang.code
+                          ? 'bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-600'
+                          : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span>{lang.nativeName}</span>
+                      {language === lang.code && <Check className="w-4 h-4 text-blue-600" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -203,7 +231,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
         <div className="mt-6 pt-6 border-t border-gray-200">
           <p className="text-xs text-gray-500 text-center">
-            İş Sağlığı ve Güvenliği Yönetim Sistemi
+          Ramakkala Raporlama Sistemi &copy; 2025 Tüm hakları saklıdır. - Geliştirici: Devkit
           </p>
         </div>
       </div>
