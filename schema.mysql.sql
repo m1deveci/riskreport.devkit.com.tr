@@ -38,20 +38,6 @@ CREATE TABLE IF NOT EXISTS regions (
   INDEX idx_regions_is_active (is_active)
 );
 
--- Create ISG experts table
-CREATE TABLE IF NOT EXISTS isg_experts (
-  id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
-  location_id CHAR(36) NOT NULL,
-  full_name VARCHAR(255) NOT NULL,
-  email VARCHAR(255) NOT NULL,
-  phone VARCHAR(20) NOT NULL,
-  is_active BOOLEAN DEFAULT true,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  CONSTRAINT fk_isg_experts_location_id FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE,
-  INDEX idx_isg_experts_location_id (location_id),
-  INDEX idx_isg_experts_is_active (is_active)
-);
 
 -- Create sequence table for incident numbers (MySQL doesn't have sequences like PostgreSQL)
 CREATE TABLE IF NOT EXISTS incident_number_seq (
@@ -92,6 +78,7 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(255) UNIQUE NOT NULL,
   password_hash VARCHAR(255),
   role VARCHAR(50) NOT NULL DEFAULT 'viewer',
+  location_ids JSON DEFAULT '[]',
   is_active BOOLEAN DEFAULT true,
   last_login DATETIME DEFAULT NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -101,6 +88,9 @@ CREATE TABLE IF NOT EXISTS users (
   INDEX idx_users_is_active (is_active),
   INDEX idx_users_last_login (last_login)
 );
+
+-- Add location_ids column if it doesn't exist (for existing databases)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS location_ids JSON DEFAULT '[]';
 
 -- Create system logs table
 CREATE TABLE IF NOT EXISTS system_logs (
@@ -161,47 +151,6 @@ BEGIN
 END //
 DELIMITER ;
 
--- Create trigger to check ISG experts limit before insert on isg_experts
-DELIMITER //
-CREATE TRIGGER check_isg_experts_limit_insert
-BEFORE INSERT ON isg_experts
-FOR EACH ROW
-BEGIN
-  DECLARE active_count INT;
-
-  IF NEW.is_active = true THEN
-    SELECT COUNT(*) INTO active_count
-    FROM isg_experts
-    WHERE location_id = NEW.location_id AND is_active = true;
-
-    IF active_count >= 5 THEN
-      SIGNAL SQLSTATE '45000'
-      SET MESSAGE_TEXT = 'Bir lokasyonda maksimum 5 aktif İSG uzmanı olabilir';
-    END IF;
-  END IF;
-END //
-DELIMITER ;
-
--- Create trigger to check ISG experts limit before update on isg_experts
-DELIMITER //
-CREATE TRIGGER check_isg_experts_limit_update
-BEFORE UPDATE ON isg_experts
-FOR EACH ROW
-BEGIN
-  DECLARE active_count INT;
-
-  IF NEW.is_active = true AND OLD.is_active = false THEN
-    SELECT COUNT(*) INTO active_count
-    FROM isg_experts
-    WHERE location_id = NEW.location_id AND is_active = true;
-
-    IF active_count >= 5 THEN
-      SIGNAL SQLSTATE '45000'
-      SET MESSAGE_TEXT = 'Bir lokasyonda maksimum 5 aktif İSG uzmanı olabilir';
-    END IF;
-  END IF;
-END //
-DELIMITER ;
 
 -- Create stored procedure to get next incident number
 DELIMITER //

@@ -699,11 +699,11 @@ app.delete('/api/reports/:id', authenticateToken, adminOnly, async (req, res) =>
 
 // ==================== ISG EXPERTS ENDPOINTS ====================
 
-// Get All Experts
+// Get All Experts (isg_expert role users)
 app.get('/api/experts', async (req, res) => {
   try {
     const connection = await pool.getConnection();
-    const [rows] = await connection.query('SELECT * FROM isg_experts WHERE is_active = true');
+    const [rows] = await connection.query('SELECT * FROM users WHERE role = ? AND is_active = true', ['isg_expert']);
     connection.release();
 
     // Parse location_ids for each expert
@@ -725,14 +725,14 @@ app.get('/api/experts', async (req, res) => {
   }
 });
 
-// Get Experts by Location ID (returns experts who have access to this location)
+// Get Experts by Location ID (returns isg_expert role users who have access to this location)
 app.get('/api/experts/:locationId', async (req, res) => {
   try {
     const { locationId } = req.params;
     const connection = await pool.getConnection();
     const [rows] = await connection.query(
-      'SELECT * FROM isg_experts WHERE is_active = true',
-      []
+      'SELECT * FROM users WHERE role = ? AND is_active = true',
+      ['isg_expert']
     );
     connection.release();
 
@@ -774,36 +774,28 @@ app.post('/api/experts', authenticateToken, adminOnly, async (req, res) => {
       return res.status(400).json({ error: 'En az bir lokasyon seçilmelidir' });
     }
 
-    const id = randomUUID();
-    const connection = await pool.getConnection();
-
-    // Insert ISG Expert with location_ids
-    const locationIdsJson = JSON.stringify(location_ids);
-    await connection.query(
-      'INSERT INTO isg_experts (id, full_name, email, phone, location_ids) VALUES (?, ?, ?, ?, ?)',
-      [id, full_name, email, phone, locationIdsJson]
-    );
-
-    // If password provided, create user account too
-    if (password) {
-      if (password.length < 6) {
-        connection.release();
-        return res.status(400).json({ error: 'Şifre en az 6 karakter olmalıdır' });
-      }
-
-      const salt = await bcrypt.genSalt(10);
-      const password_hash = await bcrypt.hash(password, salt);
-      const userId = randomUUID();
-
-      // Create user account with isg_expert role and location assignments
-      await connection.query(
-        'INSERT INTO users (id, full_name, email, password_hash, role, is_active, location_ids) VALUES (?, ?, ?, ?, ?, true, ?)',
-        [userId, full_name, email, password_hash, 'isg_expert', locationIdsJson]
-      );
+    if (password && password.length < 6) {
+      return res.status(400).json({ error: 'Şifre en az 6 karakter olmalıdır' });
     }
 
+    const id = randomUUID();
+    const connection = await pool.getConnection();
+    const locationIdsJson = JSON.stringify(location_ids);
+
+    // Create isg_expert user directly in users table
+    let password_hash = null;
+    if (password) {
+      const salt = await bcrypt.genSalt(10);
+      password_hash = await bcrypt.hash(password, salt);
+    }
+
+    await connection.query(
+      'INSERT INTO users (id, full_name, email, password_hash, role, is_active, location_ids) VALUES (?, ?, ?, ?, ?, true, ?)',
+      [id, full_name, email, password_hash, 'isg_expert', locationIdsJson]
+    );
+
     connection.release();
-    res.json({ success: true, id, message: password ? 'İSG uzmanı ve kullanıcı hesabı başarıyla oluşturuldu' : 'İSG uzmanı başarıyla oluşturuldu' });
+    res.json({ success: true, id, message: 'İSG uzmanı başarıyla oluşturuldu' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -853,8 +845,8 @@ app.put('/api/experts/:id', authenticateToken, adminOnly, async (req, res) => {
     }
 
     const [result] = await connection.query(
-      `UPDATE isg_experts SET ${updates.join(', ')} WHERE id = ?`,
-      values
+      `UPDATE users SET ${updates.join(', ')} WHERE id = ? AND role = ?`,
+      [...values, 'isg_expert']
     );
     connection.release();
 
@@ -877,8 +869,8 @@ app.put('/api/isg-experts/:id/password', authenticateToken, async (req, res) => 
 
     const connection = await pool.getConnection();
 
-    // Check if expert exists and get their location_ids
-    const [experts] = await connection.query('SELECT * FROM isg_experts WHERE id = ?', [id]);
+    // Check if expert (isg_expert role user) exists and get their location_ids
+    const [experts] = await connection.query('SELECT * FROM users WHERE id = ? AND role = ?', [id, 'isg_expert']);
 
     if (!experts || experts.length === 0) {
       connection.release();
@@ -910,12 +902,10 @@ app.put('/api/isg-experts/:id/password', authenticateToken, async (req, res) => 
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
 
-    // Update password - using users table password_hash, so we need to create a user first if not exists
-    // For now, we update isg_experts table directly if it has password_hash field
-    // Or we assume ISG experts are also users
+    // Update password in users table
     await connection.query(
-      'UPDATE users SET password_hash = ? WHERE email = (SELECT email FROM isg_experts WHERE id = ?)',
-      [password_hash, id]
+      'UPDATE users SET password_hash = ? WHERE id = ? AND role = ?',
+      [password_hash, id, 'isg_expert']
     );
 
     connection.release();
@@ -932,7 +922,7 @@ app.delete('/api/experts/:id', authenticateToken, adminOnly, async (req, res) =>
     const { id } = req.params;
 
     const connection = await pool.getConnection();
-    const [result] = await connection.query('DELETE FROM isg_experts WHERE id = ?', [id]);
+    const [result] = await connection.query('DELETE FROM users WHERE id = ? AND role = ?', [id, 'isg_expert']);
     connection.release();
 
     res.json({ success: true, message: 'İSG uzmanı silindi' });

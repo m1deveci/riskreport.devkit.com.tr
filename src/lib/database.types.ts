@@ -73,38 +73,6 @@ export interface Database {
           updated_at?: string
         }
       }
-      isg_experts: {
-        Row: {
-          id: string
-          location_id: string
-          full_name: string
-          email: string
-          phone: string
-          is_active: boolean
-          created_at: string
-          updated_at: string
-        }
-        Insert: {
-          id?: string
-          location_id: string
-          full_name: string
-          email: string
-          phone: string
-          is_active?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-        Update: {
-          id?: string
-          location_id?: string
-          full_name?: string
-          email?: string
-          phone?: string
-          is_active?: boolean
-          created_at?: string
-          updated_at?: string
-        }
-      }
       near_miss_reports: {
         Row: {
           id: string
