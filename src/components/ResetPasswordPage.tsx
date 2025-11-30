@@ -6,8 +6,9 @@ export function ResetPasswordPage() {
     window.location.hash = path;
   };
 
-  // Get token from URL query params
-  const params = new URLSearchParams(window.location.search);
+  // Get token from URL hash (hash routing)
+  const hashParts = window.location.hash.split('?');
+  const params = new URLSearchParams(hashParts.length > 1 ? hashParts[1] : '');
   const token = params.get('token');
 
   const [password, setPassword] = useState('');
