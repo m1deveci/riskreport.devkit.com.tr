@@ -152,12 +152,15 @@ export function Regions() {
     try {
       const qrCanvas = document.createElement('canvas');
       await QRCode.toCanvas(qrCanvas, region.qr_code_url, {
-        width: 512,
+        width: 350,
         margin: 2,
       });
 
-      // Create a new canvas with extra space for title
-      const titleHeight = 100;
+      // Get location name
+      const locationName = (region.locations as unknown as { name: string })?.name || 'Lokasyon';
+
+      // Create a new canvas with extra space for title and location info
+      const titleHeight = 140;
       const finalCanvas = document.createElement('canvas');
       finalCanvas.width = qrCanvas.width;
       finalCanvas.height = qrCanvas.height + titleHeight;
@@ -169,19 +172,34 @@ export function Regions() {
       ctx.fillStyle = '#FFFFFF';
       ctx.fillRect(0, 0, finalCanvas.width, finalCanvas.height);
 
-      // Draw title
-      ctx.fillStyle = '#1F2937'; // Dark gray
-      ctx.font = 'bold 48px Arial, sans-serif';
+      // Draw location name
+      ctx.fillStyle = '#6B7280'; // Gray
+      ctx.font = 'bold 16px Arial, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
-      ctx.fillText('RAMAK KALA BİLDİR', finalCanvas.width / 2, 20);
+      ctx.fillText(`📍 ${locationName}`, finalCanvas.width / 2, 12);
+
+      // Draw region name
+      ctx.fillStyle = '#1F2937'; // Dark gray
+      ctx.font = 'bold 24px Arial, sans-serif';
+      ctx.fillText(region.name, finalCanvas.width / 2, 35);
+
+      // Draw main title
+      ctx.fillStyle = '#1F2937'; // Dark gray
+      ctx.font = 'bold 18px Arial, sans-serif';
+      ctx.fillText('Ramakkala Bildirimi Yap', finalCanvas.width / 2, 70);
+
+      // Draw instruction text
+      ctx.fillStyle = '#6B7280'; // Gray
+      ctx.font = '12px Arial, sans-serif';
+      ctx.fillText('QR kodu tarayarak rapor gönderin', finalCanvas.width / 2, 95);
 
       // Draw QR code on the canvas below title
-      ctx.drawImage(qrCanvas, 0, titleHeight);
+      ctx.drawImage(qrCanvas, (finalCanvas.width - qrCanvas.width) / 2, titleHeight);
 
       // Download
       const link = document.createElement('a');
-      link.download = `qr-${region.name.replace(/\s+/g, '-')}.png`;
+      link.download = `qr-${locationName.replace(/\s+/g, '-')}-${region.name.replace(/\s+/g, '-')}.png`;
       link.href = finalCanvas.toDataURL();
       link.click();
     } catch (err) {
