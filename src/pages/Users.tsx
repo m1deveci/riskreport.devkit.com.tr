@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { api, supabase } from '../lib/supabase';
 import { signUp } from '../lib/auth';
 import { logAction, LogActions } from '../lib/logger';
-import { Plus, Edit2, Trash2, Users as UsersIcon, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, Users as UsersIcon, AlertCircle, CheckCircle2, Key } from 'lucide-react';
 
 interface User {
   id: string;
@@ -153,6 +153,31 @@ export function Users() {
     }
   }
 
+  async function handleResetPassword(id: string, email: string, fullName: string) {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/password-reset/admin/' + id, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Parola sıfırlama başarısız oldu');
+      }
+
+      await logAction(LogActions.UPDATE_USER, { user_id: id, action: 'password_reset' });
+      alert(`Parola sıfırlama bağlantısı ${email} adresine gönderildi`);
+    } catch (err) {
+      console.error('Failed to reset password:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Parola sıfırlama işleminde bir hata oluştu';
+      alert(errorMessage);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -250,18 +275,33 @@ export function Users() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-400">
-                    {new Date(user.created_at).toLocaleDateString('tr-TR')}
+                    {user.created_at ? new Date(user.created_at).toLocaleDateString('tr-TR', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) : 'Bilinmiyor'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
                       onClick={() => openModal(user)}
                       className="text-blue-600 hover:text-blue-900 mr-3"
+                      title="Düzenle"
                     >
                       <Edit2 className="w-4 h-4 inline" />
                     </button>
                     <button
+                      onClick={() => handleResetPassword(user.id, user.email, user.full_name)}
+                      className="text-orange-600 hover:text-orange-900 mr-3"
+                      title="Parola Sıfırla"
+                    >
+                      <Key className="w-4 h-4 inline" />
+                    </button>
+                    <button
                       onClick={() => handleDelete(user.id)}
                       className="text-red-600 hover:text-red-900"
+                      title="Sil"
                     >
                       <Trash2 className="w-4 h-4 inline" />
                     </button>

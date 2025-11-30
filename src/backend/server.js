@@ -198,7 +198,7 @@ app.get('/api/users', authenticateToken, adminOnly, async (req, res) => {
   try {
     const connection = await pool.getConnection();
     const [rows] = await connection.query(
-      'SELECT id, full_name, email, role, is_active, location_ids FROM users'
+      'SELECT id, full_name, email, role, is_active, location_ids, created_at FROM users'
     );
     connection.release();
 
