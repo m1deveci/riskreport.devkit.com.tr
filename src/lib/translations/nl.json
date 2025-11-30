@@ -1,0 +1,77 @@
+{
+  "common": {
+    "language": "Taal",
+    "logout": "Afmelden",
+    "save": "Opslaan",
+    "cancel": "Annuleren",
+    "delete": "Verwijderen",
+    "edit": "Bewerken",
+    "add": "Toevoegen",
+    "search": "Zoeken",
+    "loading": "Bezig met laden...",
+    "error": "Fout",
+    "success": "Succes",
+    "close": "Sluiten"
+  },
+  "auth": {
+    "login": "Aanmelden",
+    "selectLanguage": "Taal Selecteren",
+    "email": "E-mail",
+    "password": "Wachtwoord",
+    "forgotPassword": "Wachtwoord Vergeten",
+    "loginButton": "Aanmelden",
+    "invalidCredentials": "Ongeldig e-mailadres of wachtwoord",
+    "loginError": "Er is een fout opgetreden bij het aanmelden"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "locations": "Locaties",
+    "regions": "Regio's",
+    "reports": "Bijna-Ongevallen Rapporten",
+    "logs": "Systeemlogboeken",
+    "users": "Gebruikers en Experts",
+    "settings": "Instellingen"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Welkom"
+  },
+  "locations": {
+    "title": "Locaties",
+    "addNew": "Nieuwe Locatie Toevoegen",
+    "name": "Naam",
+    "email": "E-mail",
+    "description": "Beschrijving",
+    "active": "Actief",
+    "created": "Gemaakt"
+  },
+  "users": {
+    "title": "Gebruikers en ISG-Experts",
+    "addNew": "Nieuwe Gebruiker Toevoegen",
+    "fullName": "Volledige Naam",
+    "email": "E-mail",
+    "role": "Rol",
+    "lastLogin": "Laatste Aanmelding",
+    "created": "Gemaakt",
+    "admin": "Beheerder",
+    "isgExpert": "ISG-Expert",
+    "viewer": "Viewer",
+    "resetPassword": "Wachtwoord Opnieuw Instellen",
+    "manualReset": "Handmatig Herstellen"
+  },
+  "logs": {
+    "title": "Systeemlogboeken",
+    "subtitle": "Bekijk alle systeemactiviteiten",
+    "date": "Datum/Tijd",
+    "user": "Gebruiker",
+    "action": "Actie",
+    "details": "Details",
+    "notFound": "Geen logboeken gevonden",
+    "noActivity": "Tot nu toe geen systeemactiviteit geregistreerd"
+  },
+  "settings": {
+    "title": "Instellingen",
+    "siteTitle": "Sitertitel",
+    "save": "Opslaan"
+  }
+}

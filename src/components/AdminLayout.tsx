@@ -10,9 +10,11 @@ import {
   X,
   AlertTriangle,
   Database,
-  Grid3x3
+  Grid3x3,
+  Globe
 } from 'lucide-react';
 import { signOut } from '../lib/auth';
+import { useI18n, LANGUAGES } from '../lib/i18n';
 import type { UserProfile } from '../lib/auth';
 
 interface AdminLayoutProps {
@@ -33,6 +35,7 @@ const menuItems = [
 ];
 
 export function AdminLayout({ children, currentUser, currentPage, onNavigate }: AdminLayoutProps) {
+  const { language, setLanguage } = useI18n();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [siteTitle, setSiteTitle] = useState('Ramak Kala Sistemi');
 
@@ -89,6 +92,28 @@ export function AdminLayout({ children, currentUser, currentPage, onNavigate }: 
             <div className="hidden sm:block text-right">
               <p className="text-sm font-semibold text-white">{currentUser.full_name}</p>
               <p className="text-xs text-slate-400 capitalize">{currentUser.role}</p>
+            </div>
+            {/* Dil Seçici */}
+            <div className="relative group">
+              <button className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-700/50 text-slate-300 hover:bg-slate-700 transition-colors border border-slate-600">
+                <Globe className="w-4 h-4" />
+                <span className="text-sm font-medium">{language.toUpperCase()}</span>
+              </button>
+              <div className="absolute hidden group-hover:block right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-50">
+                {LANGUAGES.map((lang) => (
+                  <button
+                    key={lang.code}
+                    onClick={() => setLanguage(lang.code)}
+                    className={`block w-full text-left px-4 py-2 text-sm transition-colors ${
+                      language === lang.code
+                        ? 'bg-blue-600 text-white font-medium'
+                        : 'text-slate-300 hover:bg-slate-700'
+                    }`}
+                  >
+                    {lang.nativeName}
+                  </button>
+                ))}
+              </div>
             </div>
             <button
               onClick={handleLogout}

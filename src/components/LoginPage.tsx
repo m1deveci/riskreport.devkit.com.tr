@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { signIn } from '../lib/auth';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { useI18n, LANGUAGES } from '../lib/i18n';
+import { Loader2, AlertCircle, Globe } from 'lucide-react';
 
 interface LoginPageProps {
   onLogin: () => void;
@@ -13,6 +14,7 @@ interface Settings {
 }
 
 export function LoginPage({ onLogin }: LoginPageProps) {
+  const { t, language, setLanguage } = useI18n();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -43,7 +45,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       onLogin();
     } catch (err: unknown) {
       const errorMessage =
-        err instanceof Error ? err.message : 'Giriş yapılırken bir hata oluştu';
+        err instanceof Error ? err.message : t('auth.loginError');
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -65,6 +67,31 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       )}
 
       <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-xl p-8 w-full max-w-md relative z-10">
+        {/* Dil Seçeci */}
+        <div className="absolute top-4 right-4">
+          <div className="relative group">
+            <button className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium transition-colors">
+              <Globe className="w-4 h-4" />
+              <span>{language.toUpperCase()}</span>
+            </button>
+            <div className="absolute hidden group-hover:block right-0 mt-1 w-40 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+              {LANGUAGES.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => setLanguage(lang.code)}
+                  className={`block w-full text-left px-4 py-2 text-sm ${
+                    language === lang.code
+                      ? 'bg-blue-50 text-blue-600 font-medium'
+                      : 'text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  {lang.nativeName}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
         <div className="text-center mb-8">
           {settings?.logo_path ? (
             <img
@@ -80,7 +107,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
             {settings?.site_title || 'Ramak Kala Sistemi'}
           </h1>
-          <p className="text-gray-600">Yönetim Paneli Girişi</p>
+          <p className="text-gray-600">{t('auth.selectLanguage')}</p>
         </div>
 
         {error && (
@@ -95,7 +122,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              E-posta
+              {t('auth.email')}
             </label>
             <input
               type="email"
@@ -103,14 +130,14 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="ornek@sirket.com"
+              placeholder="example@company.com"
               required
             />
           </div>
 
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-              Şifre
+              {t('auth.password')}
             </label>
             <input
               type="password"
@@ -126,7 +153,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
                 href="/#/forgot-password"
                 className="text-sm text-blue-600 hover:text-blue-700 font-medium"
               >
-                Parolamı Unuttum?
+                {t('auth.forgotPassword')}
               </a>
             </div>
           </div>
@@ -139,10 +166,10 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             {loading ? (
               <>
                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                Giriş yapılıyor...
+                {t('common.loading')}
               </>
             ) : (
-              'Giriş Yap'
+              t('auth.loginButton')
             )}
           </button>
         </form>

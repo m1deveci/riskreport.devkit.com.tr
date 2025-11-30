@@ -1,0 +1,77 @@
+{
+  "common": {
+    "language": "Language",
+    "logout": "Logout",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "close": "Close"
+  },
+  "auth": {
+    "login": "Login",
+    "selectLanguage": "Select Language",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot Password",
+    "loginButton": "Login",
+    "invalidCredentials": "Invalid email or password",
+    "loginError": "An error occurred during login"
+  },
+  "sidebar": {
+    "dashboard": "Dashboard",
+    "locations": "Locations",
+    "regions": "Regions",
+    "reports": "Near-Miss Reports",
+    "logs": "System Logs",
+    "users": "Users and Experts",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Welcome"
+  },
+  "locations": {
+    "title": "Locations",
+    "addNew": "Add New Location",
+    "name": "Name",
+    "email": "Email",
+    "description": "Description",
+    "active": "Active",
+    "created": "Created"
+  },
+  "users": {
+    "title": "Users and ISG Experts",
+    "addNew": "Add New User",
+    "fullName": "Full Name",
+    "email": "Email",
+    "role": "Role",
+    "lastLogin": "Last Login",
+    "created": "Created",
+    "admin": "Admin",
+    "isgExpert": "ISG Expert",
+    "viewer": "Viewer",
+    "resetPassword": "Reset Password",
+    "manualReset": "Manual Reset"
+  },
+  "logs": {
+    "title": "System Logs",
+    "subtitle": "View all system activities",
+    "date": "Date/Time",
+    "user": "User",
+    "action": "Action",
+    "details": "Details",
+    "notFound": "No logs found",
+    "noActivity": "No system activity recorded yet"
+  },
+  "settings": {
+    "title": "Settings",
+    "siteTitle": "Site Title",
+    "save": "Save"
+  }
+}

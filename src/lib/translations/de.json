@@ -1,0 +1,77 @@
+{
+  "common": {
+    "language": "Sprache",
+    "logout": "Abmelden",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "add": "Hinzufügen",
+    "search": "Suchen",
+    "loading": "Wird geladen...",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "close": "Schließen"
+  },
+  "auth": {
+    "login": "Anmelden",
+    "selectLanguage": "Sprache Wählen",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "forgotPassword": "Passwort vergessen",
+    "loginButton": "Anmelden",
+    "invalidCredentials": "Ungültige E-Mail oder Passwort",
+    "loginError": "Ein Fehler ist bei der Anmeldung aufgetreten"
+  },
+  "sidebar": {
+    "dashboard": "Übersicht",
+    "locations": "Standorte",
+    "regions": "Regionen",
+    "reports": "Beinahe-Unfälle-Berichte",
+    "logs": "Systemprotokolle",
+    "users": "Benutzer und Experten",
+    "settings": "Einstellungen"
+  },
+  "dashboard": {
+    "title": "Übersicht",
+    "subtitle": "Willkommen"
+  },
+  "locations": {
+    "title": "Standorte",
+    "addNew": "Neuen Standort Hinzufügen",
+    "name": "Name",
+    "email": "E-Mail",
+    "description": "Beschreibung",
+    "active": "Aktiv",
+    "created": "Erstellt"
+  },
+  "users": {
+    "title": "Benutzer und ISG-Experten",
+    "addNew": "Neuen Benutzer Hinzufügen",
+    "fullName": "Vollständiger Name",
+    "email": "E-Mail",
+    "role": "Rolle",
+    "lastLogin": "Letzte Anmeldung",
+    "created": "Erstellt",
+    "admin": "Administrator",
+    "isgExpert": "ISG-Experte",
+    "viewer": "Betrachter",
+    "resetPassword": "Passwort Zurücksetzen",
+    "manualReset": "Manuelles Zurücksetzen"
+  },
+  "logs": {
+    "title": "Systemprotokolle",
+    "subtitle": "Alle Systemaktivitäten anzeigen",
+    "date": "Datum/Zeit",
+    "user": "Benutzer",
+    "action": "Aktion",
+    "details": "Details",
+    "notFound": "Keine Protokolle gefunden",
+    "noActivity": "Noch keine Systemaktivität aufgezeichnet"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "siteTitle": "Webseitentitel",
+    "save": "Speichern"
+  }
+}

@@ -13,6 +13,7 @@ import { SystemLogs } from './pages/SystemLogs';
 import { Settings } from './pages/Settings';
 import { Users } from './pages/Users';
 import { getCurrentUser, onAuthStateChange } from './lib/auth';
+import { I18nProvider } from './lib/i18n';
 import type { UserProfile } from './lib/auth';
 
 type AppMode = 'loading' | 'public-form' | 'login' | 'forgot-password' | 'reset-password' | 'admin';
@@ -238,4 +239,12 @@ function App() {
   return null;
 }
 
-export default App;
+function AppWithProvider() {
+  return (
+    <I18nProvider>
+      <App />
+    </I18nProvider>
+  );
+}
+
+export default AppWithProvider;

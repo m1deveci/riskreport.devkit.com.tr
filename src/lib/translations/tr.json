@@ -1,0 +1,77 @@
+{
+  "common": {
+    "language": "Dil",
+    "logout": "Çıkış",
+    "save": "Kaydet",
+    "cancel": "İptal",
+    "delete": "Sil",
+    "edit": "Düzenle",
+    "add": "Ekle",
+    "search": "Ara",
+    "loading": "Yükleniyor...",
+    "error": "Hata",
+    "success": "Başarılı",
+    "close": "Kapat"
+  },
+  "auth": {
+    "login": "Giriş",
+    "selectLanguage": "Dil Seçin",
+    "email": "E-posta",
+    "password": "Şifre",
+    "forgotPassword": "Parolamı Unuttum",
+    "loginButton": "Giriş Yap",
+    "invalidCredentials": "Geçersiz e-posta veya şifre",
+    "loginError": "Giriş yapılırken bir hata oluştu"
+  },
+  "sidebar": {
+    "dashboard": "Gösterge Paneli",
+    "locations": "Lokasyonlar",
+    "regions": "Bölgeler",
+    "reports": "Ramak Kala Raporları",
+    "logs": "Sistem Logları",
+    "users": "Kullanıcılar ve Uzmanlar",
+    "settings": "Ayarlar"
+  },
+  "dashboard": {
+    "title": "Gösterge Paneli",
+    "subtitle": "Hoş geldiniz"
+  },
+  "locations": {
+    "title": "Lokasyonlar",
+    "addNew": "Yeni Lokasyon Ekle",
+    "name": "Ad",
+    "email": "E-posta",
+    "description": "Açıklama",
+    "active": "Aktif",
+    "created": "Oluşturuldu"
+  },
+  "users": {
+    "title": "Kullanıcılar ve İSG Uzmanları",
+    "addNew": "Yeni Kullanıcı Ekle",
+    "fullName": "Ad Soyad",
+    "email": "E-posta",
+    "role": "Rol",
+    "lastLogin": "Son Giriş",
+    "created": "Oluşturuldu",
+    "admin": "Admin",
+    "isgExpert": "İSG Uzmanı",
+    "viewer": "Görüntüleyici",
+    "resetPassword": "Parolayı Sıfırla",
+    "manualReset": "Manuel Sıfırla"
+  },
+  "logs": {
+    "title": "Sistem Logları",
+    "subtitle": "Tüm sistem aktivitelerini görüntüleyin",
+    "date": "Tarih/Saat",
+    "user": "Kullanıcı",
+    "action": "İşlem",
+    "details": "Detaylar",
+    "notFound": "Log bulunamadı",
+    "noActivity": "Henüz sistem aktivitesi kaydedilmemiş"
+  },
+  "settings": {
+    "title": "Ayarlar",
+    "siteTitle": "Site Başlığı",
+    "save": "Kaydet"
+  }
+}
