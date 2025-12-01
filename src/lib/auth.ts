@@ -19,7 +19,21 @@ export async function signIn(email: string, password: string, turnstileToken?: s
 
     if (!res.ok) {
       const error = await res.json();
-      throw new Error(error.error || 'Login başarısız');
+      const errorMsg = error.error || 'Login başarısız';
+
+      // Pass additional error data as JSON in the error message
+      if (error.failedAttempts !== undefined && error.maxAttempts !== undefined) {
+        const errorWithData = JSON.stringify({
+          error: errorMsg,
+          failedAttempts: error.failedAttempts,
+          maxAttempts: error.maxAttempts,
+          attemptsBlocked: error.attemptsBlocked,
+          retryAfter: error.retryAfter
+        });
+        throw new Error(errorWithData);
+      }
+
+      throw new Error(errorMsg);
     }
 
     const data = await res.json();
@@ -36,7 +50,7 @@ export async function signIn(email: string, password: string, turnstileToken?: s
 
     return { user, profile: user };
   } catch (error) {
-    throw new Error(`Login hatası: ${(error as Error).message}`);
+    throw error;
   }
 }
 

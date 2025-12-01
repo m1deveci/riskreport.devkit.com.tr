@@ -69,9 +69,33 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       await signIn(email, password, turnstileToken);
       onLogin();
     } catch (err: unknown) {
-      const errorMessage =
-        err instanceof Error ? err.message : t('auth.loginError');
-      setError(errorMessage);
+      let errorMessage = err instanceof Error ? err.message : t('auth.loginError');
+      let displayError = errorMessage;
+
+      // Check if error response includes attempt information
+      if (err instanceof Error) {
+        try {
+          const errorData = JSON.parse(err.message);
+          if (errorData.failedAttempts !== undefined && errorData.maxAttempts !== undefined) {
+            const remainingAttempts = errorData.maxAttempts - errorData.failedAttempts;
+            displayError = errorData.error;
+
+            // Add attempt information
+            if (errorData.attemptsBlocked && errorData.retryAfter) {
+              const minutesRemaining = Math.ceil(errorData.retryAfter / 60);
+              displayError += `\n\n🔒 Hesabınız ${minutesRemaining} dakika boyunca kilitlenmiştir.`;
+            } else if (remainingAttempts > 0) {
+              displayError += `\n\n⚠️ Başarısız Deneme: ${errorData.failedAttempts}/${errorData.maxAttempts}`;
+              displayError += `\nKalan Deneme: ${remainingAttempts}`;
+            }
+          }
+        } catch (e) {
+          // If JSON parsing fails, use original message
+          displayError = errorMessage;
+        }
+      }
+
+      setError(displayError);
 
       // Reset Turnstile on error
       if (turnstileRef.current) {
@@ -165,9 +189,9 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
         {error && (
           <div className="mb-6 bg-red-50 border-l-4 border-red-400 p-4">
-            <div className="flex">
-              <AlertCircle className="w-5 h-5 text-red-600 mr-3 flex-shrink-0" />
-              <p className="text-sm text-red-700">{error}</p>
+            <div className="flex gap-3">
+              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-red-700 whitespace-pre-line">{error}</div>
             </div>
           </div>
         )}
