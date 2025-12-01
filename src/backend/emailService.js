@@ -267,7 +267,7 @@ export async function sendWelcomeEmail(email, fullName, plainPassword, locationI
                   <tr>
                     <td style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); padding: 40px 30px; text-align: center;">
                       <h1 style="margin: 0; font-size: 32px; font-weight: 700; color: white;">🎉 Hoş Geldiniz!</h1>
-                      <p style="margin: 10px 0 0 0; font-size: 16px; color: rgba(255,255,255,0.9);">Risk Report Sistemi'ne başlamaya hazırlayın</p>
+                      <p style="margin: 10px 0 0 0; font-size: 16px; color: rgba(255,255,255,0.9);">Ramakkala Raporlama Sistemi'ni kullanmaya hazırsınız.</p>
                     </td>
                   </tr>
 
@@ -278,7 +278,7 @@ export async function sendWelcomeEmail(email, fullName, plainPassword, locationI
                         Merhaba <strong>${fullName}</strong>,
                       </p>
                       <p style="margin: 0 0 25px 0; font-size: 15px; color: #555; line-height: 1.6;">
-                        Risk Report Sistemi'nde bir hesap oluşturulmuştur. Aşağıdaki bilgileri kullanarak sisteme giriş yapabilirsiniz.
+                        Ramakkala Raporlama Sistemi'nde bir hesap oluşturulmuştur. Aşağıdaki bilgileri kullanarak sisteme giriş yapabilirsiniz.
                       </p>
 
                       <!-- Login Credentials Card -->

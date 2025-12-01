@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react'; 
+import { useEffect, useState } from 'react';
 import { logAction, LogActions } from '../lib/logger';
-import { Search, Filter, X, AlertTriangle, Eye, Download, Image as ImageIcon, Lock, History } from 'lucide-react';
+import { api } from '../lib/supabase';
+import { Search, Filter, X, AlertTriangle, Eye, Download, Image as ImageIcon, Lock, History, FileDown } from 'lucide-react';
 import type { UserProfile } from '../lib/auth';
 import { useI18n, useLanguageChange } from '../lib/i18n';
+import { exportReportsAsPDF, exportReportsAsExcel, type ReportExportData } from '../lib/exportUtils';
 
 interface Report {
   id: string;
@@ -197,6 +199,61 @@ export function Reports() {
     setSearchTerm('');
   }
 
+  async function handleExportPDF() {
+    const dataToExport: ReportExportData[] = filteredReports.map((report) => ({
+      incident_number: report.incident_number,
+      location_name: report.location_name || report.locations?.name || 'Bilinmeyen',
+      region_name: report.region_name || report.regions?.name || 'Bilinmeyen',
+      full_name: report.full_name,
+      phone: report.phone,
+      category: report.category,
+      status: report.status,
+      description: report.description,
+      internal_notes: report.internal_notes,
+      created_at: new Date(report.created_at).toLocaleString('tr-TR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    }));
+
+    const filename = `raporlar_${new Date().toISOString().split('T')[0]}.pdf`;
+    await exportReportsAsPDF(dataToExport, {
+      filename,
+      title: 'Ramakkala Raporları',
+      subtitle: `Toplam ${dataToExport.length} rapor`,
+    });
+  }
+
+  function handleExportExcel() {
+    const dataToExport: ReportExportData[] = filteredReports.map((report) => ({
+      incident_number: report.incident_number,
+      location_name: report.location_name || report.locations?.name || 'Bilinmeyen',
+      region_name: report.region_name || report.regions?.name || 'Bilinmeyen',
+      full_name: report.full_name,
+      phone: report.phone,
+      category: report.category,
+      status: report.status,
+      description: report.description,
+      internal_notes: report.internal_notes,
+      created_at: new Date(report.created_at).toLocaleString('tr-TR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+    }));
+
+    const filename = `raporlar_${new Date().toISOString().split('T')[0]}.xlsx`;
+    exportReportsAsExcel(dataToExport, {
+      filename,
+      title: 'Ramakkala Raporları',
+    });
+  }
+
   function openDetail(report: Report) {
     setSelectedReport(report);
     setEditNotes(report.internal_notes);
@@ -319,9 +376,29 @@ export function Reports() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 -my-6 px-6 py-6">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-white">{t('reports.title')}</h1>
-        <p className="text-slate-400 text-lg mt-2">{t('reports.subtitle') || 'Tüm ramakkala bildirimlerini görüntüleyin ve yönetin'}</p>
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-4xl font-bold text-white">{t('reports.title')}</h1>
+          <p className="text-slate-400 text-lg mt-2">{t('reports.subtitle') || 'Tüm ramakkala bildirimlerini görüntüleyin ve yönetin'}</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={handleExportPDF}
+            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors text-sm whitespace-nowrap"
+            title="PDF olarak indir"
+          >
+            <FileDown className="w-4 h-4" />
+            PDF
+          </button>
+          <button
+            onClick={handleExportExcel}
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors text-sm whitespace-nowrap"
+            title="Excel olarak indir"
+          >
+            <FileDown className="w-4 h-4" />
+            Excel
+          </button>
+        </div>
       </div>
 
       <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md p-4 space-y-4">

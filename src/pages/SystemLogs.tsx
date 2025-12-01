@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { api, supabase } from '../lib/supabase';
 import { ActionDescriptions, formatLogDetails } from '../lib/logger';
-import { FileText, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { FileText, Search, ChevronDown, ChevronUp, Download } from 'lucide-react';
 import { useI18n, useLanguageChange } from '../lib/i18n';
+import { exportLogsAsPDF, exportLogsAsExcel, type SystemLogExportData } from '../lib/exportUtils';
 
 interface SystemLog {
   id: string;
@@ -77,6 +78,63 @@ export function SystemLogs() {
     }
   }
 
+  async function handleExportPDF() {
+    const dataToExport: SystemLogExportData[] = filteredLogs.map((log) => {
+      const actionDesc = ActionDescriptions[log.action];
+      const parsedDetails = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
+      const detailsText = formatLogDetails(log.action, parsedDetails, usersMap);
+
+      return {
+        date: new Date(log.created_at).toLocaleString('tr-TR', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        }),
+        user: (log.users as unknown as { full_name: string })?.full_name || 'Sistem',
+        action: actionDesc?.tr || log.action,
+        details: detailsText,
+      };
+    });
+
+    const filename = `sistemlogları_${new Date().toISOString().split('T')[0]}.pdf`;
+    await exportLogsAsPDF(dataToExport, {
+      filename,
+      title: 'Sistem Logları',
+      subtitle: `Toplam ${dataToExport.length} log kaydı`,
+    });
+  }
+
+  function handleExportExcel() {
+    const dataToExport: SystemLogExportData[] = filteredLogs.map((log) => {
+      const actionDesc = ActionDescriptions[log.action];
+      const parsedDetails = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
+      const detailsText = formatLogDetails(log.action, parsedDetails, usersMap);
+
+      return {
+        date: new Date(log.created_at).toLocaleString('tr-TR', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        }),
+        user: (log.users as unknown as { full_name: string })?.full_name || 'Sistem',
+        action: actionDesc?.tr || log.action,
+        details: detailsText,
+      };
+    });
+
+    const filename = `sistemlogları_${new Date().toISOString().split('T')[0]}.xlsx`;
+    exportLogsAsExcel(dataToExport, {
+      filename,
+      title: 'Sistem Logları',
+    });
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -87,9 +145,29 @@ export function SystemLogs() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 -my-6 px-6 py-6">
-      <div>
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">{t('logs.title')}</h1>
-        <p className="text-slate-400 text-sm sm:text-base md:text-lg mt-2">{t('logs.subtitle')}</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">{t('logs.title')}</h1>
+          <p className="text-slate-400 text-sm sm:text-base md:text-lg mt-2">{t('logs.subtitle')}</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={handleExportPDF}
+            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors text-sm"
+            title="PDF olarak indir"
+          >
+            <Download className="w-4 h-4" />
+            PDF
+          </button>
+          <button
+            onClick={handleExportExcel}
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors text-sm"
+            title="Excel olarak indir"
+          >
+            <Download className="w-4 h-4" />
+            Excel
+          </button>
+        </div>
       </div>
 
       <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md p-4">

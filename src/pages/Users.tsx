@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { signUp, getCurrentUser } from '../lib/auth';
+import { api } from '../lib/supabase';
 import { logAction, LogActions } from '../lib/logger';
 import { Plus, Edit2, Trash2, Users as UsersIcon, AlertCircle, CheckCircle2, Key, RefreshCw, Copy } from 'lucide-react';
 import { useI18n, useLanguageChange } from '../lib/i18n';

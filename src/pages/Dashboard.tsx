@@ -1,8 +1,24 @@
 import { useEffect, useState } from 'react';
 import { api, supabase } from '../lib/supabase';
 import { useI18n, useLanguageChange } from '../lib/i18n';
-import { MapPin, AlertTriangle, TrendingUp, Calendar, Zap, Building2, BarChart3, Clock, Lock } from 'lucide-react';
+import { MapPin, AlertTriangle, TrendingUp, Calendar, Zap, Building2, BarChart3, Clock, Lock, Activity, Target, Download } from 'lucide-react';
 import type { UserProfile } from '../lib/auth';
+import {
+  calculateLocationHealth,
+  analyzeReportStatusTransition,
+  getActionSpeedRanking,
+  getHealthColor,
+  getHealthBgColor,
+  getLastReportDescription,
+  type LocationHealth,
+  type ReportStatusAnalysis,
+} from '../lib/dashboardAnalytics';
+import {
+  exportLocationRiskAsPDF,
+  exportLocationRiskAsExcel,
+  exportActionSpeedAsPDF,
+  exportActionSpeedAsExcel,
+} from '../lib/exportUtils';
 
 interface Stats {
   totalLocations: number;
@@ -18,6 +34,9 @@ interface Stats {
     created_at: string;
     status: string;
   }[];
+  locationHealth: LocationHealth[];
+  statusAnalysis: ReportStatusAnalysis[];
+  actionSpeedRanking: any[];
 }
 
 export function Dashboard() {
@@ -30,6 +49,9 @@ export function Dashboard() {
     reportsByCategory: [],
     reportsByLocation: [],
     recentReports: [],
+    locationHealth: [],
+    statusAnalysis: [],
+    actionSpeedRanking: [],
   });
   const [loading, setLoading] = useState(true);
 
@@ -57,18 +79,23 @@ export function Dashboard() {
           reportsByCategory: [],
           reportsByLocation: [],
           recentReports: [],
+          locationHealth: [],
+          statusAnalysis: [],
+          actionSpeedRanking: [],
         });
         setLoading(false);
         return;
       }
 
-      const [locationsData, reportsData] = await Promise.all([
+      const [locationsData, reportsData, regionsData] = await Promise.all([
         api.locations.getList(),
         api.reports.getList(),
+        api.regions.getList(''),
       ]);
 
       const activeLocations = (locationsData || []).filter((loc: any) => loc.is_active);
       const allReports = reportsData || [];
+      const allRegions = regionsData || [];
       const newReports = allReports.filter((report: any) => report.status === 'Yeni');
 
       const categoryCount: Record<string, number> = {};
@@ -95,6 +122,20 @@ export function Dashboard() {
           status: report.status,
         }));
 
+      // Yeni analytics hesapla
+      const locationHealth = calculateLocationHealth(
+        allReports as any[],
+        activeLocations,
+        allRegions
+      );
+
+      const statusAnalysis = analyzeReportStatusTransition(
+        allReports as any[],
+        activeLocations
+      );
+
+      const actionSpeedRanking = getActionSpeedRanking(statusAnalysis);
+
       setStats({
         totalLocations: activeLocations.length,
         totalReports: allReports.length,
@@ -108,12 +149,101 @@ export function Dashboard() {
           count,
         })),
         recentReports: recentReportsList,
+        locationHealth,
+        statusAnalysis,
+        actionSpeedRanking,
       });
     } catch (error) {
       console.error('Failed to load stats:', error);
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleExportLocationRiskPDF() {
+    const dataToExport = stats.locationHealth.map((loc) => ({
+      location: loc.location_name,
+      healthScore: loc.healthScore,
+      riskLevel: getHealthColorText(loc.healthScore),
+      reportCount: loc.reportCount,
+      lastReport: getLastReportDescription(loc.daysSinceLastReport),
+      regions: loc.regions.map((r) => r.region_name).join(', '),
+    }));
+
+    const filename = `lokasyon_risk_durumu_${new Date().toISOString().split('T')[0]}.pdf`;
+    await exportLocationRiskAsPDF(dataToExport, {
+      filename,
+      title: 'Lokasyon Risk Durumu Raporu',
+      subtitle: `${new Date().toLocaleString('tr-TR')}`,
+    });
+  }
+
+  function handleExportLocationRiskExcel() {
+    const dataToExport = stats.locationHealth.map((loc) => ({
+      'Lokasyon Adı': loc.location_name,
+      'Risk Skoru': loc.healthScore,
+      'Risk Seviyesi': getHealthColorText(loc.healthScore),
+      'Rapor Sayısı': loc.reportCount,
+      'Son Rapor': getLastReportDescription(loc.daysSinceLastReport),
+      'Güvenli Bölgeler': loc.regions.filter((r) => r.isSafe).length,
+      'Tehlikeli Bölgeler': loc.regions.filter((r) => !r.isSafe).length,
+      'Tüm Bölgeler': loc.regions.map((r) => r.region_name).join('; '),
+    }));
+
+    const filename = `lokasyon_risk_durumu_${new Date().toISOString().split('T')[0]}.xlsx`;
+    exportLocationRiskAsExcel(dataToExport, {
+      filename,
+      title: 'Lokasyon Risk Durumu',
+    });
+  }
+
+  function handleExportActionSpeedPDF() {
+    const dataToExport = stats.actionSpeedRanking.map((item, index) => ({
+      rank: index + 1,
+      location: item.location_name,
+      investigationDays: item.avgDaysToInvestigation > 0 ? item.avgDaysToInvestigation : '—',
+      resolutionDays: item.avgDaysToResolution > 0 ? item.avgDaysToResolution : '—',
+      resolutionRate: `%${item.resolutionRate}`,
+      speed: getActionSpeedText(item.avgDaysToResolution),
+    }));
+
+    const filename = `hizli_aksiyon_lokasyonlari_${new Date().toISOString().split('T')[0]}.pdf`;
+    exportActionSpeedAsPDF(dataToExport, {
+      filename,
+      title: 'Hızlı Aksiyon Alınmış Lokasyonlar Raporu',
+      subtitle: `${new Date().toLocaleString('tr-TR')}`,
+    });
+  }
+
+  function handleExportActionSpeedExcel() {
+    const dataToExport = stats.actionSpeedRanking.map((item, index) => ({
+      'Sıra': index + 1,
+      'Lokasyon': item.location_name,
+      'Ortalama İnceleme Süresi (Gün)': item.avgDaysToInvestigation > 0 ? item.avgDaysToInvestigation : '—',
+      'Ortalama Çözüm Süresi (Gün)': item.avgDaysToResolution > 0 ? item.avgDaysToResolution : '—',
+      'Çözüm Oranı (%)': item.resolutionRate,
+      'Aksiyon Hızı': getActionSpeedText(item.avgDaysToResolution),
+    }));
+
+    const filename = `hizli_aksiyon_lokasyonlari_${new Date().toISOString().split('T')[0]}.xlsx`;
+    exportActionSpeedAsExcel(dataToExport, {
+      filename,
+      title: 'Hızlı Aksiyon Alınmış Lokasyonlar',
+    });
+  }
+
+  function getHealthColorText(score: number): string {
+    if (score >= 80) return 'Güvenli';
+    if (score >= 60) return 'Dikkat';
+    if (score >= 40) return 'Uyarı';
+    return 'Tehlike';
+  }
+
+  function getActionSpeedText(days: number): string {
+    if (days <= 0) return '—';
+    if (days <= 3) return 'Hızlı';
+    if (days <= 7) return 'Normal';
+    return 'Yavaş';
   }
 
   if (loading) {
@@ -296,6 +426,202 @@ export function Dashboard() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Location Risk Status Section */}
+      <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-slate-700 backdrop-blur-md mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <Activity className="w-5 h-5 text-red-400" />
+            Lokasyon Risk Durumu
+          </h2>
+          <div className="flex gap-2">
+            <button
+              onClick={handleExportLocationRiskPDF}
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors text-sm"
+              title="PDF olarak indir"
+            >
+              <Download className="w-4 h-4" />
+              PDF
+            </button>
+            <button
+              onClick={handleExportLocationRiskExcel}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors text-sm"
+              title="Excel olarak indir"
+            >
+              <Download className="w-4 h-4" />
+              Excel
+            </button>
+          </div>
+        </div>
+        {stats.locationHealth.length === 0 ? (
+          <p className="text-slate-400 text-center py-12">Henüz lokasyon bulunmuyor</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {stats.locationHealth.map((location) => (
+              <div
+                key={location.location_id}
+                className="rounded-lg bg-slate-700/50 p-4 border border-slate-600 hover:border-slate-500 transition-colors"
+              >
+                {/* Lokasyon Başlığı */}
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="font-bold text-white text-sm">{location.location_name}</h3>
+                    <p className="text-xs text-slate-400 mt-1">
+                      {location.reportCount > 0 ? `${location.reportCount} rapor` : 'Rapor yok'}
+                    </p>
+                  </div>
+                  <div
+                    className={`w-12 h-12 rounded-lg flex items-center justify-center text-white font-bold text-lg ${location.color}`}
+                  >
+                    {location.healthScore}
+                  </div>
+                </div>
+
+                {/* Son Rapor Bilgisi */}
+                <div className="mb-4 text-xs text-slate-300 bg-slate-800/50 p-2 rounded">
+                  <p>
+                    Son rapor:{' '}
+                    <span className={getHealthColor(location.healthScore)}>
+                      {getLastReportDescription(location.daysSinceLastReport)}
+                    </span>
+                  </p>
+                </div>
+
+                {/* Bölgeler */}
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-slate-300 mb-2">Bölgeler:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {location.regions.map((region) => (
+                      <div
+                        key={region.region_id}
+                        className={`px-2 py-1 rounded text-xs font-medium ${
+                          region.isSafe
+                            ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                            : 'bg-red-500/20 text-red-300 border border-red-500/30'
+                        }`}
+                        title={
+                          region.isSafe
+                            ? 'Rapor yok (Güvenli)'
+                            : `${region.reportCount} rapor - Son: ${getLastReportDescription(region.daysSinceLastReport)}`
+                        }
+                      >
+                        {region.region_name}
+                        {!region.isSafe && ` (${region.reportCount})`}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Sağlık Barı */}
+                <div className="mt-4 pt-4 border-t border-slate-600">
+                  <div className="w-full bg-slate-600/50 rounded-full h-2 overflow-hidden">
+                    <div
+                      className={`h-full transition-all duration-500 ${location.color}`}
+                      style={{
+                        width: `${Math.max(location.healthScore, 5)}%`,
+                      }}
+                    ></div>
+                  </div>
+                  <p className="text-xs text-slate-400 mt-2 text-center">
+                    {location.healthScore >= 80
+                      ? '✅ Güvenli'
+                      : location.healthScore >= 60
+                        ? '⚠️ Dikkat'
+                        : location.healthScore >= 40
+                          ? '🔴 Uyarı'
+                          : '🚨 Tehlike'}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Action Speed Ranking Section */}
+      <div className="rounded-2xl bg-gradient-to-br from-slate-800 to-slate-700 p-6 border border-slate-700 backdrop-blur-md mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-white flex items-center gap-2">
+            <Target className="w-5 h-5 text-green-400" />
+            Hızlı Aksiyon Alınmış Lokasyonlar
+          </h2>
+          <div className="flex gap-2">
+            <button
+              onClick={handleExportActionSpeedPDF}
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors text-sm"
+              title="PDF olarak indir"
+            >
+              <Download className="w-4 h-4" />
+              PDF
+            </button>
+            <button
+              onClick={handleExportActionSpeedExcel}
+              className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg transition-colors text-sm"
+              title="Excel olarak indir"
+            >
+              <Download className="w-4 h-4" />
+              Excel
+            </button>
+          </div>
+        </div>
+        {stats.actionSpeedRanking.length === 0 ? (
+          <p className="text-slate-400 text-center py-12">Henüz analiz verisi bulunmuyor</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-slate-600">
+                  <th className="px-4 py-3 text-left text-slate-300 font-semibold">Lokasyon</th>
+                  <th className="px-4 py-3 text-center text-slate-300 font-semibold">
+                    İnceleme Süresi
+                  </th>
+                  <th className="px-4 py-3 text-center text-slate-300 font-semibold">
+                    Çözüm Süresi
+                  </th>
+                  <th className="px-4 py-3 text-center text-slate-300 font-semibold">Çözüm Oranı</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-600">
+                {stats.actionSpeedRanking.map((item, index) => (
+                  <tr key={item.location_name} className="hover:bg-slate-700/30 transition-colors">
+                    <td className="px-4 py-3 font-medium text-white">
+                      <span className="inline-block w-6 h-6 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center mr-2">
+                        {index + 1}
+                      </span>
+                      {item.location_name}
+                    </td>
+                    <td className="px-4 py-3 text-center text-slate-300">
+                      {item.avgDaysToInvestigation > 0
+                        ? `${item.avgDaysToInvestigation} gün`
+                        : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span
+                        className={`font-semibold ${
+                          item.avgDaysToResolution <= 3
+                            ? 'text-green-400'
+                            : item.avgDaysToResolution <= 7
+                              ? 'text-yellow-400'
+                              : 'text-orange-400'
+                        }`}
+                      >
+                        {item.avgDaysToResolution > 0
+                          ? `${item.avgDaysToResolution} gün`
+                          : '—'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="inline-block px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold">
+                        %{item.resolutionRate}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Recent Reports Section */}
