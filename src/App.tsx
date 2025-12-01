@@ -77,7 +77,15 @@ function App() {
     const initializeRouting = async () => {
       try {
         const path = window.location.pathname;
+        const hash = window.location.hash;
         const isReportRoute = path.match(/^\/report\/([^/]+)\/([^/]+)$/);
+
+        // Check for hash-based routes FIRST (higher priority)
+        if (hash && (hash.includes('/reset-password') || hash.includes('/forgot-password'))) {
+          console.log('[App] Hash route detected:', hash);
+          checkRoute();
+          return;
+        }
 
         if (isReportRoute) {
           // Report route ise hiç auth kontrolü yapmadan form göster
