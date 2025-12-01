@@ -374,6 +374,131 @@ export async function sendWelcomeEmail(email, fullName, plainPassword, locationI
 }
 
 /**
+ * Send password reset confirmation email with new credentials
+ * @param {string} email - Recipient email address
+ * @param {string} fullName - User's full name
+ * @param {string} plainPassword - Plain text password (NOT hashed)
+ */
+export async function sendPasswordResetNotificationEmail(email, fullName, plainPassword) {
+  try {
+    if (!transporter) {
+      throw new Error('Email service not initialized. Please call initializeEmailService first.');
+    }
+
+    const loginUrl = 'https://riskreport.devkit.com.tr';
+
+    const mailOptions = {
+      from: `"${smtpConfig.fromName}" <${smtpConfig.fromEmail}>`,
+      to: email,
+      subject: 'Parolanız Sıfırlandı - Risk Report Sistemi',
+      html: `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f7fa; margin: 0; padding: 0;">
+          <!-- Outer Wrapper -->
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f7fa;">
+            <tr>
+              <td align="center" style="padding: 40px 20px;">
+                <!-- Main Container -->
+                <table width="100%" max-width="600px" cellpadding="0" cellspacing="0" style="background-color: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+
+                  <!-- Header -->
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 40px 30px; text-align: center;">
+                      <h1 style="margin: 0; font-size: 32px; font-weight: 700; color: white;">🔑 Parolanız Sıfırlandı</h1>
+                      <p style="margin: 10px 0 0 0; font-size: 16px; color: rgba(255,255,255,0.9);">Yeni giriş bilgilerinizi alabilirsiniz</p>
+                    </td>
+                  </tr>
+
+                  <!-- Content -->
+                  <tr>
+                    <td style="padding: 40px 30px;">
+                      <p style="margin: 0 0 20px 0; font-size: 16px; color: #2c3e50; line-height: 1.6;">
+                        Merhaba <strong>${fullName}</strong>,
+                      </p>
+                      <p style="margin: 0 0 25px 0; font-size: 15px; color: #555; line-height: 1.6;">
+                        Parolanız sistem yöneticisi tarafından sıfırlanmıştır. Aşağıdaki yeni bilgileri kullanarak sisteme giriş yapabilirsiniz.
+                      </p>
+
+                      <!-- Login Credentials Card -->
+                      <div style="background: linear-gradient(135deg, #fef3c7 0%, #fef9e7 100%); border: 2px solid #fcd34d; border-radius: 8px; padding: 25px; margin-bottom: 25px;">
+                        <p style="margin: 0 0 15px 0; font-size: 13px; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">📧 Yeni Giriş Bilgileri</p>
+
+                        <!-- Email -->
+                        <div style="margin-bottom: 15px;">
+                          <label style="display: block; font-size: 12px; color: #92400e; text-transform: uppercase; margin-bottom: 5px;">E-posta Adresi:</label>
+                          <div style="background: white; padding: 12px; border-radius: 5px; border: 1px solid #fbbf24; font-family: 'Courier New', monospace; font-size: 14px; color: #2c3e50; word-break: break-all;">
+                            ${email}
+                          </div>
+                        </div>
+
+                        <!-- Password -->
+                        <div>
+                          <label style="display: block; font-size: 12px; color: #92400e; text-transform: uppercase; margin-bottom: 5px;">Yeni Parola:</label>
+                          <div style="background: white; padding: 12px; border-radius: 5px; border: 1px solid #fbbf24; font-family: 'Courier New', monospace; font-size: 14px; color: #2c3e50; letter-spacing: 2px; font-weight: 600;">
+                            ${plainPassword}
+                          </div>
+                          <p style="margin: 8px 0 0 0; font-size: 12px; color: #ef4444;">⚠️ Parolayı güvenli bir yerde saklayın ve başkasıyla paylaşmayın</p>
+                        </div>
+                      </div>
+
+                      <!-- Login Button -->
+                      <div style="text-align: center; margin-bottom: 30px;">
+                        <a href="${loginUrl}" style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 14px 40px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3); transition: transform 0.2s;">
+                          🔐 Sisteme Giriş Yap
+                        </a>
+                      </div>
+
+                      <!-- Security Warning -->
+                      <div style="background: #fee2e2; border: 1px solid #fecaca; border-radius: 6px; padding: 15px; margin-bottom: 25px;">
+                        <p style="margin: 0; font-size: 13px; color: #991b1b; line-height: 1.6;">
+                          <strong>⚠️ Güvenlik Notu:</strong> Ilk giriş yaptığınızda parolanızı hemen değiştirmenizi tavsiye ederiz. Bu parolayı başkası ile asla paylaşmayınız.
+                        </p>
+                      </div>
+
+                      <!-- Information -->
+                      <div style="background: #f3f4f6; border-radius: 6px; padding: 20px; margin-bottom: 25px;">
+                        <p style="margin: 0 0 12px 0; font-size: 13px; color: #7f8c8d; text-transform: uppercase; font-weight: 600;">Giriş Adımları:</p>
+                        <ol style="margin: 0; padding-left: 20px; color: #2c3e50; font-size: 14px; line-height: 1.8;">
+                          <li>Risk Report Sistemi'ne gidin</li>
+                          <li>Yukarıdaki e-posta adresini girin</li>
+                          <li>Yukarıdaki yeni parolayı girin</li>
+                          <li>"Giriş Yap" düğmesine tıklayın</li>
+                          <li>Başarılı bir şekilde sisteme giriş yapacaksınız</li>
+                        </ol>
+                      </div>
+
+                      <p style="margin: 0; font-size: 12px; color: #999; text-align: center;">
+                        Herhangi bir sorunla karşılaşırsanız sistem yöneticisine başvurunuz.
+                      </p>
+                    </td>
+                  </tr>
+
+                  <!-- Footer -->
+                  <tr>
+                    <td style="background-color: #1f2937; color: rgba(255,255,255,0.8); padding: 25px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+                      <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600;">Risk Report Sistemi</p>
+                      <p style="margin: 0; font-size: 12px; opacity: 0.8;">Ramak Kala (Near-Miss) Yönetim Platformu</p>
+                      <p style="margin: 10px 0 0 0; font-size: 11px; opacity: 0.6;">Bu e-posta, sistem yöneticisi tarafından otomatik olarak oluşturulmuştur.</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </div>
+      `,
+      text: `Parolanız Sıfırlandı\n\nMerhaba ${fullName},\n\nParolanız sistem yöneticisi tarafından sıfırlanmıştır. Aşağıdaki yeni bilgileri kullanarak sisteme giriş yapabilirsiniz.\n\n--- YENİ GİRİŞ BİLGİLERİ ---\nE-posta: ${email}\nYeni Parola: ${plainPassword}\n\nGiriş URL'si: ${loginUrl}\n\nIlk giriş yaptığınızda parolanızı değiştirmenizi tavsiye ederiz.\n\nRisk Report Sistemi`
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log('[PASSWORD_RESET_NOTIFICATION] Email sent to:', email, '- Message ID:', result.messageId);
+    return result;
+  } catch (error) {
+    console.error('[PASSWORD_RESET_NOTIFICATION] Error sending email:', error);
+    throw new Error('Parola sıfırlama e-postası gönderilemedi');
+  }
+}
+
+/**
  * Verify SMTP connection
  */
 export async function verifyEmailConnection() {

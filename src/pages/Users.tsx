@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
-import { api, supabase } from '../lib/supabase';
 import { signUp, getCurrentUser } from '../lib/auth';
 import { logAction, LogActions } from '../lib/logger';
-import { Plus, Edit2, Trash2, Users as UsersIcon, AlertCircle, CheckCircle2, Key } from 'lucide-react';
+import { Plus, Edit2, Trash2, Users as UsersIcon, AlertCircle, CheckCircle2, Key, RefreshCw, Copy } from 'lucide-react';
 import { useI18n, useLanguageChange } from '../lib/i18n';
 import type { UserProfile } from '../lib/auth';
 import Swal from 'sweetalert2';
@@ -42,6 +41,7 @@ export function Users() {
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [passwordResetUser, setPasswordResetUser] = useState<User | null>(null);
   const [manualPassword, setManualPassword] = useState('');
+  const [suggestedPassword, setSuggestedPassword] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [currentUser, setCurrentUser] = useState<UserProfile | null>(null);
   const [formData, setFormData] = useState({
@@ -291,12 +291,35 @@ export function Users() {
     }
   }
 
+  // Generate random password (8 characters)
+  function generateRandomPassword(): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%';
+    let password = '';
+    for (let i = 0; i < 8; i++) {
+      password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+  }
+
   function openPasswordModal(user: User) {
     setPasswordResetUser(user);
     setManualPassword('');
+    setSuggestedPassword('');
     setError('');
     setSuccess('');
     setShowPasswordModal(true);
+  }
+
+  function handleSuggestPassword() {
+    const newPassword = generateRandomPassword();
+    setSuggestedPassword(newPassword);
+    setManualPassword(newPassword);
+  }
+
+  function handleUseSuggestedPassword() {
+    if (suggestedPassword) {
+      setManualPassword(suggestedPassword);
+    }
   }
 
   async function handleManualPasswordReset() {
@@ -747,18 +770,60 @@ export function Users() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">
-                  {t('users.newPassword') || 'Yeni Şifre'} <span className="text-red-600">*</span>
-                </label>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-medium text-slate-300">
+                    {t('users.newPassword') || 'Yeni Şifre'} <span className="text-red-600">*</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleSuggestPassword}
+                    className="flex items-center gap-1 px-3 py-1 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                    title="Parola öner"
+                  >
+                    <RefreshCw className="w-3 h-3" />
+                    Parola Öner
+                  </button>
+                </div>
                 <input
-                  type="password"
+                  type="text"
                   value={manualPassword}
                   onChange={(e) => setManualPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
                   placeholder={t('users.minCharactersPlaceholder') || 'En az 6 karakter'}
                   minLength={6}
                 />
                 <p className="mt-1 text-xs text-slate-500">{t('users.minCharacters') || 'Minimum 6 karakter'}</p>
+
+                {suggestedPassword && (
+                  <div className="mt-3 p-3 bg-slate-600 rounded-lg">
+                    <p className="text-xs font-semibold text-slate-300 mb-2">Önerilen Parola:</p>
+                    <div className="flex items-center justify-between gap-2">
+                      <code className="flex-1 text-sm text-white font-mono bg-slate-700 px-2 py-1 rounded text-center">
+                        {suggestedPassword}
+                      </code>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(suggestedPassword);
+                          Swal.fire({
+                            icon: 'success',
+                            title: 'Kopyalandı!',
+                            text: 'Parola panoya kopyalandı.',
+                            showConfirmButton: false,
+                            timer: 2000,
+                          });
+                        }}
+                        className="p-2 text-blue-400 hover:text-blue-300 transition-colors"
+                        title="Kopyala"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-2">
+                      Yukarıdaki şifre otomatik olarak forma dolduruldu. İstiyorsanız manuel olarak düzenleyebilirsiniz.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="bg-amber-50 border-l-4 border-amber-400 p-3">

@@ -766,4 +766,109 @@ Kullanıcı silme işlemi ve CRUD operasyonları için profesyonel onay diyalogl
 
 ---
 
+## 🔐 Parola Sıfırlama Modern E-Postası ve Önerme Sistemi
+
+Users sayfasında kullanıcı parolalarını sıfırlarken modern e-posta şablonu ve otomatik parola önerme sistemi:
+
+### 📧 Parola Sıfırlama E-Postası
+
+Kullanıcı parolası sıfırlandığında gönderilen profesyonel e-posta:
+
+**E-Posta Özellikler:**
+- **Gradient Başlık**: Turuncu/sarı renk gradiyenti ile modern tasarım
+- **Yeni Giriş Bilgileri Kartı**: E-posta ve yeni parola belirtilen alan
+- **Güvenlik Uyarısı**: Parolanın güvenli tutulması hakkında uyarı
+- **Giriş Butonu**: Doğrudan sisteme yönlendiren bağlantı
+- **Adım Adım Talimat**: Giriş yapma talimatları sırası ile
+- **Professional Footer**: Sistem adı ve açıklaması ile
+
+**Teknik Detaylar:**
+- `sendPasswordResetNotificationEmail()` fonksiyonu emailService.js'e eklendi
+- Backend'de PUT `/api/users/:id/password` endpoint'inde otomatik tetiklenir
+- HTML ve plain text formatlarında gönderimi destekler
+- E-posta gönderme hatası durumunda parola yine de sıfırlanır
+
+### 🎯 Parola Önerme Sistemi
+
+Users sayfasında Parola Sıfırla modal'ında yeni parola önerme özellikleri:
+
+**Özellikler:**
+- **"Parola Öner" Butonu**: Mavi buton ile 8 karakterlik rastgele parola üretimi
+- **Otomatik Doldurma**: Önerilen parola form alanına otomatik doldurulur
+- **Manuel Düzenleme**: Kullanıcı önerilen parolayı isterse değiştirebilir
+- **Kopyala Butonu**: Önerilen parolayı panoya kopyalamak için (📋 ikonlu)
+- **Parola Gösterimi**: Monospace font ile kolay okunur şekilde gösterilir
+
+**Parola Oluşturma:**
+- 8 karakterden oluşur
+- Büyük harf, küçük harf, rakam ve özel karakterler içerir
+- Güvenli ve rastgele oluşturulur
+- Minimum 6 karakter validasyonu sağlanır
+
+**Güvenlik:**
+- Parolalar şifrelenerek veritabanına kaydedilir
+- E-posta yoluyla açık metin olarak gönderilir (e-posta gönderimi sırasında şifrelenmiş kanal kullanılırsa)
+- Sistem loglarında parola kaydı yapılmaz
+
+**Sistem Loglaması:**
+- RESET_PASSWORD action'ında `manual_password_reset` flag'i kaydedilir
+- Parola değişikliği kim tarafından yapıldığı kaydedilir
+
+---
+
+## 🔔 Yeni Raporlar Bildirim Badge'ı
+
+Header'da oturum açan kullanıcının kendi lokasyonlarındaki yeni raporları gösteren bildirim sistemi:
+
+### Bildirim Badge Özellikleri
+
+**Header'da Gösterim:**
+- **Zil İkonu**: 🔔 Bell ikonu ile gösterilir
+- **Kırmızı Badge**: Yeni rapor varsa kırmızı numara badge'ı görüntülenir
+- **Sayı Gösterimi**: 1-99 arası sayılar direkt gösterilir, 100+ için "99+" gösterilir
+- **Renk Kodlaması**:
+  - Yeni rapor varsa: Kırmızı arka plan (`bg-red-600/20`)
+  - Rapor yoksa: Gri arka plan (`bg-slate-700/50`)
+
+**Tıklanabilir Badge:**
+- Badge'a tıklandığında Reports sayfasına gider
+- Otomatik olarak "Yeni" statusu filtrelenir
+- Yeni raporlar listesi hemen görüntülenir
+
+### 🔄 Otomatik Güncelleme
+
+**Teknik Detaylar:**
+- Backend endpoint: `GET /api/reports/count/new`
+- Token ile kimlik doğrulama yapılır
+- Rol bazlı filtreleme: Admin tüm raporları, diğer kullanıcılar sadece kendi lokasyonlarını görebilir
+- Lokasyon bazlı filtreleme: Kullanıcı sadece atanmış olduğu lokasyonlardaki yeni raporları görür
+
+**Sayfa Yüklemede:**
+- AdminLayout montajında otomatik olarak rapor sayısı yüklenir
+- Token ve autorization header'ı ile güvenli API çağrısı yapılır
+
+### 📋 Reports Sayfasında Filtreleme
+
+Badge'dan yönlendirme:
+1. Reports sayfasına navigasyon yapılır
+2. URL parametresi: `?status=Yeni` eklenir
+3. Sayfa yüklenince otomatik filtre uygulanır
+4. Yeni raporlar listesi gösterilir
+5. URL parametresi temizlenir (bookmark uyumluluğu için)
+
+### Sistem Loglaması
+
+- `GET /api/reports/count/new` çağrısı sistem loglarına kaydedilir
+- Rapor filtreleme işlemleri audit trail'e eklenir
+- Başarısız API çağrıları hata loglarına kaydedilir
+
+**Örnek Kullanım:**
+1. Kullanıcı sisteme giriş yapar
+2. Header'da "Yeni: 5" gösterilir (5 yeni rapor var)
+3. Badge'a tıklar
+4. Reports sayfasına gider ve 5 yeni rapor otomatik filtrelenir
+5. Bir raporu durumunu değiştirirse, sayfayı yenilediğinde badge güncellenir
+
+---
+
 **Not**: Uygulama Türkçe dilinde tasarlanmıştır ve Türkiye İş Sağlığı ve Güvenliği mevzuatına uygun ramak kala raporlama süreçlerini destekler.

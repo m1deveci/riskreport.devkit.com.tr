@@ -1,5 +1,4 @@
-import { useEffect, useState } from 'react';
-import { api, supabase } from '../lib/supabase';
+import { useEffect, useState } from 'react'; 
 import { logAction, LogActions } from '../lib/logger';
 import { Search, Filter, X, AlertTriangle, Eye, Download, Image as ImageIcon, Lock, History } from 'lucide-react';
 import type { UserProfile } from '../lib/auth';
@@ -89,6 +88,18 @@ export function Reports() {
 
   useEffect(() => {
     loadData();
+
+    // URL'den status parametresini oku ve filtre uygula
+    const searchParams = new URLSearchParams(window.location.search);
+    const statusParam = searchParams.get('status');
+    if (statusParam) {
+      setFilters((prev) => ({
+        ...prev,
+        status: statusParam,
+      }));
+      // URL'den parametreyi temizle
+      window.history.replaceState({}, '', '/reports');
+    }
   }, []);
 
   useEffect(() => {
@@ -310,7 +321,7 @@ export function Reports() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 -my-6 px-6 py-6">
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-white">{t('reports.title')}</h1>
-        <p className="text-slate-400 text-lg mt-2">{t('reports.subtitle') || 'Tüm ramak kala bildirimlerini görüntüleyin ve yönetin'}</p>
+        <p className="text-slate-400 text-lg mt-2">{t('reports.subtitle') || 'Tüm ramakkala bildirimlerini görüntüleyin ve yönetin'}</p>
       </div>
 
       <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md p-4 space-y-4">

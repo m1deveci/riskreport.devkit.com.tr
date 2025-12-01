@@ -12,7 +12,7 @@ import multer from 'multer';
 import fs from 'fs';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { sendPasswordResetEmail, sendNearMissReportEmail, sendWelcomeEmail, verifyEmailConnection, initializeEmailService } from './emailService.js';
+import { sendPasswordResetEmail, sendNearMissReportEmail, sendWelcomeEmail, verifyEmailConnection, initializeEmailService, sendPasswordResetNotificationEmail } from './emailService.js';
 
 // Load environment variables
 dotenv.config();
@@ -684,11 +684,24 @@ app.put('/api/users/:id/password', authenticateToken, adminOrExpert, async (req,
       }
     }
 
+    // Fetch user details for email
+    const connection = await pool.getConnection();
+    const [userRows] = await connection.query(
+      'SELECT email, full_name FROM users WHERE id = ?',
+      [id]
+    );
+
+    if (userRows.length === 0) {
+      connection.release();
+      return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+    }
+
+    const user = userRows[0];
+
     // Hash new password
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
 
-    const connection = await pool.getConnection();
     const [result] = await connection.query(
       'UPDATE users SET password_hash = ? WHERE id = ?',
       [password_hash, id]
@@ -699,10 +712,18 @@ app.put('/api/users/:id/password', authenticateToken, adminOrExpert, async (req,
       return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
     }
 
+    // Send password reset notification email
+    try {
+      await sendPasswordResetNotificationEmail(user.email, user.full_name, password);
+    } catch (emailError) {
+      console.error('Failed to send password reset notification email:', emailError);
+      // Don't fail the password reset if email fails to send
+    }
+
     // Log successful password reset
     await logAction(req.user.id, 'RESET_PASSWORD', { user_id: id });
 
-    res.json({ success: true, message: 'Parola başarıyla değiştirildi' });
+    res.json({ success: true, message: 'Parola başarıyla değiştirildi ve kullanıcıya e-posta gönderildi' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -960,6 +981,40 @@ app.get('/api/reports', authenticateToken, async (req, res) => {
     const [rows] = await connection.query(query, params);
     connection.release();
     res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get count of new reports for current user's locations
+app.get('/api/reports/count/new', authenticateToken, async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+
+    // Build query based on user role
+    let query = `SELECT COUNT(*) as count FROM near_miss_reports WHERE status = 'Yeni'`;
+    const params = [];
+
+    // If user is not admin, filter by their assigned locations
+    if (req.user.role !== 'admin') {
+      // Parse location_ids from token
+      const locationIds = req.user.location_ids || [];
+
+      // If user has no assigned locations, return 0
+      if (locationIds.length === 0) {
+        connection.release();
+        return res.json({ count: 0 });
+      }
+
+      // Filter by location_ids
+      const placeholders = locationIds.map(() => '?').join(',');
+      query += ` AND location_id IN (${placeholders})`;
+      params.push(...locationIds);
+    }
+
+    const [rows] = await connection.query(query, params);
+    connection.release();
+    res.json({ count: rows[0]?.count || 0 });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

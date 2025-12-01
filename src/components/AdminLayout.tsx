@@ -11,7 +11,8 @@ import {
   AlertTriangle,
   Database,
   Grid3x3,
-  Globe
+  Globe,
+  Bell
 } from 'lucide-react';
 import { signOut } from '../lib/auth';
 import { useI18n, LANGUAGES, useLanguageChange } from '../lib/i18n';
@@ -49,6 +50,7 @@ export function AdminLayout({ children, currentUser, currentPage, onNavigate }: 
   const [siteTitle, setSiteTitle] = useState('Ramak Kala Sistemi');
   const [menuItems, setMenuItems] = useState(() => getMenuItems(t, currentUser.role));
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
+  const [newReportsCount, setNewReportsCount] = useState(0);
 
   // Dil değiştiğinde menu itemleri güncelle
   useLanguageChange(() => {
@@ -71,6 +73,26 @@ export function AdminLayout({ children, currentUser, currentPage, onNavigate }: 
       }
     }
     loadSiteTitle();
+
+    // Yeni raporların sayısını yükle
+    async function loadNewReportsCount() {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(
+          (import.meta.env.VITE_API_URL || 'http://localhost:6000') + '/api/reports/count/new',
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+            },
+          }
+        );
+        const data = await response.json();
+        setNewReportsCount(data.count || 0);
+      } catch (err) {
+        console.error('Failed to load new reports count:', err);
+      }
+    }
+    loadNewReportsCount();
   }, []);
 
   async function handleLogout() {
@@ -147,6 +169,30 @@ export function AdminLayout({ children, currentUser, currentPage, onNavigate }: 
                 </>
               )}
             </div>
+            {/* Yeni Raporlar Bildirim Badge */}
+            <button
+              onClick={() => {
+                onNavigate('reports');
+                // Bu fonksiyon Reports sayfasında filtreleri set etmek için kullanılacak
+                // URL'de query parametresi ile status filtresini geçeceğiz
+                const searchParams = new URLSearchParams();
+                searchParams.set('status', 'Yeni');
+                window.history.pushState({}, '', `/reports?${searchParams.toString()}`);
+              }}
+              className={`relative flex items-center justify-center p-2 rounded-lg transition-colors ${
+                newReportsCount > 0
+                  ? 'bg-red-600/20 text-red-300 hover:bg-red-600/30 border border-red-500/30'
+                  : 'bg-slate-700/50 text-slate-300 hover:bg-slate-700 border border-slate-600'
+              }`}
+              title={`Yeni raporlar: ${newReportsCount}`}
+            >
+              <Bell className="w-4 h-4" />
+              {newReportsCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {newReportsCount > 99 ? '99+' : newReportsCount}
+                </span>
+              )}
+            </button>
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-600/20 text-red-300 hover:bg-red-600/30 transition-colors border border-red-500/20"
