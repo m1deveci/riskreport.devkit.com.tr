@@ -3,6 +3,7 @@ import { NearMissForm } from './components/NearMissForm';
 import { LoginPage } from './components/LoginPage';
 import { ForgotPasswordPage } from './components/ForgotPasswordPage';
 import { ResetPasswordPage } from './components/ResetPasswordPage';
+import { StandaloneResetPassword } from './components/StandaloneResetPassword';
 import { AdminLayout } from './components/AdminLayout';
 import { Dashboard } from './pages/Dashboard';
 import { Locations } from './pages/Locations';
@@ -79,6 +80,12 @@ function App() {
         const path = window.location.pathname;
         const hash = window.location.hash;
         const isReportRoute = path.match(/^\/report\/([^/]+)\/([^/]+)$/);
+
+        // Standalone reset password page (pathname route)
+        if (path === '/reset-password') {
+          console.log('[App] Standalone reset password page');
+          return; // Component renders directly, no state change needed
+        }
 
         // Check for hash-based routes FIRST (higher priority)
         if (hash && (hash.includes('/reset-password') || hash.includes('/forgot-password'))) {
@@ -209,6 +216,11 @@ function App() {
       default:
         return <Dashboard />;
     }
+  }
+
+  // Standalone reset password page (no state needed)
+  if (window.location.pathname === '/reset-password') {
+    return <StandaloneResetPassword />;
   }
 
   if (mode === 'loading') {
