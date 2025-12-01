@@ -578,4 +578,99 @@ Değişiklik geçmişi `report_history` tablosunda aşağıdaki alanlarla saklan
 
 ---
 
+## 🔐 Son Güncellemeler (Aralık 2025)
+
+### 👥 İSG Uzmanı Kullanıcı Yönetimi Erişim Kontrolü
+İSG Uzmanı (isg_expert) rolüne sahip kullanıcılar için geliştirilmiş erişim kontrolü sistemi:
+
+**Yeni Özellikleri:**
+- **Lokasyon Bazlı Görüntüleme**: İSG Uzmanları sadece kendi lokasyonlarına atanmış kullanıcıları görebilir
+- **Lokasyon Kısıtlı Ekleme**: Yeni kullanıcı eklenirken sadece kendi lokasyonlarını seçebilir
+- **Backend Doğrulaması**: Tüm işlemler backend'de lokasyon doğrulamasından geçer
+- **Güvenli Filtrering**: SQL sorguları ile veritabanı seviyesinde filtreleme
+- **Log Kaydı**: Tüm yetkilendirme işlemleri sistem loglarında kaydedilir
+
+**İşlem Akışı:**
+1. `/api/users` GET endpoint'i isg_expert kullanıcılarına açılmıştır
+2. Gelen verileri kendi location_ids'lerine göre filtrelenmiştir
+3. Yeni kullanıcı oluşturulurken (POST) location_ids doğrulaması yapılır
+4. Yetkisiz lokasyon atama dentemesinde 403 Forbidden döndürülür
+
+---
+
+### 📧 Yeni Kullanıcı Hoş Geldiniz E-Postası
+Yeni kullanıcı oluşturulduğunda otomatik gönderilen profesyonel hoş geldiniz e-postası:
+
+**E-Posta İçeriği:**
+- **Gradient Başlık**: Modern tasarım ile hoşlanılacak görünüm
+- **Login Bilgileri**: E-posta, hashlenmemiş parola (güvenli şekilde), rol
+- **Yetkilendirilmiş Lokasyonlar**: Kullanıcının erişim yetkisi olan lokasyonlar listesi
+- **Giriş Butonu**: Doğrudan sisteme yönlendiren bağlantı
+- **Güvenlik Uyarısı**: Parolanın güvenli tutulması hakkında bilgi
+- **Adım Adım Talimat**: Giriş yapma talimatları
+
+**Teknik Detaylar:**
+- `sendWelcomeEmail()` fonksiyonu emailService.js'e eklendi
+- HTML ve plain text formatlarında gönderimi destekler
+- POST /api/users endpoint'inde otomatik tetiklenir
+- E-posta gönderme hatası durumunda kullanıcı yine de oluşturulur
+
+**Sistem Loglaması:**
+- E-posta gönderimi başarılı/başarısız kaydedilir
+- create_user action'ında email_sent flag'i ve locations bilgisi kaydedilir
+
+---
+
+### 🔒 Login Rate Limiting ve Otomatik Sayfa Yenilemesi
+Başarısız giriş denemelerine karşı koruma sistemi ve geliştirilmiş kullanıcı deneyimi:
+
+**Rate Limiting Özellikleri:**
+- **3 Başarısız Denemesi Blokla**: Her IP için maksimum 3 deneme izni
+- **10 Dakika Blokaj**: 3 başarısız denemeden sonra IP 10 dakika bloke edilir
+- **IP Bazlı Takip**: Proxy'ler için X-Forwarded-For header'ı destekler
+- **Otomatik Reset**: 1 saat hiçbir deneme olmadığında otomatik reset
+- **Başarılı Giriş Temizliği**: Başarılı giriş sırasında deneme sayacı sıfırlanır
+
+**Frontend Otomatik Yenilemesi:**
+- **3 Saniyede Yenileme**: Başarısız giriş sonrasında sayfa otomatik yenilenir
+- **Turnstile Reset**: Sayfanın yenilenmesiyle Turnstile CAPTCHA otomatik reset olur
+- **Hata Görüntüsü**: Error mesajı 3 saniye gösterilmiş olur
+- **Kullanıcı Geri Bildirimi**: Yenileme öncesi hata nedeni görülür
+
+**API Yanıtları:**
+```json
+// Başarısız giriş (401)
+{
+  "error": "Email veya şifre hatalı",
+  "failedAttempts": 2,
+  "maxAttempts": 3
+}
+
+// Bloke edilen IP (429)
+{
+  "error": "Çok fazla başarısız giriş denemesi. Lütfen 10 dakika sonra tekrar deneyin.",
+  "attemptsBlocked": true,
+  "retryAfter": 600
+}
+```
+
+**Sistem Loglaması:**
+- `[RATE_LIMIT]` prefixli console loglar
+- Her başarısız deneme "failed_attempts" sayacı ile kaydedilir
+- IP blokaj zamanı loglanır
+- Başarılı girişte başarısız denemeler temizlenir
+
+**Korunan Işlemler:**
+1. Email doğrulama başarısızlığı
+2. Parola yanlışlığı
+3. Turnstile CAPTCHA doğrulama başarısızlığı
+
+**Güvenlik Avantajları:**
+- ✅ Brute force saldırılarına karşı koruma
+- ✅ Otomatik sistemle manuel bypass riski azalır
+- ✅ IP bazlı takip ile şüpheli aktivite tespiti
+- ✅ Audit trail ile denetim imkanı
+
+---
+
 **Not**: Uygulama Türkçe dilinde tasarlanmıştır ve Türkiye İş Sağlığı ve Güvenliği mevzuatına uygun ramak kala raporlama süreçlerini destekler.
