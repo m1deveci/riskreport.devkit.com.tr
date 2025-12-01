@@ -12,7 +12,7 @@ import multer from 'multer';
 import fs from 'fs';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { sendPasswordResetEmail, sendNearMissReportEmail, verifyEmailConnection, initializeEmailService } from './emailService.js';
+import { sendPasswordResetEmail, sendNearMissReportEmail, sendWelcomeEmail, verifyEmailConnection, initializeEmailService } from './emailService.js';
 
 // Load environment variables
 dotenv.config();
@@ -339,8 +339,10 @@ app.get('/api/users', authenticateToken, async (req, res) => {
 app.post('/api/users', authenticateToken, adminOrExpert, async (req, res) => {
   try {
     const { full_name, email, password, role, location_ids } = req.body;
+    console.log('[CREATE_USER] User creation request received:', { email, full_name, role, locationCount: location_ids?.length || 0 });
 
     if (!full_name || !email || !password) {
+      console.warn('[CREATE_USER] Missing required fields:', { full_name: !!full_name, email: !!email, password: !!password });
       return res.status(400).json({ error: 'Tüm alanlar zorunludur' });
     }
 
@@ -348,12 +350,14 @@ app.post('/api/users', authenticateToken, adminOrExpert, async (req, res) => {
     if (req.user.role === 'isg_expert') {
       // ISG Expert cannot create admin users
       if (role === 'admin') {
+        console.warn('[CREATE_USER] ISG Expert attempted to create admin user:', email);
         await logAction(req.user.id, 'CREATE_USER_FAILED', { email, reason: 'isg_expert cannot create admin users' });
         return res.status(403).json({ error: 'İSG Uzmanları admin kullanıcı oluşturamazlar' });
       }
 
       // ISG Expert can only assign users to their own locations
       if (!location_ids || location_ids.length === 0) {
+        console.warn('[CREATE_USER] No locations specified for non-admin user:', email);
         await logAction(req.user.id, 'CREATE_USER_FAILED', { email, reason: 'no locations specified' });
         return res.status(400).json({ error: 'En az bir lokasyon seçiniz' });
       }
@@ -362,12 +366,14 @@ app.post('/api/users', authenticateToken, adminOrExpert, async (req, res) => {
       const userLocations = req.user.location_ids || [];
       const invalidLocations = location_ids.filter(locId => !userLocations.includes(locId));
       if (invalidLocations.length > 0) {
+        console.warn('[CREATE_USER] ISG Expert attempted unauthorized location assignment:', { email, invalidLocations });
         await logAction(req.user.id, 'CREATE_USER_FAILED', { email, reason: 'unauthorized locations' });
         return res.status(403).json({ error: 'Sadece kendi lokasyonlarınıza kullanıcı atayabilirsiniz' });
       }
     }
 
     // Şifreyi bcrypt ile hash'le
+    console.log('[CREATE_USER] Hashing password for:', email);
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(password, salt);
     const id = randomUUID();
@@ -375,23 +381,78 @@ app.post('/api/users', authenticateToken, adminOrExpert, async (req, res) => {
     // Prepare location_ids as JSON
     const locationIdsJson = JSON.stringify(location_ids || []);
 
-    const connection = await pool.getConnection();
-    await connection.query(
-      'INSERT INTO users (id, full_name, email, password_hash, role, is_active, location_ids) VALUES (?, ?, ?, ?, ?, true, ?)',
-      [id, full_name, email, password_hash, role || 'viewer', locationIdsJson]
-    );
-    connection.release();
+    // Fetch location names for email
+    let locationNames = [];
+    if (location_ids && location_ids.length > 0) {
+      const connection = await pool.getConnection();
+      try {
+        const [locations] = await connection.query(
+          'SELECT id, name FROM locations WHERE id IN (?) AND is_active = true',
+          [location_ids]
+        );
+        locationNames = locations.map(loc => loc.name);
+        console.log('[CREATE_USER] Fetched location names:', locationNames);
+      } finally {
+        connection.release();
+      }
+    }
 
-    // Log successful user creation
-    await logAction(req.user.id, 'CREATE_USER', { email, full_name, role });
+    // Insert user into database
+    const dbConnection = await pool.getConnection();
+    try {
+      await dbConnection.query(
+        'INSERT INTO users (id, full_name, email, password_hash, role, is_active, location_ids) VALUES (?, ?, ?, ?, ?, true, ?)',
+        [id, full_name, email, password_hash, role || 'viewer', locationIdsJson]
+      );
+      console.log('[CREATE_USER] User inserted into database:', { id, email, role });
+    } finally {
+      dbConnection.release();
+    }
+
+    // Send welcome email with login credentials
+    try {
+      console.log('[CREATE_USER] Sending welcome email to:', email);
+      await sendWelcomeEmail(email, full_name, password, location_ids || [], locationNames, role || 'viewer');
+      console.log('[CREATE_USER] Welcome email sent successfully to:', email);
+
+      // Log successful user creation with email sent
+      await logAction(req.user.id, 'CREATE_USER', {
+        email,
+        full_name,
+        role,
+        locations: locationNames,
+        email_sent: true
+      });
+    } catch (emailError) {
+      console.error('[CREATE_USER] Failed to send welcome email:', emailError.message);
+
+      // Log user creation but note email failure
+      await logAction(req.user.id, 'CREATE_USER', {
+        email,
+        full_name,
+        role,
+        locations: locationNames,
+        email_sent: false,
+        email_error: emailError.message
+      });
+
+      // Still return success since user was created, but warn about email
+      return res.json({
+        success: true,
+        message: 'Kullanıcı oluşturuldu ancak hoş geldiniz e-postası gönderilemedi',
+        id,
+        warning: 'E-posta gönderme başarısız oldu'
+      });
+    }
 
     res.json({
       success: true,
-      message: 'Kullanıcı başarıyla oluşturuldu',
+      message: 'Kullanıcı başarıyla oluşturuldu ve hoş geldiniz e-postası gönderildi',
       id
     });
   } catch (error) {
-    console.error(error);
+    console.error('[CREATE_USER] Error creating user:', error);
+    await logAction(req.user?.id || 'system', 'CREATE_USER_ERROR', { error: error.message });
     res.status(500).json({ error: error.message });
   }
 });
