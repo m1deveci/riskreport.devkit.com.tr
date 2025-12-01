@@ -3,13 +3,12 @@ import { Lock, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
 
 export function ResetPasswordPage() {
   const handleNavigate = (path: string) => {
-    window.location.hash = path;
+    window.location.href = path;
   };
 
-  // Get token from URL hash (hash routing)
-  const hashParts = window.location.hash.split('?');
-  const params = new URLSearchParams(hashParts.length > 1 ? hashParts[1] : '');
-  const token = params.get('token');
+  // Get token from URL query parameters (pathname routing)
+  const searchParams = new URLSearchParams(window.location.search);
+  const token = searchParams.get('token');
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

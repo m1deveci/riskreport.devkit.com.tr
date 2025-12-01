@@ -75,7 +75,21 @@ function App() {
 
   useEffect(() => {
     const path = window.location.pathname;
+    const isResetPasswordRoute = path === '/reset-password';
+    const isForgotPasswordRoute = path === '/forgot-password';
     const isReportRoute = path.match(/^\/report\/([^/]+)\/([^/]+)$/);
+
+    if (isResetPasswordRoute) {
+      // Reset password sayfası için direktly mode'u ayarla
+      setMode('reset-password');
+      return;
+    }
+
+    if (isForgotPasswordRoute) {
+      // Forgot password sayfası için direktly mode'u ayarla
+      setMode('forgot-password');
+      return;
+    }
 
     if (isReportRoute) {
       // Report route ise hiç auth kontrolü yapmadan form göster
