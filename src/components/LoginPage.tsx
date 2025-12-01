@@ -72,11 +72,22 @@ export function LoginPage({ onLogin }: LoginPageProps) {
       const errorMessage =
         err instanceof Error ? err.message : t('auth.loginError');
       setError(errorMessage);
+
       // Reset Turnstile on error
       if (turnstileRef.current) {
         turnstileRef.current.reset();
       }
       setTurnstileToken('');
+
+      // Auto-refresh page after 3 seconds to reset Turnstile CAPTCHA
+      // and give user fresh attempt
+      const refreshTimer = setTimeout(() => {
+        console.log('[LOGIN] Auto-refreshing page after failed login attempt');
+        window.location.reload();
+      }, 3000);
+
+      // Store timer ID in a ref if needed for cleanup
+      // (not necessary in this case since page will reload)
     } finally {
       setLoading(false);
     }

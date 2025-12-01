@@ -113,6 +113,80 @@ const adminOrExpert = (req, res, next) => {
   next();
 };
 
+// ==================== LOGIN RATE LIMITING ====================
+
+// In-memory store for login attempts
+// Format: { ip: { attempts: number, lastAttempt: timestamp, blockedUntil: timestamp } }
+const loginAttempts = new Map();
+
+const MAX_LOGIN_ATTEMPTS = 3;
+const BLOCK_DURATION_MS = 10 * 60 * 1000; // 10 minutes
+const ATTEMPT_RESET_MS = 60 * 60 * 1000; // 1 hour
+
+// Get client IP address (works with proxies)
+function getClientIp(req) {
+  return (
+    req.headers['x-forwarded-for']?.split(',')[0].trim() ||
+    req.socket.remoteAddress ||
+    'unknown'
+  );
+}
+
+// Check if IP is rate limited
+function isIpRateLimited(ip) {
+  const attempt = loginAttempts.get(ip);
+
+  if (!attempt) {
+    return false;
+  }
+
+  // Check if IP is currently blocked
+  if (attempt.blockedUntil && Date.now() < attempt.blockedUntil) {
+    return true;
+  }
+
+  // Reset attempts if block duration has expired
+  if (attempt.blockedUntil && Date.now() >= attempt.blockedUntil) {
+    loginAttempts.delete(ip);
+    return false;
+  }
+
+  // Reset attempts if more than 1 hour has passed
+  if (Date.now() - attempt.lastAttempt > ATTEMPT_RESET_MS) {
+    loginAttempts.delete(ip);
+    return false;
+  }
+
+  return false;
+}
+
+// Record failed login attempt
+function recordFailedAttempt(ip) {
+  const attempt = loginAttempts.get(ip) || { attempts: 0, lastAttempt: Date.now() };
+
+  attempt.attempts += 1;
+  attempt.lastAttempt = Date.now();
+
+  // Block IP if max attempts exceeded
+  if (attempt.attempts >= MAX_LOGIN_ATTEMPTS) {
+    attempt.blockedUntil = Date.now() + BLOCK_DURATION_MS;
+    console.log('[RATE_LIMIT] IP blocked after 3 failed attempts:', {
+      ip,
+      blockedUntil: new Date(attempt.blockedUntil).toISOString()
+    });
+  }
+
+  loginAttempts.set(ip, attempt);
+}
+
+// Clear failed attempts for IP on successful login
+function clearFailedAttempts(ip) {
+  if (loginAttempts.has(ip)) {
+    loginAttempts.delete(ip);
+    console.log('[RATE_LIMIT] Failed attempts cleared for IP:', ip);
+  }
+}
+
 // ==================== LOGGING HELPER ====================
 
 // Sistem loglarına kayıt yapmak için yardımcı fonksiyon
@@ -188,6 +262,21 @@ async function verifyTurnstile(token) {
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { email, password, turnstileToken } = req.body;
+    const clientIp = getClientIp(req);
+
+    // Check if IP is rate limited
+    if (isIpRateLimited(clientIp)) {
+      const attempt = loginAttempts.get(clientIp);
+      const remainingMs = attempt.blockedUntil - Date.now();
+      const remainingSeconds = Math.ceil(remainingMs / 1000);
+      console.warn('[RATE_LIMIT] Login attempt from blocked IP:', { clientIp, remainingSeconds });
+
+      return res.status(429).json({
+        error: `Çok fazla başarısız giriş denemesi. Lütfen ${Math.ceil(remainingSeconds / 60)} dakika sonra tekrar deneyin.`,
+        attemptsBlocked: true,
+        retryAfter: remainingSeconds
+      });
+    }
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email ve şifre gereklidir' });
@@ -197,7 +286,13 @@ app.post('/api/auth/login', async (req, res) => {
     if (turnstileToken) {
       const isTurnstileValid = await verifyTurnstile(turnstileToken);
       if (!isTurnstileValid) {
-        return res.status(400).json({ error: 'Turnstile doğrulaması başarısız oldu. Lütfen tekrar deneyin.' });
+        recordFailedAttempt(clientIp);
+        const attempt = loginAttempts.get(clientIp);
+        return res.status(400).json({
+          error: 'Turnstile doğrulaması başarısız oldu. Lütfen tekrar deneyin.',
+          failedAttempts: attempt.attempts,
+          maxAttempts: MAX_LOGIN_ATTEMPTS
+        });
       }
     }
 
@@ -209,9 +304,18 @@ app.post('/api/auth/login', async (req, res) => {
     connection.release();
 
     if (rows.length === 0) {
-      // Başarısız giriş denemesini logla
-      await logAction(null, 'LOGIN_FAILED', { email, reason: 'Email bulunamadı' });
-      return res.status(401).json({ error: 'Email veya şifre hatalı' });
+      // Record failed attempt
+      recordFailedAttempt(clientIp);
+      const attempt = loginAttempts.get(clientIp);
+
+      console.log('[LOGIN] Failed attempt - email not found:', { email, ip: clientIp, attempts: attempt.attempts });
+      await logAction(null, 'LOGIN_FAILED', { email, reason: 'Email bulunamadı', ip: clientIp, attempts: attempt.attempts });
+
+      return res.status(401).json({
+        error: 'Email veya şifre hatalı',
+        failedAttempts: attempt.attempts,
+        maxAttempts: MAX_LOGIN_ATTEMPTS
+      });
     }
 
     const user = rows[0];
@@ -220,10 +324,22 @@ app.post('/api/auth/login', async (req, res) => {
     const passwordMatch = await bcrypt.compare(password, user.password_hash);
 
     if (!passwordMatch) {
-      // Başarısız giriş denemesini logla
-      await logAction(null, 'LOGIN_FAILED', { email, reason: 'Şifre hatalı' });
-      return res.status(401).json({ error: 'Email veya şifre hatalı' });
+      // Record failed attempt
+      recordFailedAttempt(clientIp);
+      const attempt = loginAttempts.get(clientIp);
+
+      console.log('[LOGIN] Failed attempt - wrong password:', { email, ip: clientIp, attempts: attempt.attempts });
+      await logAction(null, 'LOGIN_FAILED', { email, reason: 'Şifre hatalı', ip: clientIp, attempts: attempt.attempts });
+
+      return res.status(401).json({
+        error: 'Email veya şifre hatalı',
+        failedAttempts: attempt.attempts,
+        maxAttempts: MAX_LOGIN_ATTEMPTS
+      });
     }
+
+    // Clear failed attempts on successful login
+    clearFailedAttempts(clientIp);
 
     // Update last_login
     const updateConnection = await pool.getConnection();
@@ -257,7 +373,8 @@ app.post('/api/auth/login', async (req, res) => {
     );
 
     // Başarılı girişi logla
-    await logAction(user.id, 'LOGIN_SUCCESS', { email: user.email, full_name: user.full_name });
+    console.log('[LOGIN] Successful login:', { email, ip: clientIp });
+    await logAction(user.id, 'LOGIN_SUCCESS', { email: user.email, full_name: user.full_name, ip: clientIp });
 
     res.json({
       success: true,
@@ -271,7 +388,7 @@ app.post('/api/auth/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error(error);
+    console.error('[LOGIN] Error:', error);
     res.status(500).json({ error: error.message });
   }
 });
