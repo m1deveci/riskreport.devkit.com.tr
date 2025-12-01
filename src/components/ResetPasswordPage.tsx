@@ -49,42 +49,76 @@ export function ResetPasswordPage() {
 
     setLoading(true);
 
-    try {
-      const response = await fetch('/api/password-reset/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, newPassword: password }),
-      });
+    // Retry logic for handling browser extension interference
+    const maxRetries = 3;
+    let lastError: Error | null = null;
 
-      let data;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        data = await response.json();
-      } catch (parseErr) {
-        console.error('JSON Parse Error:', parseErr, 'Response status:', response.status);
-        throw new Error(`Sunucu hatası (${response.status}): Yanıt işlenemedi`);
-      }
+        const requestBody = { token, newPassword: password };
+        console.log(`[ResetPassword] Attempt ${attempt}/${maxRetries}: Sending fetch request`, {
+          token: token?.substring(0, 10) + '...',
+          passwordLength: password.length,
+        });
 
-      if (!response.ok) {
-        throw new Error(data.error || `Sunucu hatası: ${response.status}`);
-      }
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
 
-      setSuccess(true);
-      setTimeout(() => {
-        handleNavigate('/login');
-      }, 2000);
-    } catch (err: unknown) {
-      let errorMessage = 'Bir hata oluştu';
-      if (err instanceof Error) {
-        errorMessage = err.message;
-        console.error('Password reset error:', err);
-      } else if (err instanceof TypeError) {
-        errorMessage = `Ağ hatası: ${err.message}`;
-        console.error('Network error during password reset:', err);
+        const response = await fetch('/api/password-reset/verify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+          signal: controller.signal,
+        });
+
+        clearTimeout(timeoutId);
+
+        console.log(`[ResetPassword] Attempt ${attempt}: Response received`, {
+          status: response.status,
+          statusText: response.statusText,
+        });
+
+        let data;
+        try {
+          data = await response.json();
+        } catch (parseErr) {
+          console.error(`Attempt ${attempt}: JSON Parse Error:`, parseErr);
+          throw new Error(`Sunucu hatası (${response.status}): Yanıt işlenemedi`);
+        }
+
+        if (!response.ok) {
+          throw new Error(data.error || `Sunucu hatası: ${response.status}`);
+        }
+
+        // Success!
+        setSuccess(true);
+        setTimeout(() => {
+          handleNavigate('/login');
+        }, 2000);
+        return;
+      } catch (err: unknown) {
+        lastError = err instanceof Error ? err : new Error(String(err));
+        console.warn(`[ResetPassword] Attempt ${attempt} failed:`, lastError.message);
+
+        // If not the last attempt, wait a bit before retrying
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        }
       }
-      setError(errorMessage);
-    } finally {
-      setLoading(false);
     }
+
+    // All retries failed
+    let errorMessage = 'Bir hata oluştu';
+    if (lastError) {
+      if (lastError.message.includes('Failed to fetch') || lastError.message.includes('AbortError')) {
+        errorMessage = 'Ağ bağlantısı kesintiye uğradı. Lütfen sayfayı yenileyin ve tarayıcı uzantılarını kontrol edin (özellikle LastPass).';
+      } else {
+        errorMessage = lastError.message;
+      }
+      console.error('[ResetPassword] All retry attempts failed:', lastError);
+    }
+    setError(errorMessage);
+    setLoading(false);
   }
 
   return (
