@@ -5,6 +5,7 @@ import { logAction, LogActions } from '../lib/logger';
 import { Plus, Edit2, Trash2, Users as UsersIcon, AlertCircle, CheckCircle2, Key } from 'lucide-react';
 import { useI18n, useLanguageChange } from '../lib/i18n';
 import type { UserProfile } from '../lib/auth';
+import Swal from 'sweetalert2';
 
 interface User {
   id: string;
@@ -183,12 +184,30 @@ export function Users() {
       return;
     }
 
-    if (!confirm(t('messages.confirmDeleteUser') || 'Bu kullanıcıyı silmek istediğinize emin misiniz?')) return;
+    const userToDelete = users.find(u => u.id === id);
+
+    const result = await Swal.fire({
+      title: 'Kullanıcıyı Sil',
+      html: `<div style="text-align: left;">
+        <p><strong>${userToDelete?.full_name}</strong> adlı kullanıcıyı silmek istediğinize emin misiniz?</p>
+        <p style="margin-top: 10px; color: #888; font-size: 0.9em;">
+          <strong>E-posta:</strong> ${userToDelete?.email}<br/>
+          <strong>Rol:</strong> ${userToDelete?.role}
+        </p>
+        <p style="margin-top: 15px; color: #d32f2f; font-weight: 500;">Bu işlem geri alınamaz!</p>
+      </div>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Evet, Sil',
+      cancelButtonText: 'İptal',
+      reverseButtons: true,
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
-      // Silmeden önce kullanıcı bilgilerini al
-      const userToDelete = users.find(u => u.id === id);
-
       await api.users.delete(id);
 
       // Detaylı bilgileri logla
@@ -198,10 +217,24 @@ export function Users() {
         user_email: userToDelete?.email,
         user_role: userToDelete?.role,
       });
+
+      await Swal.fire({
+        title: 'Silindi!',
+        text: `${userToDelete?.full_name} başarıyla silindi.`,
+        icon: 'success',
+        confirmButtonColor: '#3b82f6',
+      });
+
       await loadData();
     } catch (err) {
       console.error('Failed to delete user:', err);
-      alert(t('messages.errorDelete'));
+      const errorMessage = err instanceof Error ? err.message : t('messages.errorDelete');
+      Swal.fire({
+        title: 'Hata!',
+        text: errorMessage,
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
     }
   }
 
