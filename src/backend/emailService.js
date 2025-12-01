@@ -68,7 +68,7 @@ export async function sendPasswordResetEmail(email, resetToken, userName) {
       throw new Error('Email service not initialized. Please call initializeEmailService first.');
     }
 
-    const resetLink = `${process.env.PASSWORD_RESET_LINK_BASE}/reset-password?token=${resetToken}`;
+    const resetLink = `${process.env.PASSWORD_RESET_LINK_BASE}/#/reset-password?token=${resetToken}`;
 
     const mailOptions = {
       from: `"${smtpConfig.fromName}" <${smtpConfig.fromEmail}>`,

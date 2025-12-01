@@ -77,21 +77,6 @@ function App() {
     const initializeRouting = async () => {
       try {
         const path = window.location.pathname;
-        console.log('[App] Current pathname:', path);
-
-        // Check for pathname-based routes first
-        if (path === '/reset-password') {
-          console.log('[App] Reset password route detected');
-          setMode('reset-password');
-          return;
-        }
-
-        if (path === '/forgot-password') {
-          console.log('[App] Forgot password route detected');
-          setMode('forgot-password');
-          return;
-        }
-
         const isReportRoute = path.match(/^\/report\/([^/]+)\/([^/]+)$/);
 
         if (isReportRoute) {
