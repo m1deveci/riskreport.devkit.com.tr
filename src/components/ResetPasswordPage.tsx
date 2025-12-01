@@ -56,10 +56,16 @@ export function ResetPasswordPage() {
         body: JSON.stringify({ token, newPassword: password }),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseErr) {
+        console.error('JSON Parse Error:', parseErr, 'Response status:', response.status);
+        throw new Error(`Sunucu hatası (${response.status}): Yanıt işlenemedi`);
+      }
 
       if (!response.ok) {
-        throw new Error(data.error || 'Bir hata oluştu');
+        throw new Error(data.error || `Sunucu hatası: ${response.status}`);
       }
 
       setSuccess(true);
@@ -67,7 +73,14 @@ export function ResetPasswordPage() {
         handleNavigate('/login');
       }, 2000);
     } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Bir hata oluştu';
+      let errorMessage = 'Bir hata oluştu';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+        console.error('Password reset error:', err);
+      } else if (err instanceof TypeError) {
+        errorMessage = `Ağ hatası: ${err.message}`;
+        console.error('Network error during password reset:', err);
+      }
       setError(errorMessage);
     } finally {
       setLoading(false);

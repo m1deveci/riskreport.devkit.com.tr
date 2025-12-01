@@ -1494,55 +1494,74 @@ app.post('/api/password-reset', async (req, res) => {
 // Verify Reset Token and Reset Password
 app.post('/api/password-reset/verify', async (req, res) => {
   try {
+    console.log('[PASSWORD-RESET] Verify request received');
     const { token, newPassword } = req.body;
+    console.log('[PASSWORD-RESET] Token length:', token?.length || 0);
 
     if (!token || !newPassword) {
+      console.log('[PASSWORD-RESET] Missing token or password');
       return res.status(400).json({ error: 'Token ve yeni şifre gereklidir' });
     }
 
     if (newPassword.length < 6) {
+      console.log('[PASSWORD-RESET] Password too short');
       return res.status(400).json({ error: 'Şifre en az 6 karakter olmalıdır' });
     }
 
+    console.log('[PASSWORD-RESET] Getting database connection');
     const connection = await pool.getConnection();
+    console.log('[PASSWORD-RESET] Connection established');
 
     // Check if token is valid and not expired
+    console.log('[PASSWORD-RESET] Querying password_reset_tokens table');
     const [tokenRows] = await connection.query(
       'SELECT * FROM password_reset_tokens WHERE token = ? AND expires_at > NOW() AND used_at IS NULL',
       [token]
     );
+    console.log('[PASSWORD-RESET] Token query result:', tokenRows.length, 'rows found');
 
     if (tokenRows.length === 0) {
+      console.log('[PASSWORD-RESET] Token not found or expired');
       connection.release();
       return res.status(400).json({ error: 'Geçersiz veya süresi dolmuş token' });
     }
 
     const resetTokenRecord = tokenRows[0];
+    console.log('[PASSWORD-RESET] Token found for user_id:', resetTokenRecord.user_id);
 
     // Hash new password
+    console.log('[PASSWORD-RESET] Hashing new password');
     const salt = await bcrypt.genSalt(10);
     const password_hash = await bcrypt.hash(newPassword, salt);
+    console.log('[PASSWORD-RESET] Password hashed');
 
     // Update user password
+    console.log('[PASSWORD-RESET] Updating user password');
     await connection.query(
       'UPDATE users SET password_hash = ? WHERE id = ?',
       [password_hash, resetTokenRecord.user_id]
     );
+    console.log('[PASSWORD-RESET] User password updated');
 
     // Mark token as used
+    console.log('[PASSWORD-RESET] Marking token as used');
     await connection.query(
       'UPDATE password_reset_tokens SET used_at = NOW() WHERE id = ?',
       [resetTokenRecord.id]
     );
+    console.log('[PASSWORD-RESET] Token marked as used');
 
     connection.release();
+    console.log('[PASSWORD-RESET] Connection released');
 
     res.json({
       success: true,
       message: 'Parolanız başarıyla sıfırlandı. Lütfen yeni parolanızla giriş yapın.'
     });
+    console.log('[PASSWORD-RESET] Success response sent');
   } catch (error) {
-    console.error(error);
+    console.error('[PASSWORD-RESET] Error:', error.message || error);
+    console.error('[PASSWORD-RESET] Stack:', error.stack);
     res.status(500).json({ error: error.message });
   }
 });
