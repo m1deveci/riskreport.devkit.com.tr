@@ -351,7 +351,7 @@ export function Dashboard() {
                       year: 'numeric'
                     })}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="sm:px-6 px-3 sm:py-4 py-2 whitespace-nowrap">
                     <span
                       className={`px-3 py-1.5 text-xs font-semibold rounded-lg backdrop-blur-md transition-all duration-200 ${
                         report.status === 'Yeni'

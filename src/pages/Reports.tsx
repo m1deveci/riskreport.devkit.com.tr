@@ -449,22 +449,22 @@ export function Reports() {
           <table className="w-full">
             <thead className="bg-slate-900/50 border-b border-slate-600">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="sm:px-6 px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   {t('dashboard.incidentNumber') || 'Olay No'}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="sm:px-6 px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   {t('reports.locationRegion') || 'Lokasyon / Bölge'}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="sm:px-6 px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   {t('dashboard.reporter') || 'Bildirim Yapan'}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="sm:px-6 px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   {t('reports.category') || 'Kategori'}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="sm:px-6 px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   {t('dashboard.date') || 'Tarih'}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="sm:px-6 px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   {t('reports.status') || 'Durum'}
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">
@@ -500,7 +500,7 @@ export function Reports() {
                       minute: '2-digit',
                     })}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="sm:px-6 px-3 sm:py-4 py-2 whitespace-nowrap">
                     <span
                       className={`px-2 py-1 text-xs font-medium rounded-full ${
                         report.status === 'Yeni'

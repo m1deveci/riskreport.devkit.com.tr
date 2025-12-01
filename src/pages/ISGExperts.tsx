@@ -343,19 +343,19 @@ export function ISGExperts() {
           <table className="w-full">
             <thead className="bg-slate-900/50 border-b border-slate-600">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="sm:px-6 px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   Ad Soyad
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="sm:px-6 px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   Lokasyon
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="sm:px-6 px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   E-posta
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="sm:px-6 px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   Telefon
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="sm:px-6 px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   Durum
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">
@@ -366,10 +366,10 @@ export function ISGExperts() {
             <tbody className="bg-transparent divide-y divide-slate-700">
               {filteredExperts.map((expert) => (
                 <tr key={expert.id} className="hover:bg-slate-900/50 border-b border-slate-700">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="sm:px-6 px-3 sm:py-4 py-2 whitespace-nowrap">
                     <div className="text-sm font-medium text-slate-100">{expert.full_name}</div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="sm:px-6 px-3 sm:py-4 py-2">
                     <div className="flex flex-wrap gap-1">
                       {expert.location_ids && expert.location_ids.length > 0 ? (
                         expert.location_ids.map((locId) => {
@@ -388,13 +388,13 @@ export function ISGExperts() {
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="sm:px-6 px-3 sm:py-4 py-2 whitespace-nowrap">
                     <div className="text-sm text-slate-300">{expert.email}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="sm:px-6 px-3 sm:py-4 py-2 whitespace-nowrap">
                     <div className="text-sm text-slate-300">{expert.phone}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="sm:px-6 px-3 sm:py-4 py-2 whitespace-nowrap">
                     <span
                       className={`px-2 py-1 text-xs font-medium rounded-full ${
                         expert.is_active
@@ -506,7 +506,7 @@ export function ISGExperts() {
                               });
                             }
                           }}
-                          className="w-4 h-4 text-blue-600 border-slate-600 rounded focus:ring-blue-500"
+                          className="w-5 h-5 text-blue-600 border-slate-600 rounded focus:ring-blue-500"
                         />
                         <span className="ml-2 text-sm text-slate-300">{location.name}</span>
                       </label>
@@ -581,7 +581,7 @@ export function ISGExperts() {
                   id="is_active"
                   checked={formData.is_active}
                   onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="w-4 h-4 text-blue-600 border-slate-600 rounded focus:ring-blue-500"
+                  className="w-5 h-5 text-blue-600 border-slate-600 rounded focus:ring-blue-500"
                 />
                 <label htmlFor="is_active" className="ml-2 text-sm text-slate-300">
                   Aktif

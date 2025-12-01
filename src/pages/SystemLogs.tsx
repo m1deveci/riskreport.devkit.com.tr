@@ -88,8 +88,8 @@ export function SystemLogs() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 -my-6 px-6 py-6">
       <div>
-        <h1 className="text-4xl font-bold text-white">{t('logs.title')}</h1>
-        <p className="text-slate-400 text-lg mt-2">{t('logs.subtitle')}</p>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">{t('logs.title')}</h1>
+        <p className="text-slate-400 text-sm sm:text-base md:text-lg mt-2">{t('logs.subtitle')}</p>
       </div>
 
       <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md p-4">
@@ -110,16 +110,16 @@ export function SystemLogs() {
           <table className="w-full">
             <thead className="bg-slate-900/50 border-b border-slate-600">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="sm:px-6 px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   {t('logs.date')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="sm:px-6 px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   {t('logs.user')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="sm:px-6 px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   {t('logs.action')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="sm:px-6 px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   {t('logs.details')}
                 </th>
               </tr>
@@ -171,7 +171,7 @@ export function SystemLogs() {
                     </tr>
                     {isExpanded && (
                       <tr className="bg-slate-900/30 border-b border-slate-700">
-                        <td colSpan={4} className="px-6 py-4">
+                        <td colSpan={4} className="sm:px-6 px-3 sm:py-4 py-2">
                           <div className="bg-slate-800/50 rounded p-4 border border-slate-700">
                             <h4 className="text-sm font-semibold text-white mb-3">📋 İşlem Detayları</h4>
                             <pre className="text-xs text-slate-300 whitespace-pre-wrap font-mono leading-relaxed break-words">

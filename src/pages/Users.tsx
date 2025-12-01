@@ -352,10 +352,10 @@ export function Users() {
           </div>
         </div>
       )}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold text-white">{t('users.title') || 'Kullanıcı Yönetimi'}</h1>
-          <p className="text-slate-400 text-lg mt-2">{t('users.subtitle') || 'Sistem kullanıcılarını yönetin'}</p>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">{t('users.title') || 'Kullanıcı Yönetimi'}</h1>
+          <p className="text-slate-400 text-sm sm:text-base md:text-lg mt-2">{t('users.subtitle') || 'Sistem kullanıcılarını yönetin'}</p>
         </div>
         <button
           onClick={() => openModal()}
@@ -371,25 +371,25 @@ export function Users() {
           <table className="w-full">
             <thead className="bg-slate-900/50 border-b border-slate-600">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="sm:px-6 px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   {t('users.fullName') || 'Ad Soyad'}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="sm:px-6 px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   {t('users.email') || 'E-posta'}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="sm:px-6 px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   {t('users.role') || 'Rol'}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="sm:px-6 px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   {t('users.locations') || 'Lokasyonlar'}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="sm:px-6 px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   {t('reports.status') || 'Durum'}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="sm:px-6 px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   {t('users.registrationDate') || 'Kayıt Tarihi'}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
+                <th className="sm:px-6 px-3 py-3 text-left text-xs font-medium text-slate-300 uppercase tracking-wider">
                   {t('users.lastLogin') || 'Son Giriş'}
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-slate-300 uppercase tracking-wider">
@@ -400,13 +400,13 @@ export function Users() {
             <tbody className="bg-transparent divide-y divide-slate-700">
               {filteredUsers.map((user) => (
                 <tr key={user.id} className="hover:bg-slate-900/50 border-b border-slate-700">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="sm:px-6 px-3 sm:py-4 py-2 whitespace-nowrap">
                     <div className="text-sm font-medium text-slate-100">{user.full_name}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="sm:px-6 px-3 sm:py-4 py-2 whitespace-nowrap">
                     <div className="text-sm text-slate-300">{user.email}</div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="sm:px-6 px-3 sm:py-4 py-2 whitespace-nowrap">
                     <span className="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800 capitalize">
                       {ROLES.find((r) => r.value === user.role)?.label || user.role}
                     </span>
@@ -430,7 +430,7 @@ export function Users() {
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="sm:px-6 px-3 sm:py-4 py-2 whitespace-nowrap">
                     <span
                       className={`px-2 py-1 text-xs font-medium rounded-full ${
                         user.is_active
@@ -632,7 +632,7 @@ export function Users() {
                                 });
                               }
                             }}
-                            className="w-4 h-4 text-blue-600 border-slate-600 rounded focus:ring-blue-500"
+                            className="w-5 h-5 text-blue-600 border-slate-600 rounded focus:ring-blue-500"
                           />
                           <span className="ml-2 text-sm text-slate-300">{location.name}</span>
                         </label>
@@ -653,7 +653,7 @@ export function Users() {
                   id="is_active"
                   checked={formData.is_active}
                   onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="w-4 h-4 text-blue-600 border-slate-600 rounded focus:ring-blue-500"
+                  className="w-5 h-5 text-blue-600 border-slate-600 rounded focus:ring-blue-500"
                 />
                 <label htmlFor="is_active" className="ml-2 text-sm text-slate-300">
                   {t('common.active')}
