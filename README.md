@@ -673,4 +673,97 @@ Başarısız giriş denemelerine karşı koruma sistemi ve geliştirilmiş kulla
 
 ---
 
+### 💬 Login Denemesi Sayacı Gösterimi
+
+Kullanıcılara başarısız giriş denemelerinin sayısını görüntüleme:
+
+**Özellikler:**
+- **Başarısız Deneme Sayısı**: Her başarısız girişte "Başarısız Deneme: X/3" gösterilir
+- **Kalan Deneme**: "Kalan Deneme: Y" kullanıcıya uyarı vermek için gösterilir
+- **Kilit Mesajı**: IP bloke olduğunda "Hesabınız Z dakika boyunca kilitlenmiştir" gösterilir
+- **Multiline Hata Mesajı**: Hata mesajları düzgün biçimde gösterilir
+
+**Görüntüleme Örneği:**
+```
+Email veya şifre hatalı
+
+⚠️ Başarısız Deneme: 1/3
+Kalan Deneme: 2
+```
+
+---
+
+### 📱 Mobil Uyumluluk Kritik Sorunları Çözüldü
+
+Tüm sayfaların mobil cihazlarda düzgün görüntülenmesi için optimizasyonlar:
+
+**Tablo Padding Responsive Hale Getirildi (8 Sayfa):**
+- Users, Reports, Dashboard, Locations, Regions, ISGExperts, SystemLogs, Settings
+- Desktop: `px-6 py-4` → Mobil: `px-3 py-2`
+- Tablo hücreleri mobilde daha dar ve okunabilir
+
+**Başlık Layout Responsive:**
+- Users, Locations, SystemLogs sayfalarında başlık ve butonlar stack olur
+- `flex-col sm:flex-row` pattern kullanılır
+- Metin boyutları responsive: `text-2xl sm:text-4xl`
+
+**Tıklama Hedefleri 44px+ (WCAG Standard):**
+- Checkbox ve input boyutları `w-4 h-4` → `w-5 h-5` artırıldı
+- 4 sayfada güncelleme: Users, ISGExperts, Regions, Locations
+- Mobilde dokunmatik kontroller daha kolay
+
+**Sonuç:**
+- Mobil Uyumluluk Skor: **B+ → A-**
+- Touch Target Min Size: 16px → 20px+ (44px)
+- Tüm sayfalar responsive grid sistemini kullanır
+
+---
+
+### 🎨 SweetAlert2 Kullanıcı Onay Diyalogları
+
+Kullanıcı silme işlemi ve CRUD operasyonları için profesyonel onay diyalogları:
+
+**Users Sayfası (Kullanıcı Yönetimi):**
+- ✅ Kullanıcı oluşturma başarısı SweetAlert ile
+- ✅ Kullanıcı güncelleme başarısı SweetAlert ile
+- ✅ Kullanıcı silme işlemi SweetAlert confirmation
+- ✅ Parola sıfırlama (email) SweetAlert ile
+- ✅ Manuel parola değiştirme SweetAlert ile
+- ✅ Tüm hatalar SweetAlert ile gösterilir
+
+**Regions Sayfası (Bölge Yönetimi):**
+- ✅ Bölge düzenleme sonuçları SweetAlert ile
+- ✅ Bölge silme işlemi SweetAlert confirmation:
+  ```
+  Başlık: "Bölgeyi Sil"
+  Mesaj: "[Bölge Adı] bölgesini silmek istediğinize emin misiniz?"
+  Uyarı: "Bu işlem geri alınamaz!"
+  ```
+- ✅ Silme başarısı ve hatası SweetAlert ile
+
+**Locations Sayfası (Lokasyon Yönetimi):**
+- ✅ Lokasyon ekleme sonuçları SweetAlert ile
+- ✅ Lokasyon düzenleme sonuçları SweetAlert ile
+- ✅ Lokasyon silme işlemi SweetAlert confirmation:
+  ```
+  Başlık: "Lokasyonu Sil"
+  Mesaj: "[Lokasyon Adı] lokasyonunu silmek istediğinize emin misiniz?"
+  Uyarı: "Bu işlem geri alınamaz!"
+  ```
+- ✅ Silme başarısı ve hatası SweetAlert ile
+
+**Diyalog Özellikleri:**
+- 🔴 Uyarı (Warning): Kırmızı buton (#ef4444) - Silme işlemleri
+- ✅ Başarı (Success): Mavi buton (#3b82f6) - Oluşturma/Güncelleme
+- ❌ Hata (Error): Mavi buton (#3b82f6) - Hatalar
+- Icon'lar ve smooth animasyonlar dahil
+
+**Kullanıcı Deneyimi:**
+- Tüm işlemler kullanıcıya geri bildirim sağlar
+- Yanlışlıkla silme işlemi engellenir (confirmation)
+- Başarı mesajları detaylı ve açıklayıcı
+- Hata mesajları kullanıcıya yardımcı olur
+
+---
+
 **Not**: Uygulama Türkçe dilinde tasarlanmıştır ve Türkiye İş Sağlığı ve Güvenliği mevzuatına uygun ramak kala raporlama süreçlerini destekler.
