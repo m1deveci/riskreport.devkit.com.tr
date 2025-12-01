@@ -299,7 +299,7 @@ app.get('/api/auth/verify', authenticateToken, (req, res) => {
 // ==================== USER ENDPOINTS ====================
 
 // Get All Users (Admin Only)
-app.get('/api/users', authenticateToken, adminOnly, async (req, res) => {
+app.get('/api/users', authenticateToken, async (req, res) => {
   try {
     const connection = await pool.getConnection();
     const [rows] = await connection.query(
@@ -308,7 +308,7 @@ app.get('/api/users', authenticateToken, adminOnly, async (req, res) => {
     connection.release();
 
     // Parse location_ids JSON for each user
-    const usersWithParsedLocations = rows.map((user) => {
+    let usersWithParsedLocations = rows.map((user) => {
       let locationIds = [];
       try {
         locationIds = typeof user.location_ids === 'string'
@@ -319,6 +319,15 @@ app.get('/api/users', authenticateToken, adminOnly, async (req, res) => {
       }
       return { ...user, location_ids: locationIds };
     });
+
+    // If user is ISG Expert, filter to show only users from their assigned locations
+    if (req.user.role === 'isg_expert') {
+      const expertLocationIds = req.user.location_ids || [];
+      usersWithParsedLocations = usersWithParsedLocations.filter((user) => {
+        // Always show users that have at least one location in common with expert's locations
+        return user.location_ids.some((locId) => expertLocationIds.includes(locId));
+      });
+    }
 
     res.json(usersWithParsedLocations);
   } catch (error) {
