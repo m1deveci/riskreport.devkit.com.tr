@@ -524,10 +524,25 @@ app.put('/api/users/:id/password', authenticateToken, adminOrExpert, async (req,
 // ==================== LOCATIONS ENDPOINTS ====================
 
 // Get All Locations
-app.get('/api/locations', async (req, res) => {
+app.get('/api/locations', authenticateToken, async (req, res) => {
   try {
     const connection = await pool.getConnection();
-    const [rows] = await connection.query('SELECT * FROM locations WHERE is_active = true');
+    let query = 'SELECT * FROM locations WHERE is_active = true';
+    let params = [];
+
+    // ISG Expert: sadece kendi location_ids'lerine göre filtrele
+    if (req.user.role === 'isg_expert') {
+      const locationIds = req.user.location_ids || [];
+      if (locationIds.length === 0) {
+        connection.release();
+        return res.json([]); // ISG Expert'in yetki alanında location yok
+      }
+      const placeholders = locationIds.map(() => '?').join(',');
+      query += ` AND id IN (${placeholders})`;
+      params = locationIds;
+    }
+
+    const [rows] = await connection.query(query, params);
     connection.release();
     res.json(rows);
   } catch (error) {
@@ -589,10 +604,25 @@ app.delete('/api/locations/:id', authenticateToken, adminOnly, async (req, res) 
 // ==================== REGIONS ENDPOINTS ====================
 
 // Get All Regions
-app.get('/api/regions', async (req, res) => {
+app.get('/api/regions', authenticateToken, async (req, res) => {
   try {
     const connection = await pool.getConnection();
-    const [rows] = await connection.query('SELECT * FROM regions WHERE is_active = true');
+    let query = 'SELECT * FROM regions WHERE is_active = true';
+    let params = [];
+
+    // ISG Expert: sadece kendi location_ids'lerine ait regions'ları göster
+    if (req.user.role === 'isg_expert') {
+      const locationIds = req.user.location_ids || [];
+      if (locationIds.length === 0) {
+        connection.release();
+        return res.json([]);
+      }
+      const placeholders = locationIds.map(() => '?').join(',');
+      query += ` AND location_id IN (${placeholders})`;
+      params = locationIds;
+    }
+
+    const [rows] = await connection.query(query, params);
     connection.release();
     res.json(rows);
   } catch (error) {
@@ -601,9 +631,18 @@ app.get('/api/regions', async (req, res) => {
 });
 
 // Get Regions by Location ID
-app.get('/api/regions/:locationId', async (req, res) => {
+app.get('/api/regions/:locationId', authenticateToken, async (req, res) => {
   try {
     const { locationId } = req.params;
+
+    // ISG Expert: sadece kendi location'larına erişebilir
+    if (req.user.role === 'isg_expert') {
+      const locationIds = req.user.location_ids || [];
+      if (!locationIds.includes(locationId)) {
+        return res.status(403).json({ error: 'Bu bölgeye erişme yetkisi yoktur' });
+      }
+    }
+
     const connection = await pool.getConnection();
     const [rows] = await connection.query(
       'SELECT * FROM regions WHERE location_id = ? AND is_active = true',
