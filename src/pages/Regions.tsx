@@ -4,6 +4,7 @@ import { logAction, LogActions } from '../lib/logger';
 import { Plus, Edit2, Trash2, QrCode, Download, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useI18n, useLanguageChange } from '../lib/i18n';
 import QRCode from 'qrcode';
+import Swal from 'sweetalert2';
 
 interface Region {
   id: string;
@@ -124,18 +125,50 @@ export function Regions() {
       }
 
       await loadData();
-      setTimeout(() => {
-        setShowModal(false);
-        setSuccess('');
-      }, 1500);
+
+      // Show success with SweetAlert
+      const message = editingId ? `${formData.name} güncellendi` : `${formData.name} oluşturuldu`;
+      await Swal.fire({
+        title: 'Başarılı!',
+        text: message,
+        icon: 'success',
+        confirmButtonColor: '#3b82f6',
+      });
+
+      setShowModal(false);
+      setSuccess('');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : t('messages.errorGeneric');
+
+      Swal.fire({
+        title: 'Hata!',
+        text: errorMessage,
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
       setError(errorMessage);
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm(t('messages.confirmDeleteRegion'))) return;
+    const regionToDelete = regions.find(r => r.id === id);
+
+    const result = await Swal.fire({
+      title: 'Bölgeyi Sil',
+      html: `<div style="text-align: left;">
+        <p><strong>${regionToDelete?.name}</strong> bölgesini silmek istediğinize emin misiniz?</p>
+        <p style="margin-top: 15px; color: #d32f2f; font-weight: 500;">Bu işlem geri alınamaz!</p>
+      </div>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Evet, Sil',
+      cancelButtonText: 'İptal',
+      reverseButtons: true,
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       // Silmeden önce bölge bilgilerini al
@@ -150,10 +183,24 @@ export function Regions() {
         location_id: regionToDelete?.location_id,
         location_name: (regionToDelete?.locations as unknown as { name: string })?.name,
       });
+
+      Swal.fire({
+        title: 'Silindi!',
+        text: `${regionToDelete?.name} başarıyla silindi.`,
+        icon: 'success',
+        confirmButtonColor: '#3b82f6',
+      });
+
       await loadData();
     } catch (err) {
       console.error('Failed to delete region:', err);
-      alert(t('messages.errorDelete'));
+      const errorMessage = err instanceof Error ? err.message : t('messages.errorDelete');
+      Swal.fire({
+        title: 'Hata!',
+        text: errorMessage,
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
     }
   }
 

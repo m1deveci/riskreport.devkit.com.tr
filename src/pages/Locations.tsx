@@ -3,6 +3,7 @@ import { api, supabase } from '../lib/supabase';
 import { logAction, LogActions } from '../lib/logger';
 import { useI18n, useLanguageChange } from '../lib/i18n';
 import { Plus, Edit2, Trash2, MapPin, AlertCircle, CheckCircle2 } from 'lucide-react';
+import Swal from 'sweetalert2';
 
 interface Location {
   id: string;
@@ -87,18 +88,50 @@ export function Locations() {
       }
 
       await loadLocations();
-      setTimeout(() => {
-        setShowModal(false);
-        setSuccess('');
-      }, 1500);
+
+      // Show success with SweetAlert
+      const message = editingId ? `${formData.name} güncellendi` : `${formData.name} oluşturuldu`;
+      await Swal.fire({
+        title: 'Başarılı!',
+        text: message,
+        icon: 'success',
+        confirmButtonColor: '#3b82f6',
+      });
+
+      setShowModal(false);
+      setSuccess('');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : t('messages.errorGeneric');
+
+      Swal.fire({
+        title: 'Hata!',
+        text: errorMessage,
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
       setError(errorMessage);
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm(t('messages.confirmDeleteLocation'))) return;
+    const locationToDelete = locations.find(l => l.id === id);
+
+    const result = await Swal.fire({
+      title: 'Lokasyonu Sil',
+      html: `<div style="text-align: left;">
+        <p><strong>${locationToDelete?.name}</strong> lokasyonunu silmek istediğinize emin misiniz?</p>
+        <p style="margin-top: 15px; color: #d32f2f; font-weight: 500;">Bu işlem geri alınamaz!</p>
+      </div>`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Evet, Sil',
+      cancelButtonText: 'İptal',
+      reverseButtons: true,
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       // Silmeden önce lokasyon bilgilerini al
@@ -111,10 +144,24 @@ export function Locations() {
         location_id: id,
         location_name: locationToDelete?.name,
       });
+
+      Swal.fire({
+        title: 'Silindi!',
+        text: `${locationToDelete?.name} başarıyla silindi.`,
+        icon: 'success',
+        confirmButtonColor: '#3b82f6',
+      });
+
       await loadLocations();
     } catch (err) {
       console.error('Failed to delete location:', err);
-      alert(`${t('messages.location')} ${t('messages.errorDelete')}`);
+      const errorMessage = err instanceof Error ? err.message : t('messages.errorDelete');
+      Swal.fire({
+        title: 'Hata!',
+        text: errorMessage,
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
     }
   }
 

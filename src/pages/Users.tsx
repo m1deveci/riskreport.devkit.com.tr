@@ -167,12 +167,27 @@ export function Users() {
       }
 
       await loadData();
-      setTimeout(() => {
-        setShowModal(false);
-        setSuccess('');
-      }, 1500);
+
+      // Show success message with SweetAlert
+      const isEditing = editingId ? 'Güncellendi' : 'Oluşturuldu';
+      await Swal.fire({
+        title: 'Başarılı!',
+        text: `${formData.full_name} ${editingId ? 'güncellendi' : 'oluşturuldu'}.`,
+        icon: 'success',
+        confirmButtonColor: '#3b82f6',
+      });
+
+      setShowModal(false);
+      setSuccess('');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : t('messages.errorGeneric');
+
+      Swal.fire({
+        title: 'Hata!',
+        text: errorMessage,
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
       setError(errorMessage);
     }
   }
@@ -258,11 +273,21 @@ export function Users() {
       }
 
       await logAction(LogActions.UPDATE_USER, { user_id: id, action: 'password_reset' });
-      alert(`Parola sıfırlama bağlantısı ${email} adresine gönderildi`);
+      Swal.fire({
+        title: 'Başarılı!',
+        text: `Parola sıfırlama bağlantısı ${email} adresine gönderildi.`,
+        icon: 'success',
+        confirmButtonColor: '#3b82f6',
+      });
     } catch (err) {
       console.error('Failed to reset password:', err);
       const errorMessage = err instanceof Error ? err.message : 'Parola sıfırlama işleminde bir hata oluştu';
-      alert(errorMessage);
+      Swal.fire({
+        title: 'Hata!',
+        text: errorMessage,
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
     }
   }
 
@@ -309,14 +334,24 @@ export function Users() {
         action: 'manual_password_reset'
       });
 
-      setSuccess(t('messages.successPassword'));
-      setTimeout(() => {
-        setShowPasswordModal(false);
-        setPasswordResetUser(null);
-        setManualPassword('');
-      }, 1500);
+      Swal.fire({
+        title: 'Başarılı!',
+        text: `${passwordResetUser.full_name} parolası değiştirildi.`,
+        icon: 'success',
+        confirmButtonColor: '#3b82f6',
+      });
+
+      setShowPasswordModal(false);
+      setPasswordResetUser(null);
+      setManualPassword('');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : t('messages.errorGeneric');
+      Swal.fire({
+        title: 'Hata!',
+        text: errorMessage,
+        icon: 'error',
+        confirmButtonColor: '#3b82f6',
+      });
       setError(errorMessage);
     }
   }
