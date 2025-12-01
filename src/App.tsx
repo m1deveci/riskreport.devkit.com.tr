@@ -74,66 +74,76 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const path = window.location.pathname;
-    const isResetPasswordRoute = path === '/reset-password';
-    const isForgotPasswordRoute = path === '/forgot-password';
-    const isReportRoute = path.match(/^\/report\/([^/]+)\/([^/]+)$/);
+    const initializeRouting = async () => {
+      try {
+        const path = window.location.pathname;
+        console.log('[App] Current pathname:', path);
 
-    if (isResetPasswordRoute) {
-      // Reset password sayfası için direktly mode'u ayarla
-      setMode('reset-password');
-      return;
-    }
-
-    if (isForgotPasswordRoute) {
-      // Forgot password sayfası için direktly mode'u ayarla
-      setMode('forgot-password');
-      return;
-    }
-
-    if (isReportRoute) {
-      // Report route ise hiç auth kontrolü yapmadan form göster
-      checkRoute();
-    } else {
-      // Diğer route'lar için auth kontrol et
-      initializeApp();
-    }
-
-    // Auth state değişikliklerini dinle (sadece report dışı sayfalar için)
-    if (!isReportRoute) {
-      onAuthStateChange((user) => {
-        setCurrentUser(user);
-        if (user) {
-          setMode('admin');
-        } else {
-          checkRoute();
+        // Check for pathname-based routes first
+        if (path === '/reset-password') {
+          console.log('[App] Reset password route detected');
+          setMode('reset-password');
+          return;
         }
-      });
 
-      // Custom auth event listener
-      const handleAuthChange = async () => {
-        const user = await getCurrentUser();
-        setCurrentUser(user);
-        if (user) {
-          setMode('admin');
-        } else {
-          checkRoute();
+        if (path === '/forgot-password') {
+          console.log('[App] Forgot password route detected');
+          setMode('forgot-password');
+          return;
         }
-      };
 
-      window.addEventListener('auth-changed', handleAuthChange);
+        const isReportRoute = path.match(/^\/report\/([^/]+)\/([^/]+)$/);
 
-      // Listen for hash changes (for forgot-password, reset-password routes)
-      const handleHashChange = () => {
-        checkRoute();
-      };
-      window.addEventListener('hashchange', handleHashChange);
+        if (isReportRoute) {
+          // Report route ise hiç auth kontrolü yapmadan form göster
+          checkRoute();
+        } else {
+          // Diğer route'lar için auth kontrol et
+          await initializeApp();
+        }
 
-      return () => {
-        window.removeEventListener('auth-changed', handleAuthChange);
-        window.removeEventListener('hashchange', handleHashChange);
-      };
-    }
+        // Auth state değişikliklerini dinle (sadece report dışı sayfalar için)
+        if (!isReportRoute) {
+          onAuthStateChange((user) => {
+            setCurrentUser(user);
+            if (user) {
+              setMode('admin');
+            } else {
+              checkRoute();
+            }
+          });
+
+          // Custom auth event listener
+          const handleAuthChange = async () => {
+            const user = await getCurrentUser();
+            setCurrentUser(user);
+            if (user) {
+              setMode('admin');
+            } else {
+              checkRoute();
+            }
+          };
+
+          window.addEventListener('auth-changed', handleAuthChange);
+
+          // Listen for hash changes (for forgot-password, reset-password routes)
+          const handleHashChange = () => {
+            checkRoute();
+          };
+          window.addEventListener('hashchange', handleHashChange);
+
+          return () => {
+            window.removeEventListener('auth-changed', handleAuthChange);
+            window.removeEventListener('hashchange', handleHashChange);
+          };
+        }
+      } catch (error) {
+        console.error('[App] Error during initialization:', error);
+        setMode('login');
+      }
+    };
+
+    initializeRouting();
   }, []);
 
   async function initializeApp() {
