@@ -1,4 +1,4 @@
-import { api } from './supabase';
+import { api } from './api';
 import { getCurrentUser } from './auth';
 
 export async function logAction(

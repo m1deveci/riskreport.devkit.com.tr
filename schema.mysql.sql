@@ -165,3 +165,53 @@ BEGIN
   SET next_number = CONCAT('RK-', year_str, '-', LPAD(next_num - 1, 6, '0'));
 END //
 DELIMITER ;
+
+-- ==================== CHAT SYSTEM TABLES ====================
+
+-- Create messages table (1-to-1 chat)
+CREATE TABLE IF NOT EXISTS messages (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  sender_id CHAR(36) NOT NULL,
+  receiver_id CHAR(36) NOT NULL,
+  message LONGTEXT NOT NULL,
+  message_type VARCHAR(50) DEFAULT 'text',
+  is_read BOOLEAN DEFAULT FALSE,
+  read_at DATETIME NULL,
+  edited_at DATETIME NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_messages_sender_id FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_messages_receiver_id FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_messages_sender_id (sender_id),
+  INDEX idx_messages_receiver_id (receiver_id),
+  INDEX idx_messages_conversation (sender_id, receiver_id),
+  INDEX idx_messages_created_at (created_at DESC),
+  INDEX idx_messages_is_read (is_read)
+);
+
+-- Create message reactions table
+CREATE TABLE IF NOT EXISTS message_reactions (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  message_id INT NOT NULL,
+  user_id CHAR(36) NOT NULL,
+  emoji VARCHAR(10) NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_message_reactions_message_id FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE,
+  CONSTRAINT fk_message_reactions_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_user_reaction (message_id, user_id),
+  INDEX idx_message_reactions_message_id (message_id),
+  INDEX idx_message_reactions_user_id (user_id)
+);
+
+-- Create typing status table (for typing indicators)
+CREATE TABLE IF NOT EXISTS typing_status (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id CHAR(36) NOT NULL,
+  receiver_id CHAR(36) NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_typing_status_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_typing_status_receiver_id FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
+  UNIQUE KEY unique_typing (user_id, receiver_id),
+  INDEX idx_typing_status_user_id (user_id),
+  INDEX idx_typing_status_receiver_id (receiver_id),
+  INDEX idx_typing_status_created_at (created_at)
+);

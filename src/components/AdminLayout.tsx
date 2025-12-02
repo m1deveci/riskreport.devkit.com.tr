@@ -136,10 +136,13 @@ export function AdminLayout({ children, currentUser, currentPage, onNavigate }: 
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <div className="hidden sm:block text-right">
+            <button
+              onClick={() => onNavigate('profile')}
+              className="hidden sm:block text-right hover:opacity-80 transition-opacity"
+            >
               <p className="text-sm font-semibold text-white">{currentUser.full_name}</p>
               <p className="text-xs text-slate-400">{getRoleDisplayName(currentUser.role)}</p>
-            </div>
+            </button>
             {/* Dil Seçici - Dropdown */}
             <div className="relative">
               <button

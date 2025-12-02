@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { logAction, LogActions } from '../lib/logger';
-import { api } from '../lib/supabase';
+import { api } from '../lib/api';
 import { Search, Filter, X, AlertTriangle, Eye, Download, Image as ImageIcon, Lock, History, FileDown } from 'lucide-react';
 import type { UserProfile } from '../lib/auth';
 import { useI18n, useLanguageChange } from '../lib/i18n';

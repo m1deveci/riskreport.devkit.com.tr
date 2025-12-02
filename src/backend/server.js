@@ -1033,6 +1033,111 @@ app.delete('/api/regions/:id', authenticateToken, adminOrExpert, async (req, res
   }
 });
 
+// ==================== PROFILE ENDPOINTS ====================
+
+// Get current user profile
+app.get('/api/profile', authenticateToken, async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+    const [rows] = await connection.query(
+      'SELECT id, full_name, email, role, location_ids FROM users WHERE id = ?',
+      [req.user.id]
+    );
+    connection.release();
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+    }
+
+    res.json(rows[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update profile
+app.put('/api/profile', authenticateToken, async (req, res) => {
+  try {
+    const { full_name } = req.body;
+
+    if (!full_name || !full_name.trim()) {
+      return res.status(400).json({ error: 'Ad Soyad zorunludur' });
+    }
+
+    const connection = await pool.getConnection();
+    await connection.query(
+      'UPDATE users SET full_name = ? WHERE id = ?',
+      [full_name.trim(), req.user.id]
+    );
+    connection.release();
+
+    // Log action
+    await logAction(req.user.id, 'UPDATE_PROFILE', {
+      action: 'profile_update',
+      field: 'full_name',
+    });
+
+    res.json({ success: true, message: 'Profil güncellendi' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Change password
+app.post('/api/profile/change-password', authenticateToken, async (req, res) => {
+  try {
+    const { current_password, new_password } = req.body;
+
+    if (!current_password || !new_password) {
+      return res.status(400).json({ error: 'Tüm alanlar zorunludur' });
+    }
+
+    if (new_password.length < 6) {
+      return res.status(400).json({ error: 'Yeni parola en az 6 karakter olmalıdır' });
+    }
+
+    const connection = await pool.getConnection();
+    const [rows] = await connection.query(
+      'SELECT password_hash FROM users WHERE id = ?',
+      [req.user.id]
+    );
+
+    if (rows.length === 0) {
+      connection.release();
+      return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+    }
+
+    // Verify current password
+    const passwordMatch = await bcrypt.compare(current_password, rows[0].password_hash);
+    if (!passwordMatch) {
+      connection.release();
+      await logAction(req.user.id, 'CHANGE_PASSWORD_FAILED', { reason: 'invalid current password' });
+      return res.status(401).json({ error: 'Mevcut parola yanlış' });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const newPasswordHash = await bcrypt.hash(new_password, salt);
+
+    // Update password
+    await connection.query(
+      'UPDATE users SET password_hash = ? WHERE id = ?',
+      [newPasswordHash, req.user.id]
+    );
+    connection.release();
+
+    // Log action
+    await logAction(req.user.id, 'CHANGE_PASSWORD', {
+      success: true,
+    });
+
+    res.json({ success: true, message: 'Parola başarıyla değiştirildi' });
+  } catch (error) {
+    console.error('Password change error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ==================== NEAR-MISS REPORTS ENDPOINTS ====================
 
 app.get('/api/reports', authenticateToken, async (req, res) => {

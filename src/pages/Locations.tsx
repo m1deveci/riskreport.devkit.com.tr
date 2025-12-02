@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { logAction, LogActions } from '../lib/logger';
 import { useI18n, useLanguageChange } from '../lib/i18n';
 import { Plus, Edit2, Trash2, MapPin, AlertCircle, CheckCircle2 } from 'lucide-react';

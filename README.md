@@ -871,4 +871,216 @@ Badge'dan yönlendirme:
 
 ---
 
+---
+
+## 📊 Dashboard Analitikleri ve Dışarı Aktarma Özellikleri (Aralık 2025)
+
+### 🎯 Lokasyon Risk Durumu Kartları
+
+Dashboard'da her lokasyonun risk seviyesini görsel olarak gösteren interaktif kartlar:
+
+**Kartın İçeriği:**
+- **Risk Skoru (0-100)**: Dinamik olarak hesaplanan lokasyon risk seviyesi
+  - 🟢 80+: Güvenli
+  - 🟡 60-79: Dikkat
+  - 🔴 40-59: Uyarı
+  - 🚨 0-39: Tehlike
+
+- **Rapor Sayısı**: Lokasyondaki toplam ramak kala bildirimi sayısı
+
+- **Son Rapor Tarihi**:
+  - "Bugün", "Dün", "X gün önce", "X hafta önce", "X ay önce"
+  - Rapor yoksa: "Rapor yok (Güvenli)"
+
+- **Bölgeler Listesi**:
+  - 🟢 Yeşil: Rapor gelmemiş (Güvenli) bölgeler
+  - 🔴 Kırmızı: Rapor gelmiş (Tehlikeli) bölgeler
+  - Her bölgenin rapor sayısı gösterilir
+
+- **Sağlık Barı**: Visual progress bar ile risk durumu gösterilir
+
+**Risk Skoru Hesaplama Mantığı:**
+```
+Başlangıç: 100 puan
+Her rapor: -5 puan
+Günler geçme: +2 puan/gün (günler geçtikçe riski azalt)
+Sonuç: 0-100 arasında dinamik skor
+```
+
+### ⚡ Hızlı Aksiyon Alınmış Lokasyonlar Tablosu
+
+Raporların durumlarının değişim sürelerine göre lokasyonları sıralayan analitik tablo:
+
+**Tablo Sütunları:**
+| Sıra | Lokasyon | İnceleme Süresi | Çözüm Süresi | Çözüm Oranı | Aksiyon Hızı |
+|------|----------|-----------------|--------------|-------------|-------------|
+| 1 | Fabrika A | 1 gün | 3 gün | %95 | 🟢 Hızlı |
+| 2 | Fabrika B | 2 gün | 6 gün | %87 | 🟡 Normal |
+| 3 | Fabrika C | 3 gün | 12 gün | %72 | 🔴 Yavaş |
+
+**Aksiyon Hızı Renklendirmesi:**
+- 🟢 Hızlı: 0-3 gün
+- 🟡 Normal: 4-7 gün
+- 🔴 Yavaş: 8+ gün
+
+### 📥 PDF ve Excel Dışarı Aktarma
+
+#### Lokasyon Risk Durumu Export
+
+**PDF Raporu:**
+- **Format**: Portrait (Dikey)
+- **İçerik**:
+  - Rapor başlığı ve dışa aktarma tarihi
+  - Tablo: Lokasyon, Risk Skoru, Risk Seviyesi, Rapor Sayısı, Son Rapor, Bölgeler
+  - Türkçe karakter tam desteği (jspdf-autotable)
+  - Sayfa numaralandırması otomatik
+
+- **Dosya Adı**: `lokasyon_risk_durumu_YYYY-MM-DD.pdf`
+
+**Excel Raporu:**
+- **Format**: .xlsx (Microsoft Excel)
+- **Sütunlar**:
+  - Lokasyon Adı
+  - Risk Skoru
+  - Risk Seviyesi
+  - Rapor Sayısı
+  - Son Rapor
+  - Güvenli Bölge Sayısı
+  - Tehlikeli Bölge Sayısı
+  - Tüm Bölgeler (noktalı virgülle ayrılmış)
+
+- **Dosya Adı**: `lokasyon_risk_durumu_YYYY-MM-DD.xlsx`
+- **Özellikler**: Mavi başlık, otomatik sütun genişliği, metin kaydırma
+
+#### Hızlı Aksiyon Alınmış Lokasyonlar Export
+
+**PDF Raporu:**
+- **Format**: Portrait (Dikey)
+- **İçerik**:
+  - Rapor başlığı ve dışa aktarma tarihi
+  - Tablo: Sıra, Lokasyon, İnceleme Süresi, Çözüm Süresi, Çözüm Oranı, Hız
+  - Yeşil başlık tasarımı
+  - Sayfa numaralandırması
+
+- **Dosya Adı**: `hizli_aksiyon_lokasyonlari_YYYY-MM-DD.pdf`
+
+**Excel Raporu:**
+- **Format**: .xlsx (Microsoft Excel)
+- **Sütunlar**:
+  - Sıra (Ranking)
+  - Lokasyon
+  - Ortalama İnceleme Süresi (Gün)
+  - Ortalama Çözüm Süresi (Gün)
+  - Çözüm Oranı (%)
+  - Aksiyon Hızı
+
+- **Dosya Adı**: `hizli_aksiyon_lokasyonlari_YYYY-MM-DD.xlsx`
+- **Özellikler**: Yeşil başlık, otomatik sütun genişliği, metin kaydırma
+
+### 🎛️ Sistem Logları ve Raporlar Sayfasında Export
+
+#### Sistem Logları Sayfası (`/logs`)
+
+**PDF Export Özellikleri:**
+- Dikey (Portrait) format
+- Tablo: Tarih/Saat, Kullanıcı, İşlem, Detaylar
+- Mavi başlık tasarımı
+- Sayfa numaralandırması
+- Dosya Adı: `sistemlogları_YYYY-MM-DD.pdf`
+
+**Excel Export Özellikleri:**
+- Mavi başlık
+- Otomatik sütun genişliği
+- Türkçe başlıklar: "Tarih / Saat", "Kullanıcı", "İşlem", "Detaylar"
+- Dosya Adı: `sistemlogları_YYYY-MM-DD.xlsx`
+
+#### Raporlar Sayfası (`/reports`)
+
+**PDF Export Özellikleri:**
+- Yatay (Landscape) format (daha geniş tablo için)
+- Tablo: Olay No, Lokasyon, Bölge, Ad Soyad, Telefon, Kategori, Durum, Açıklama
+- Mavi başlık tasarımı
+- Otomatik sayfa atlama
+- Dosya Adı: `raporlar_YYYY-MM-DD.pdf`
+
+**Excel Export Özellikleri:**
+- Mavi başlık
+- 10 sütun: Olay No, Lokasyon, Bölge, Ad Soyad, Telefon, Kategori, Durum, Açıklama, İç Notlar, Oluşturulma Tarihi
+- Otomatik sütun genişliği
+- Dosya Adı: `raporlar_YYYY-MM-DD.xlsx`
+
+### 🔧 Teknik Detaylar
+
+**Kullanılan Kütüphaneler:**
+- `jspdf@4.2.1`: PDF oluşturma
+- `html2canvas@1.4.1`: HTML to Canvas dönüştürme
+- `xlsx@0.18.5`: Excel dosyası oluşturma
+- `jspdf-autotable@3.8.3`: PDF tablolama ve Türkçe karakter desteği
+
+**Ana Modüller:**
+- `src/lib/dashboardAnalytics.ts`: Analitik hesaplama fonksiyonları
+- `src/lib/exportUtils.ts`: PDF ve Excel export fonksiyonları
+
+**Export Fonksiyonları:**
+```typescript
+// Sistem Logları
+exportLogsAsPDF(logs, options)
+exportLogsAsExcel(logs, options)
+
+// Raporlar
+exportReportsAsPDF(reports, options)
+exportReportsAsExcel(reports, options)
+
+// Dashboard Analytics
+exportLocationRiskAsPDF(locationHealth, options)
+exportLocationRiskAsExcel(locationHealth, options)
+exportActionSpeedAsPDF(actionSpeed, options)
+exportActionSpeedAsExcel(actionSpeed, options)
+```
+
+### 📍 Butonlar Nerede?
+
+**Dashboard Sayfası:**
+- "Lokasyon Risk Durumu" kartının sağ üst köşesinde **PDF** ve **Excel** butonları
+- "Hızlı Aksiyon Alınmış Lokasyonlar" kartının sağ üst köşesinde **PDF** ve **Excel** butonları
+
+**Sistem Logları Sayfası:**
+- Başlığın yanında **PDF** (kırmızı) ve **Excel** (yeşil) butonları
+
+**Raporlar Sayfası:**
+- Başlığın yanında **PDF** (kırmızı) ve **Excel** (yeşil) butonları
+
+### 🌍 Türkçe Dil Desteği
+
+- Tüm başlıklar, sütun adları ve açıklamalar Türkçe
+- Tarih/Saat formatı: `DD.MM.YYYY HH:mm` (Türkiye standartı)
+- Dosya adlarında Türkçe karakterler (`lokasyon_risk_durumu`, `hızlı_aksiyon_lokasyonlari`)
+- PDF'lerde `helvetica` font ile Türkçe karakterleri destekler
+- Excel'de Unicode tam desteği
+
+### 💡 Kullanım Örnekleri
+
+**1. Günlük Raporlama:**
+```
+1. Dashboard'a git
+2. "Lokasyon Risk Durumu" kartında PDF indir
+3. Raporu yöneticiye gönder
+```
+
+**2. Aylık Analiz:**
+```
+1. Dashboard'a git
+2. "Hızlı Aksiyon Alınmış Lokasyonlar" Excel'i indir
+3. Lokasyonları karşılaştır
+```
+
+**3. Denetim ve Belgelendirme:**
+```
+1. Sistem Logları sayfasına git
+2. Raporlar sayfasında tüm filtreleri uygula
+3. PDF'leri indir ve denetim dosyasında sakla
+```
+
+---
+
 **Not**: Uygulama Türkçe dilinde tasarlanmıştır ve Türkiye İş Sağlığı ve Güvenliği mevzuatına uygun ramak kala raporlama süreçlerini destekler.

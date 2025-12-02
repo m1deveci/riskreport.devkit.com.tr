@@ -13,6 +13,7 @@ import { Reports } from './pages/Reports';
 import { SystemLogs } from './pages/SystemLogs';
 import { Settings } from './pages/Settings';
 import { Users } from './pages/Users';
+import { Profile } from './pages/Profile';
 import { getCurrentUser, onAuthStateChange } from './lib/auth';
 import { I18nProvider } from './lib/i18n';
 import type { UserProfile } from './lib/auth';
@@ -213,6 +214,8 @@ function App() {
         return <SystemLogs />;
       case 'settings':
         return <Settings />;
+      case 'profile':
+        return <Profile onBack={() => setCurrentPage('dashboard')} />;
       default:
         return <Dashboard />;
     }

@@ -182,7 +182,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             </div>
           )}
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            {settings?.site_title || 'Ramak Kala Sistemi'}
+            {settings?.site_title || 'Ramakkala Sistemi'}
           </h1>
         
         </div>
@@ -207,7 +207,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              placeholder="example@company.com"
+              placeholder="example@ravago.com"
               required
             />
           </div>

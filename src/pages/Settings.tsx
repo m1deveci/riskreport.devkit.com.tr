@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { logAction, LogActions } from '../lib/logger';
 import { Settings as SettingsIcon, Save, AlertCircle, CheckCircle2, Download, Upload, Trash2, Eye, Globe, Mail, Image as ImageIcon } from 'lucide-react';
 import { useI18n, useLanguageChange } from '../lib/i18n';

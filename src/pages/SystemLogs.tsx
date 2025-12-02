@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { ActionDescriptions, formatLogDetails } from '../lib/logger';
 import { FileText, Search, ChevronDown, ChevronUp, Download } from 'lucide-react';
 import { useI18n, useLanguageChange } from '../lib/i18n';

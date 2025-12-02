@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { api, supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { useI18n, useLanguageChange } from '../lib/i18n';
-import { MapPin, AlertTriangle, TrendingUp, Calendar, Zap, Building2, BarChart3, Clock, Lock, Activity, Target, Download } from 'lucide-react';
+import { MapPin, AlertTriangle, TrendingUp, Calendar, Zap, Building2, BarChart3, Clock, Lock, Activity, Target, Download, MessageSquare } from 'lucide-react';
+import ChatModal from '../components/ChatModal';
 import type { UserProfile } from '../lib/auth';
 import {
   calculateLocationHealth,
@@ -54,9 +55,21 @@ export function Dashboard() {
     actionSpeedRanking: [],
   });
   const [loading, setLoading] = useState(true);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   useEffect(() => {
     loadStats();
+  }, []);
+
+  // Listen for user selection in chat modal
+  useEffect(() => {
+    const handleSelectUser = (event: any) => {
+      setSelectedUserId(event.detail);
+    };
+
+    window.addEventListener('selectUser', handleSelectUser);
+    return () => window.removeEventListener('selectUser', handleSelectUser);
   }, []);
 
   // Dil değişiminde sayfayı yeniden render et
@@ -280,7 +293,7 @@ export function Dashboard() {
       {/* Header Section */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-white mb-2">{t('dashboard.title') || 'Gösterge Paneli'}</h1>
-        <p className="text-slate-400 text-lg">{t('dashboard.subtitle') || 'Ramak kala raporlama sistemi özeti ve istatistikleri'}</p>
+        <p className="text-slate-400 text-lg">{t('dashboard.subtitle') || 'Ramakkala raporlama sistemi özeti ve istatistikleri'}</p>
       </div>
 
       {/* Stats Cards Grid */}
@@ -701,6 +714,22 @@ export function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Chat Button */}
+      <button
+        onClick={() => setChatOpen(true)}
+        className="fixed bottom-8 right-8 p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all duration-200 hover:scale-110 flex items-center justify-center"
+        title="Sohbet Aç"
+      >
+        <MessageSquare className="w-6 h-6" />
+      </button>
+
+      {/* Chat Modal */}
+      <ChatModal
+        isOpen={chatOpen}
+        onClose={() => setChatOpen(false)}
+        userId={selectedUserId}
+      />
     </div>
   );
 }
