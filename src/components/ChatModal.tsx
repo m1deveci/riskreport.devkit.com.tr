@@ -73,6 +73,12 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
         : null)
     : null;
 
+  // Mark messages as read both in useChat and useOnlineUsers when messages are displayed
+  const handleMarkAsRead = async (targetUserId: string) => {
+    await markBatchAsRead(targetUserId);
+    await markUserRead(targetUserId);
+  };
+
   // Load users when modal opens and send heartbeat
   useEffect(() => {
     if (isOpen) {
@@ -129,12 +135,12 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
 
       // Auto-mark messages as read after 2 seconds
       const autoReadTimer = setTimeout(() => {
-        markBatchAsRead(userId);
+        handleMarkAsRead(userId);
       }, 2000);
 
       return () => clearTimeout(autoReadTimer);
     }
-  }, [isOpen, userId, markBatchAsRead, loadMessages]);
+  }, [isOpen, userId, loadMessages]);
 
   useEffect(() => {
     if (!userScrolled && messagesEndRef.current) {
