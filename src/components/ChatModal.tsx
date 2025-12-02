@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Send, MessageCircle, Smile, Paperclip, Trash2, MoreVertical, Search, Users } from 'lucide-react';
+import { X, Send, MessageCircle, Smile, Paperclip, Trash2, MoreVertical, Search, Users, ChevronDown } from 'lucide-react';
 import { useChat } from '../hooks/useChat';
 import { useOnlineUsers } from '../hooks/useOnlineUsers';
 
@@ -22,6 +22,7 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
   const [userSearch, setUserSearch] = useState('');
+  const [showOfflineUsers, setShowOfflineUsers] = useState(false);
 
   const quickReactions = ['❤️', '😂', '😍', '😢', '😡', '👍', '👎', '😮', '🎉', '🔥'];
   const emojis = [
@@ -56,11 +57,19 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
 
   const conversation = userId ? getConversation() : [];
 
-  // Load users when modal opens and no userId is selected
+  // Load users when modal opens and no userId is selected, and send heartbeat
   useEffect(() => {
     if (isOpen && !userId) {
       const loadUsers = async () => {
         try {
+          // Send heartbeat to update user's online status
+          await fetch('/api/messages/heartbeat', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+          }).catch(err => console.error('Heartbeat error:', err));
+
           setUsersLoading(true);
           // Use the new API endpoint that includes online status and unread counts
           const response = await fetch('/api/messages/online/users-list', {
@@ -84,6 +93,10 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
       };
 
       loadUsers();
+
+      // Refresh users list every 3 seconds
+      const interval = setInterval(loadUsers, 3000);
+      return () => clearInterval(interval);
     }
   }, [isOpen, userId]);
 
@@ -369,12 +382,22 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
                 {/* Offline Users Section */}
                 {userOfflineUsers.length > 0 && (
                   <>
-                    <div className="sticky top-0 px-4 py-2 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
-                      <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-                        ⚫ Çevrimdışı Kullanıcılar ({userOfflineUsers.length})
-                      </p>
+                    <div
+                      className="sticky top-0 px-4 py-2 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                      onClick={() => setShowOfflineUsers(!showOfflineUsers)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
+                          ⚫ Çevrimdışı Kullanıcılar ({userOfflineUsers.length})
+                        </p>
+                        <ChevronDown
+                          className={`w-4 h-4 text-gray-600 dark:text-gray-400 transition-transform ${
+                            showOfflineUsers ? 'rotate-180' : ''
+                          }`}
+                        />
+                      </div>
                     </div>
-                    {userOfflineUsers.map((user) => (
+                    {showOfflineUsers && userOfflineUsers.map((user) => (
                       <button
                         key={user.id}
                         onClick={() => {
