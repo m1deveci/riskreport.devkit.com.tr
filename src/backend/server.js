@@ -2195,7 +2195,7 @@ app.post('/api/password-reset/admin/:id', authenticateToken, adminOrExpert, asyn
 // ==================== CHAT ROUTES ====================
 
 const chatRouter = createChatRouter(pool, authenticateToken);
-app.use('/api/', chatRouter);
+app.use('/api/messages/', chatRouter);
 
 // ==================== SPA ROUTING ====================
 

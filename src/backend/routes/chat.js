@@ -454,7 +454,7 @@ export const createChatRouter = (pool, authenticateToken) => {
   });
 
   // Get unread message summary (unread count per sender)
-  router.get('/messages/unread/summary', authenticateToken, async (req, res) => {
+  router.get('/unread/summary', authenticateToken, async (req, res) => {
     try {
       const connection = await pool.getConnection();
 
@@ -480,7 +480,7 @@ export const createChatRouter = (pool, authenticateToken) => {
   });
 
   // Batch mark messages as read from a specific sender
-  router.put('/messages/batch-read', authenticateToken, async (req, res) => {
+  router.put('/batch-read', authenticateToken, async (req, res) => {
     try {
       const { sender_id } = req.body;
 
