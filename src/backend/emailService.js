@@ -133,86 +133,100 @@ export async function sendNearMissReportEmail(recipients, reportData, locationNa
       to: recipients.join(','),
       subject: `Ramak Kala Bildirim - ${reportData.incident_number}`,
       html: `
-        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; direction: rtl; text-align: right; line-height: 1.6; color: #2c3e50; margin: 0; padding: 0;">
-          <!-- Header -->
-          <div style="background: linear-gradient(135deg, #d32f2f 0%, #e53935 100%); padding: 40px 30px; border-radius: 8px 8px 0 0; margin-bottom: 0;">
-            <div style="max-width: 600px; margin: 0 auto;">
-              <p style="margin: 0 0 10px 0; font-size: 13px; color: rgba(255,255,255,0.9); text-transform: uppercase; letter-spacing: 1px;">🚨 Acil Bildirim</p>
-              <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: white;">Yeni Ramak Kala Bildirimi</h1>
-            </div>
-          </div>
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #2c3e50; margin: 0; padding: 0; background-color: #f5f7fa;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f7fa; margin: 0; padding: 0;">
+            <tr>
+              <td align="center" style="padding: 40px 20px;">
+                <!-- Main Container -->
+                <table width="100%" max-width="600px" cellpadding="0" cellspacing="0" style="background-color: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden; margin: 0;">
 
-          <!-- Main Container -->
-          <div style="background-color: #ffffff; max-width: 600px; margin: 0 auto; padding: 0; border: 1px solid #e0e0e0; border-top: none; border-radius: 0 0 8px 8px;">
+                  <!-- Header -->
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #d32f2f 0%, #e53935 100%); padding: 40px 30px; text-align: center;">
+                      <p style="margin: 0 0 10px 0; font-size: 13px; color: rgba(255,255,255,0.9); text-transform: uppercase; letter-spacing: 1px;">🚨 Acil Bildirim</p>
+                      <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: white;">Yeni Ramak Kala Bildirimi</h1>
+                    </td>
+                  </tr>
 
-            <!-- Location & Incident Info -->
-            <div style="background: linear-gradient(90deg, #f5f7fa 0%, #ffffff 100%); padding: 25px 30px; border-bottom: 2px solid #f0f0f0;">
-              <table style="width: 100%; border-collapse: collapse;">
-                <tr>
-                  <td style="padding: 8px 0; border-bottom: 1px solid #eee;">
-                    <p style="margin: 0; font-size: 12px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px;">📍 Lokasyon</p>
-                    <p style="margin: 5px 0 0 0; font-size: 16px; font-weight: 600; color: #2c3e50;">${locationName}</p>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 8px 0;">
-                    <p style="margin: 0; font-size: 12px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px;">🔢 Olay No</p>
-                    <p style="margin: 5px 0 0 0; font-size: 16px; font-weight: 600; color: #d32f2f; font-family: 'Courier New', monospace;">${reportData.incident_number}</p>
-                  </td>
-                </tr>
-              </table>
-            </div>
+                  <!-- Location & Incident Info -->
+                  <tr>
+                    <td style="background: linear-gradient(90deg, #f5f7fa 0%, #ffffff 100%); padding: 25px 30px; border-bottom: 2px solid #f0f0f0;">
+                      <table style="width: 100%; border-collapse: collapse; margin: 0;">
+                        <tr>
+                          <td style="padding: 8px 0; border-bottom: 1px solid #eee;">
+                            <p style="margin: 0; font-size: 12px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px;">📍 Lokasyon</p>
+                            <p style="margin: 5px 0 0 0; font-size: 16px; font-weight: 600; color: #2c3e50;">${locationName}</p>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 8px 0;">
+                            <p style="margin: 0; font-size: 12px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px;">🔢 Olay No</p>
+                            <p style="margin: 5px 0 0 0; font-size: 16px; font-weight: 600; color: #d32f2f; font-family: 'Courier New', monospace;">${reportData.incident_number}</p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
 
-            <!-- Details Cards -->
-            <div style="padding: 30px;">
-              <!-- Başlayan Kişi -->
-              <div style="margin-bottom: 20px; background: #fafbfc; padding: 15px; border-right: 4px solid #d32f2f; border-radius: 4px;">
-                <p style="margin: 0 0 8px 0; font-size: 11px; color: #95a5a6; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">👤 Başlayan Kişi</p>
-                <p style="margin: 0; font-size: 15px; color: #2c3e50; font-weight: 500;">${reportData.full_name}</p>
-              </div>
+                  <!-- Details Cards -->
+                  <tr>
+                    <td style="padding: 30px;">
+                      <!-- Başlayan Kişi -->
+                      <div style="margin-bottom: 20px; background: #fafbfc; padding: 15px; border-left: 4px solid #d32f2f; border-radius: 4px;">
+                        <p style="margin: 0 0 8px 0; font-size: 11px; color: #95a5a6; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">👤 Başlayan Kişi</p>
+                        <p style="margin: 0; font-size: 15px; color: #2c3e50; font-weight: 500;">${reportData.full_name}</p>
+                      </div>
 
-              <!-- İletişim -->
-              <div style="margin-bottom: 20px; background: #fafbfc; padding: 15px; border-right: 4px solid #f39c12; border-radius: 4px;">
-                <p style="margin: 0 0 8px 0; font-size: 11px; color: #95a5a6; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">📞 İletişim</p>
-                <p style="margin: 0; font-size: 15px; color: #2c3e50; font-weight: 500;">${reportData.phone || 'Belirtilmemiş'}</p>
-              </div>
+                      <!-- İletişim -->
+                      <div style="margin-bottom: 20px; background: #fafbfc; padding: 15px; border-left: 4px solid #f39c12; border-radius: 4px; direction: ltr; text-align: left;">
+                        <p style="margin: 0 0 8px 0; font-size: 11px; color: #95a5a6; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">📞 İletişim</p>
+                        <p style="margin: 0; font-size: 15px; color: #2c3e50; font-weight: 500; font-family: 'Courier New', monospace;">${reportData.phone || 'Belirtilmemiş'}</p>
+                      </div>
 
-              <!-- Kategori -->
-              <div style="margin-bottom: 20px; background: #fafbfc; padding: 15px; border-right: 4px solid #3498db; border-radius: 4px;">
-                <p style="margin: 0 0 8px 0; font-size: 11px; color: #95a5a6; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">📋 Kategori</p>
-                <p style="margin: 0; font-size: 15px; color: #2c3e50; font-weight: 500; background: #e8f4f8; padding: 8px 12px; border-radius: 4px; display: inline-block;">${reportData.category}</p>
-              </div>
+                      <!-- Kategori -->
+                      <div style="margin-bottom: 20px; background: #fafbfc; padding: 15px; border-left: 4px solid #3498db; border-radius: 4px;">
+                        <p style="margin: 0 0 8px 0; font-size: 11px; color: #95a5a6; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">📋 Kategori</p>
+                        <p style="margin: 0; font-size: 15px; color: #2c3e50; font-weight: 500; background: #e8f4f8; padding: 8px 12px; border-radius: 4px; display: inline-block;">${reportData.category}</p>
+                      </div>
 
-              <!-- Açıklama -->
-              <div style="margin-bottom: 20px; background: #fafbfc; padding: 15px; border-right: 4px solid #27ae60; border-radius: 4px;">
-                <p style="margin: 0 0 8px 0; font-size: 11px; color: #95a5a6; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">📝 Açıklama</p>
-                <p style="margin: 0; font-size: 14px; color: #34495e; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;">${reportData.description || '-'}</p>
-              </div>
+                      <!-- Açıklama -->
+                      <div style="margin-bottom: 20px; background: #fafbfc; padding: 15px; border-left: 4px solid #27ae60; border-radius: 4px;">
+                        <p style="margin: 0 0 8px 0; font-size: 11px; color: #95a5a6; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">📝 Açıklama</p>
+                        <p style="margin: 0; font-size: 14px; color: #34495e; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;">${reportData.description || '-'}</p>
+                      </div>
 
-              <!-- Tarih -->
-              <div style="background: #fafbfc; padding: 15px; border-right: 4px solid #9b59b6; border-radius: 4px;">
-                <p style="margin: 0 0 8px 0; font-size: 11px; color: #95a5a6; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">⏰ Bildirim Tarihi</p>
-                <p style="margin: 0; font-size: 15px; color: #2c3e50; font-weight: 500;">${new Date().toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' })} - ${new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</p>
-              </div>
-            </div>
+                      <!-- Tarih -->
+                      <div style="background: #fafbfc; padding: 15px; border-left: 4px solid #9b59b6; border-radius: 4px;">
+                        <p style="margin: 0 0 8px 0; font-size: 11px; color: #95a5a6; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">⏰ Bildirim Tarihi</p>
+                        <p style="margin: 0; font-size: 15px; color: #2c3e50; font-weight: 500;">${new Date().toLocaleDateString('tr-TR', { year: 'numeric', month: 'long', day: 'numeric' })} - ${new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}</p>
+                      </div>
+                    </td>
+                  </tr>
 
-            <!-- CTA Section -->
-            <div style="background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%); padding: 25px 30px; border-top: 2px solid #f0f0f0; text-align: center;">
-              <p style="margin: 0 0 15px 0; font-size: 14px; color: #2c3e50;">Detaylı bilgi ve yönetim için Sistem Logları sayfasını ziyaret edin:</p>
-              <a href="https://riskreport.devkit.com.tr/#/logs" style="display: inline-block; background: linear-gradient(135deg, #d32f2f 0%, #e53935 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: 600; font-size: 14px; box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);">
-                → Detayları Göster
-              </a>
-            </div>
+                  <!-- CTA Section -->
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%); padding: 25px 30px; border-top: 2px solid #f0f0f0; text-align: center;">
+                      <p style="margin: 0 0 15px 0; font-size: 14px; color: #2c3e50;">Detaylı bilgi ve yönetim için Sistem Logları sayfasını ziyaret edin:</p>
+                      <a href="https://riskreport.devkit.com.tr/#/logs" style="display: inline-block; background: linear-gradient(135deg, #d32f2f 0%, #e53935 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: 600; font-size: 14px; box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);">
+                        → Detayları Göster
+                      </a>
+                    </td>
+                  </tr>
 
-            <!-- Footer -->
-            <div style="background-color: #2c3e50; color: rgba(255,255,255,0.8); padding: 20px 30px; text-align: center; border-radius: 0 0 8px 8px;">
-              <p style="margin: 0 0 5px 0; font-size: 12px;">Risk Report Sistemi</p>
-              <p style="margin: 0; font-size: 11px; opacity: 0.7;">Ramak Kala (Near-Miss) Yönetim Platformu</p>
-            </div>
-          </div>
+                  <!-- Footer -->
+                  <tr>
+                    <td style="background-color: #2c3e50; color: rgba(255,255,255,0.8); padding: 20px 30px; text-align: center; border-radius: 0 0 8px 8px;">
+                      <p style="margin: 0 0 5px 0; font-size: 12px;">Risk Report Sistemi</p>
+                      <p style="margin: 0; font-size: 11px; opacity: 0.7;">Ramak Kala (Near-Miss) Yönetim Platformu</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
         </div>
       `,
-      text: `Yeni Ramak Kala Bildirimi\n\nOlay No: ${reportData.incident_number}\nLokasyon: ${locationName}\nBaşlayan Kişi: ${reportData.full_name}\nKategori: ${reportData.category}\n\nDetaylı bilgi için: https://riskreport.devkit.com.tr/#/logs`,
+      text: `Yeni Ramak Kala Bildirimi\n\nOlay No: ${reportData.incident_number}\nLokasyon: ${locationName}\nBaşlayan Kişi: ${reportData.full_name}\nİletişim: ${reportData.phone || 'Belirtilmemiş'}\nKategori: ${reportData.category}\nAçıklama: ${reportData.description || '-'}\n\nDetaylı bilgi için: https://riskreport.devkit.com.tr/#/logs`,
     };
 
     const result = await transporter.sendMail(mailOptions);
