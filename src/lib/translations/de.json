@@ -231,6 +231,9 @@
     "downloadImage": "Bild herunterladen",
     "fullSize": "Vollständige Größe",
     "noDescription": "Keine Beschreibung",
-    "notesPlaceholder": "Fügen Sie Ihre Notizen zu diesem Bericht hier ein..."
+    "notesPlaceholder": "Fügen Sie Ihre Notizen zu diesem Bericht hier ein...",
+    "history": "Geschichte",
+    "changeHistory": "Änderungsverlauf",
+    "noHistoryFound": "Kein Änderungsverlauf gefunden"
   }
 }

@@ -231,6 +231,9 @@
     "downloadImage": "Download Image",
     "fullSize": "Full Size",
     "noDescription": "No description",
-    "notesPlaceholder": "Add your notes about this report here..."
+    "notesPlaceholder": "Add your notes about this report here...",
+    "history": "History",
+    "changeHistory": "Change History",
+    "noHistoryFound": "No change history found"
   }
 }

@@ -231,6 +231,9 @@
     "downloadImage": "Afbeelding downloaden",
     "fullSize": "Volledige grootte",
     "noDescription": "Geen beschrijving",
-    "notesPlaceholder": "Voeg uw notities over dit rapport hier in..."
+    "notesPlaceholder": "Voeg uw notities over dit rapport hier in...",
+    "history": "Geschiedenis",
+    "changeHistory": "Wijzigingsgeschiedenis",
+    "noHistoryFound": "Geen wijzigingsgeschiedenis gevonden"
   }
 }

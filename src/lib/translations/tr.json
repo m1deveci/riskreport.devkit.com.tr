@@ -231,6 +231,9 @@
     "downloadImage": "Görseli İndir",
     "fullSize": "Tam Boyut",
     "noDescription": "Açıklama yok",
-    "notesPlaceholder": "Rapor hakkında notlarınızı buraya ekleyin..."
+    "notesPlaceholder": "Rapor hakkında notlarınızı buraya ekleyin...",
+    "history": "Geçmiş",
+    "changeHistory": "Değişiklik Geçmişi",
+    "noHistoryFound": "Değişiklik geçmişi bulunamadı"
   }
 }
