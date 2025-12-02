@@ -414,7 +414,7 @@ export const createChatRouter = (pool, authenticateToken) => {
                 CASE WHEN u.profile_picture IS NOT NULL THEN true ELSE false END as has_profile_picture,
                 CASE WHEN us.last_activity IS NOT NULL AND us.last_activity > DATE_SUB(NOW(), INTERVAL 3 MINUTE)
                      THEN true ELSE false END as is_online,
-                us.last_activity,
+                COALESCE(us.last_activity, us.login_time) as last_activity,
                 COALESCE(unread.unread_count, 0) as unread_count
          FROM users u
          LEFT JOIN user_sessions us ON u.id = us.user_id
