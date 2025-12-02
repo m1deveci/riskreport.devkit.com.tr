@@ -13,7 +13,6 @@ import fs from 'fs';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { sendPasswordResetEmail, sendNearMissReportEmail, sendWelcomeEmail, verifyEmailConnection, initializeEmailService, sendPasswordResetNotificationEmail } from './emailService.js';
-import { createChatRouter } from './routes/chat.js';
 
 // Load environment variables
 dotenv.config();
@@ -2191,11 +2190,6 @@ app.post('/api/password-reset/admin/:id', authenticateToken, adminOrExpert, asyn
     res.status(500).json({ error: error.message });
   }
 });
-
-// ==================== CHAT ROUTES ====================
-
-const chatRouter = createChatRouter(pool, authenticateToken);
-app.use('/api/messages/', chatRouter);
 
 // ==================== SPA ROUTING ====================
 
