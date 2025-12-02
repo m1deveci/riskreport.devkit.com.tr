@@ -50,6 +50,10 @@ export const api = {
   },
   settings: {
     getList: async () => apiCall('/system-settings'),
+    get: async () => {
+      const settings = await apiCall('/system-settings');
+      return Array.isArray(settings) ? settings[0] : settings;
+    },
     update: async (id: string, data: any) => apiCall(`/system-settings/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   },
   logs: {
