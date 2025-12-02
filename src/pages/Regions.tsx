@@ -129,22 +129,16 @@ export function Regions() {
       } else {
         const token = generateToken();
 
-        // Generate QR code URL before creating region
-        const qrUrl = `${window.location.origin}/report/${formData.location_id}/${token}`;
-
+        // Create region with just the token, QR code will be generated dynamically on demand
         const newRegionData = {
           ...formData,
           qr_code_token: token,
-          qr_code_url: qrUrl,
+          qr_code_url: '', // Will be generated dynamically when needed
         };
 
         const newRegion = await api.regions.create(newRegionData);
 
         if (!newRegion || !newRegion.id) throw new Error('Bölge oluşturulamadı');
-
-        // Update QR code URL with region ID query parameter
-        const finalQrUrl = `${qrUrl}?region=${newRegion.id}`;
-        await api.regions.update(newRegion.id, { qr_code_url: finalQrUrl });
 
         await logAction(LogActions.CREATE_REGION, { name: formData.name });
         setSuccess(`${t('messages.region')} ${t('messages.successCreated')}`);
@@ -244,10 +238,18 @@ export function Regions() {
     }
   }
 
-  async function downloadQRCode(region: Region) {
+  // Generate dynamic QR code URL based on current region data
+  function generateQRCodeUrl(region: Region): string {
+    return `${window.location.origin}/report/${region.location_id}/${region.qr_code_token}?region=${region.id}`;
+  }
+
+  async function generateAndDownloadQRCode(region: Region) {
     try {
+      // Generate QR code with current region data
+      const dynamicQrUrl = generateQRCodeUrl(region);
+
       const qrCanvas = document.createElement('canvas');
-      await QRCode.toCanvas(qrCanvas, region.qr_code_url, {
+      await QRCode.toCanvas(qrCanvas, dynamicQrUrl, {
         width: 297, // %15 küçültme (350 * 0.85 = 297.5)
         margin: 2,
       });
@@ -298,6 +300,62 @@ export function Regions() {
       link.download = `qr-${locationName.replace(/\s+/g, '-')}-${region.name.replace(/\s+/g, '-')}.png`;
       link.href = finalCanvas.toDataURL();
       link.click();
+    } catch (err) {
+      console.error('Failed to generate QR code:', err);
+      alert(t('messages.qrCodeError') || 'QR kod oluşturulurken bir hata oluştu');
+    }
+  }
+
+  // Generate and display QR code in a modal
+  async function generateAndDisplayQRCode(region: Region) {
+    try {
+      const dynamicQrUrl = generateQRCodeUrl(region);
+
+      const qrCanvas = document.createElement('canvas');
+      await QRCode.toCanvas(qrCanvas, dynamicQrUrl, {
+        width: 400,
+        margin: 2,
+      });
+
+      // Create modal to display QR code
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
+      modal.innerHTML = `
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-4">QR Kod</h2>
+          <div class="flex justify-center mb-4"></div>
+          <p class="text-sm text-gray-600 mb-2 text-center font-mono text-blue-600">${dynamicQrUrl}</p>
+          <button class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">Kopyala</button>
+        </div>
+      `;
+
+      const qrContainer = modal.querySelector('div:nth-child(2)');
+      if (qrContainer) {
+        qrContainer.appendChild(qrCanvas);
+      }
+
+      const copyBtn = modal.querySelector('button');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(dynamicQrUrl);
+            copyBtn.textContent = 'Kopyalandı!';
+            setTimeout(() => {
+              copyBtn.textContent = 'Kopyala';
+            }, 2000);
+          } catch (err) {
+            console.error('Failed to copy:', err);
+          }
+        });
+      }
+
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          modal.remove();
+        }
+      });
+
+      document.body.appendChild(modal);
     } catch (err) {
       console.error('Failed to generate QR code:', err);
       alert(t('messages.qrCodeError') || 'QR kod oluşturulurken bir hata oluştu');
@@ -377,25 +435,17 @@ export function Regions() {
               <div className="bg-slate-900/50 rounded p-3 mb-4">
                 <p className="text-xs text-slate-500 mb-1">{t('regions.qrCodeUrl') || 'QR Kod URL'}:</p>
                 <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(region.qr_code_url);
-                    // Show toast notification
-                    const toast = document.createElement('div');
-                    toast.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg text-sm z-50 animate-fade-in-out';
-                    toast.textContent = 'Bağlantı kopyalandı!';
-                    document.body.appendChild(toast);
-                    setTimeout(() => toast.remove(), 2000);
-                  }}
+                  onClick={() => generateAndDisplayQRCode(region)}
                   className="text-xs text-blue-400 font-mono hover:text-blue-300 hover:underline truncate text-left w-full transition-colors"
-                  title="Kopyalamak için tıklayın"
+                  title="QR kod oluştur ve görüntüle"
                 >
-                  {region.qr_code_url}
+                  {generateQRCodeUrl(region)}
                 </button>
               </div>
 
               <div className="flex flex-col gap-2">
                 <button
-                  onClick={() => downloadQRCode(region)}
+                  onClick={() => generateAndDownloadQRCode(region)}
                   className="flex items-center justify-center gap-2 bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
                 >
                   <Download className="w-4 h-4" />
