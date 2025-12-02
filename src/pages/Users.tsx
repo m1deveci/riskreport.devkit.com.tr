@@ -54,8 +54,9 @@ function UserProfileAvatar({ userId }: { userId: string }) {
         };
         reader.readAsDataURL(blob);
       }
+      // Silently handle 404 - it's expected when profile picture doesn't exist
     } catch (err) {
-      console.error('Failed to load profile picture:', err);
+      // Silently ignore network errors for profile pictures
     }
   }
 
