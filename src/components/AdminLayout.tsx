@@ -116,26 +116,26 @@ export function AdminLayout({ children, currentUser, currentPage, onNavigate }: 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       {/* Header */}
-      <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700 z-20 backdrop-blur-md">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-4">
+      <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700 z-50 backdrop-blur-md h-16">
+        <div className="flex items-center justify-between px-3 sm:px-4 h-full gap-2 sm:gap-4">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:hidden p-2 rounded-lg hover:bg-slate-700/50 transition-colors text-slate-300"
+              className="lg:hidden p-2 rounded-lg hover:bg-slate-700/50 transition-colors text-slate-300 flex-shrink-0"
             >
-              {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl">
-                <Database className="w-6 h-6 text-white" />
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="p-1.5 sm:p-2 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-lg sm:rounded-xl flex-shrink-0">
+                <Database className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
-              <div>
-                <h1 className="text-lg font-bold text-white">{siteTitle}</h1>
+              <div className="hidden sm:block min-w-0">
+                <h1 className="text-base sm:text-lg font-bold text-white truncate">{siteTitle}</h1>
                 <p className="text-xs text-slate-400">İSG Yönetim Paneli</p>
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
             <button
               onClick={() => onNavigate('profile')}
               className="hidden sm:block text-right hover:opacity-80 transition-opacity"
@@ -218,15 +218,15 @@ export function AdminLayout({ children, currentUser, currentPage, onNavigate }: 
 
       {/* Mobile Overlay */}
       <div
-        className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-10 lg:hidden transition-opacity duration-300 ${
-          sidebarOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300 ${
+          sidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
         onClick={() => setSidebarOpen(false)}
       />
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-16 bottom-0 left-0 w-64 bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 border-r border-slate-700 z-10 transition-transform duration-300 lg:translate-x-0 overflow-y-auto ${
+        className={`fixed top-16 bottom-0 left-0 w-64 max-w-[85vw] bg-gradient-to-b from-slate-800 via-slate-900 to-slate-950 border-r border-slate-700 z-40 transition-transform duration-300 lg:translate-x-0 overflow-y-auto ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
