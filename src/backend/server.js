@@ -64,6 +64,7 @@ const upload = multer({
 app.use(cors());
 app.use(express.json());
 app.use('/uploads', express.static(uploadsDir));
+app.use(express.static(dirname(dirname(__dirname)) + '/dist'));
 
 // MySQL Connection Pool
 const pool = mysql.createPool({
