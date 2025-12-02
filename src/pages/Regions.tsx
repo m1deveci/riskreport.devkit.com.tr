@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, supabase } from '../lib/supabase';
+import { api } from '../lib/api';
 import { logAction, LogActions } from '../lib/logger';
 import { Plus, Edit2, Trash2, QrCode, Download, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { useI18n, useLanguageChange } from '../lib/i18n';
@@ -23,6 +23,12 @@ interface Location {
   name: string;
 }
 
+interface User {
+  id: string;
+  role: string;
+  location_ids?: string[];
+}
+
 export function Regions() {
   const { t } = useI18n();
   const [regions, setRegions] = useState<Region[]>([]);
@@ -31,6 +37,7 @@ export function Regions() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedLocationFilter, setSelectedLocationFilter] = useState<string>('');
+  const [user, setUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({
     location_id: '',
     name: '',
@@ -48,6 +55,11 @@ export function Regions() {
 
   async function loadData() {
     try {
+      // Get current user info from token
+      const userStr = localStorage.getItem('user');
+      const currentUser = userStr ? JSON.parse(userStr) : null;
+      setUser(currentUser);
+
       const [regionsData, locationsData] = await Promise.all([
         api.regions.getList(''),
         api.locations.getList(),
@@ -68,6 +80,20 @@ export function Regions() {
 
   function openModal(region?: Region) {
     if (region) {
+      // Check if isg_expert has permission to edit this region
+      if (user?.role === 'isg_expert') {
+        const allowedLocations = user.location_ids || [];
+        if (!allowedLocations.includes(region.location_id)) {
+          Swal.fire({
+            title: 'Hata!',
+            text: 'Bu bölgeyi düzenleme yetkisi yoktur',
+            icon: 'error',
+            confirmButtonColor: '#3b82f6',
+          });
+          return;
+        }
+      }
+
       setEditingId(region.id);
       setFormData({
         location_id: region.location_id,
@@ -152,6 +178,20 @@ export function Regions() {
 
   async function handleDelete(id: string) {
     const regionToDelete = regions.find(r => r.id === id);
+
+    // Check if isg_expert has permission to delete this region
+    if (user?.role === 'isg_expert') {
+      const allowedLocations = user.location_ids || [];
+      if (!allowedLocations.includes(regionToDelete?.location_id || '')) {
+        Swal.fire({
+          title: 'Hata!',
+          text: 'Bu bölgeyi silme yetkisi yoktur',
+          icon: 'error',
+          confirmButtonColor: '#3b82f6',
+        });
+        return;
+      }
+    }
 
     const result = await Swal.fire({
       title: 'Bölgeyi Sil',
@@ -285,7 +325,8 @@ export function Regions() {
         </div>
         <button
           onClick={() => openModal()}
-          className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+          disabled={user?.role === 'isg_expert' && (!user.location_ids || user.location_ids.length === 0)}
+          className="flex items-center justify-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="w-5 h-5" />
           {t('regions.addNew')}
@@ -349,14 +390,16 @@ export function Regions() {
                 <div className="flex gap-2">
                   <button
                     onClick={() => openModal(region)}
-                    className="flex-1 flex items-center justify-center gap-2 bg-slate-700 text-slate-300 px-3 py-2 rounded-lg hover:bg-slate-600 transition-colors text-sm"
+                    disabled={user?.role === 'isg_expert' && !(user.location_ids || []).includes(region.location_id)}
+                    className="flex-1 flex items-center justify-center gap-2 bg-slate-700 text-slate-300 px-3 py-2 rounded-lg hover:bg-slate-600 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Edit2 className="w-4 h-4" />
                     {t('common.edit')}
                   </button>
                   <button
                     onClick={() => handleDelete(region.id)}
-                    className="flex items-center justify-center gap-2 bg-red-100 text-red-700 px-3 py-2 rounded-lg hover:bg-red-200 transition-colors text-sm"
+                    disabled={user?.role === 'isg_expert' && !(user.location_ids || []).includes(region.location_id)}
+                    className="flex items-center justify-center gap-2 bg-red-100 text-red-700 px-3 py-2 rounded-lg hover:bg-red-200 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -422,11 +465,20 @@ export function Regions() {
                   disabled={!!editingId}
                 >
                   <option value="">{t('regions.selectLocation') || 'Lokasyon Seçin'}</option>
-                  {locations.map((loc) => (
-                    <option key={loc.id} value={loc.id}>
-                      {loc.name}
-                    </option>
-                  ))}
+                  {locations.map((loc) => {
+                    // For isg_expert, only show their assigned locations
+                    if (user?.role === 'isg_expert') {
+                      const allowedLocations = user.location_ids || [];
+                      if (!allowedLocations.includes(loc.id)) {
+                        return null;
+                      }
+                    }
+                    return (
+                      <option key={loc.id} value={loc.id}>
+                        {loc.name}
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
 

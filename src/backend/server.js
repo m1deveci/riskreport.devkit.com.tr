@@ -13,6 +13,7 @@ import fs from 'fs';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { sendPasswordResetEmail, sendNearMissReportEmail, sendWelcomeEmail, verifyEmailConnection, initializeEmailService, sendPasswordResetNotificationEmail } from './emailService.js';
+import { createChatRouter } from './routes/chat.js';
 
 // Load environment variables
 dotenv.config();
@@ -62,7 +63,6 @@ const upload = multer({
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(dirname(dirname(__dirname)) + '/dist'));
 app.use('/uploads', express.static(uploadsDir));
 
 // MySQL Connection Pool
@@ -863,29 +863,62 @@ app.get('/api/regions/:locationId', authenticateToken, async (req, res) => {
   }
 });
 
-app.post('/api/regions', authenticateToken, adminOnly, async (req, res) => {
+app.post('/api/regions', authenticateToken, adminOrExpert, async (req, res) => {
   try {
     const { location_id, name, description, qr_code_token, qr_code_url } = req.body;
     const id = randomUUID();
+
+    // ISG Expert permission check - can only create regions for their assigned locations
+    if (req.user.role === 'isg_expert') {
+      const locationIds = req.user.location_ids || [];
+      if (!locationIds.includes(location_id)) {
+        return res.status(403).json({ error: 'Sadece kendi lokasyonlarınıza bölge ekleyebilirsiniz' });
+      }
+    }
+
     const connection = await pool.getConnection();
     await connection.query(
       'INSERT INTO regions (id, location_id, name, description, qr_code_token, qr_code_url) VALUES (?, ?, ?, ?, ?, ?)',
       [id, location_id, name, description || '', qr_code_token, qr_code_url]
     );
     connection.release();
+
+    // Log action
+    await logAction(req.user.id, 'CREATE_REGION', { region_id: id, name, location_id });
+
     res.json({ success: true, id });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Update Region (Admin Only)
-app.put('/api/regions/:id', authenticateToken, adminOnly, async (req, res) => {
+// Update Region (Admin or ISG Expert)
+app.put('/api/regions/:id', authenticateToken, adminOrExpert, async (req, res) => {
   try {
     const { id } = req.params;
     const { name, description, qr_code_url, is_active } = req.body;
 
     const connection = await pool.getConnection();
+
+    // Get region information for permission check
+    const [regionRows] = await connection.query(
+      'SELECT location_id FROM regions WHERE id = ?',
+      [id]
+    );
+
+    if (regionRows.length === 0) {
+      connection.release();
+      return res.status(404).json({ error: 'Bölge bulunamadı' });
+    }
+
+    // ISG Expert permission check - can only update regions in their assigned locations
+    if (req.user.role === 'isg_expert') {
+      const locationIds = req.user.location_ids || [];
+      if (!locationIds.includes(regionRows[0].location_id)) {
+        connection.release();
+        return res.status(403).json({ error: 'Bu bölgeyi düzenleme yetkisi yoktur' });
+      }
+    }
 
     // Build dynamic UPDATE query based on provided fields
     const updates = [];
@@ -919,6 +952,10 @@ app.put('/api/regions/:id', authenticateToken, adminOnly, async (req, res) => {
       `UPDATE regions SET ${updates.join(', ')} WHERE id = ?`,
       values
     );
+
+    // Log action
+    await logAction(req.user.id, 'UPDATE_REGION', { region_id: id });
+
     connection.release();
 
     res.json({ success: true, changes: result.affectedRows });
@@ -927,13 +964,38 @@ app.put('/api/regions/:id', authenticateToken, adminOnly, async (req, res) => {
   }
 });
 
-// Delete Region (Admin Only)
-app.delete('/api/regions/:id', authenticateToken, adminOnly, async (req, res) => {
+// Delete Region (Admin or ISG Expert)
+app.delete('/api/regions/:id', authenticateToken, adminOrExpert, async (req, res) => {
   try {
     const { id } = req.params;
 
     const connection = await pool.getConnection();
+
+    // Get region information for permission check
+    const [regionRows] = await connection.query(
+      'SELECT location_id FROM regions WHERE id = ?',
+      [id]
+    );
+
+    if (regionRows.length === 0) {
+      connection.release();
+      return res.status(404).json({ error: 'Bölge bulunamadı' });
+    }
+
+    // ISG Expert permission check - can only delete regions in their assigned locations
+    if (req.user.role === 'isg_expert') {
+      const locationIds = req.user.location_ids || [];
+      if (!locationIds.includes(regionRows[0].location_id)) {
+        connection.release();
+        return res.status(403).json({ error: 'Bu bölgeyi silme yetkisi yoktur' });
+      }
+    }
+
     const [result] = await connection.query('DELETE FROM regions WHERE id = ?', [id]);
+
+    // Log action
+    await logAction(req.user.id, 'DELETE_REGION', { region_id: id });
+
     connection.release();
 
     res.json({ success: true, message: 'Bölge silindi' });
@@ -1918,6 +1980,11 @@ app.post('/api/password-reset/admin/:id', authenticateToken, adminOrExpert, asyn
     res.status(500).json({ error: error.message });
   }
 });
+
+// ==================== CHAT ROUTES ====================
+
+const chatRouter = createChatRouter(pool, authenticateToken);
+app.use('/api/', chatRouter);
 
 // ==================== SPA ROUTING ====================
 
