@@ -160,7 +160,7 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
 
     // Start typing indicator
     try {
-      await fetch('/api/typing/start', {
+      await fetch('/api/messages/typing/start', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -180,7 +180,7 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
     // Stop typing after 2 seconds of inactivity
     const timeout = setTimeout(async () => {
       try {
-        await fetch('/api/typing/stop', {
+        await fetch('/api/messages/typing/stop', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -228,7 +228,7 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
 
     const checkTyping = async () => {
       try {
-        const response = await fetch(`/api/typing/status/${userId}`, {
+        const response = await fetch(`/api/messages/typing/status/${userId}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
@@ -325,8 +325,8 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
                       <button
                         key={user.id}
                         onClick={() => {
-                          window.location.hash = `#chat-${user.id}`;
                           window.dispatchEvent(new CustomEvent('selectUser', { detail: user.id }));
+                          onClose();
                         }}
                         className="w-full p-4 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center space-x-3 text-left"
                       >
@@ -376,8 +376,8 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
                       <button
                         key={user.id}
                         onClick={() => {
-                          window.location.hash = `#chat-${user.id}`;
                           window.dispatchEvent(new CustomEvent('selectUser', { detail: user.id }));
+                          onClose();
                         }}
                         className="w-full p-4 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center space-x-3 text-left opacity-75"
                       >
