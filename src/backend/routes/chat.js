@@ -410,7 +410,8 @@ export const createChatRouter = (pool, authenticateToken) => {
 
       // Get all online users (active in last 1 minute) excluding current user
       const [onlineUsers] = await connection.execute(
-        `SELECT u.id, u.full_name, u.email, u.profile_picture,
+        `SELECT u.id, u.full_name, u.email,
+                CASE WHEN u.profile_picture IS NOT NULL THEN true ELSE false END as has_profile_picture,
                 us.is_online, us.last_activity,
                 COALESCE(unread.unread_count, 0) as unread_count
          FROM users u
