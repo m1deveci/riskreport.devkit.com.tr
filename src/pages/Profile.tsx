@@ -40,12 +40,61 @@ export function Profile({ onBack }: { onBack: () => void }) {
         full_name: currentUser?.full_name || '',
         email: currentUser?.email || '',
       }));
-      // TODO: Load profile image if available
+      // Load profile image if available
+      if (currentUser?.id) {
+        loadProfilePicture(currentUser.id);
+      }
     } catch (err) {
       console.error('Failed to load profile:', err);
       setError('Profil yüklenirken hata oluştu');
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function loadProfilePicture(userId: string) {
+    try {
+      const response = await fetch(
+        (import.meta.env.VITE_API_URL || 'http://localhost:6000') + `/api/profile/picture/${userId}`
+      );
+      if (response.ok) {
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setProfileImage(e.target?.result as string);
+        };
+        reader.readAsDataURL(blob);
+      }
+    } catch (err) {
+      console.error('Failed to load profile picture:', err);
+    }
+  }
+
+  async function uploadProfilePicture(token: string) {
+    try {
+      if (!profileImage) return;
+
+      const response = await fetch(
+        (import.meta.env.VITE_API_URL || 'http://localhost:6000') + '/api/profile/upload-picture',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            imageData: profileImage,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Fotoğraf yüklenemedi');
+      }
+    } catch (err) {
+      console.error('Failed to upload profile picture:', err);
+      throw err;
     }
   }
 
@@ -83,6 +132,8 @@ export function Profile({ onBack }: { onBack: () => void }) {
       }
 
       const token = localStorage.getItem('token');
+
+      // Save profile name
       const response = await fetch(
         (import.meta.env.VITE_API_URL || 'http://localhost:6000') + '/api/profile',
         {
@@ -100,6 +151,11 @@ export function Profile({ onBack }: { onBack: () => void }) {
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Profil güncellenemedi');
+      }
+
+      // Upload profile picture if changed
+      if (profileImage && !profileImage.startsWith('blob:')) {
+        await uploadProfilePicture(token);
       }
 
       await logAction(LogActions.UPDATE_PROFILE, {

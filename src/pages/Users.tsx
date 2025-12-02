@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { signUp, getCurrentUser } from '../lib/auth';
 import { api } from '../lib/api';
 import { logAction, LogActions } from '../lib/logger';
-import { Plus, Edit2, Trash2, Users as UsersIcon, AlertCircle, CheckCircle2, Key, RefreshCw, Copy } from 'lucide-react';
+import { Plus, Edit2, Trash2, Users as UsersIcon, AlertCircle, CheckCircle2, Key, RefreshCw, Copy, User } from 'lucide-react';
 import { useI18n, useLanguageChange } from '../lib/i18n';
 import type { UserProfile } from '../lib/auth';
 import Swal from 'sweetalert2';
@@ -16,6 +16,7 @@ interface User {
   location_ids?: string[];
   created_at: string;
   last_login?: string | null;
+  profile_picture?: Buffer | null;
 }
 
 interface Location {
@@ -30,6 +31,45 @@ function getRoles(t: (key: string) => string) {
     { value: 'isg_expert', label: t('users.roleExpert') || 'İSG Uzmanı' },
     { value: 'viewer', label: t('users.roleViewer') || 'Görüntüleyici' },
   ];
+}
+
+// User Profile Avatar Component
+function UserProfileAvatar({ userId }: { userId: string }) {
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadProfilePicture();
+  }, [userId]);
+
+  async function loadProfilePicture() {
+    try {
+      const response = await fetch(
+        (import.meta.env.VITE_API_URL || 'http://localhost:6000') + `/api/profile/picture/${userId}`
+      );
+      if (response.ok) {
+        const blob = await response.blob();
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          setProfileImage(e.target?.result as string);
+        };
+        reader.readAsDataURL(blob);
+      }
+    } catch (err) {
+      console.error('Failed to load profile picture:', err);
+    }
+  }
+
+  return profileImage ? (
+    <img
+      src={profileImage}
+      alt="Profile"
+      className="w-8 h-8 rounded-full object-cover border border-slate-600"
+    />
+  ) : (
+    <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center border border-slate-600">
+      <User className="w-4 h-4 text-slate-400" />
+    </div>
+  );
 }
 
 export function Users() {
@@ -460,7 +500,10 @@ export function Users() {
               {filteredUsers.map((user) => (
                 <tr key={user.id} className="hover:bg-slate-900/50 border-b border-slate-700">
                   <td className="sm:px-6 px-3 sm:py-4 py-2 whitespace-nowrap">
-                    <div className="text-sm font-medium text-slate-100">{user.full_name}</div>
+                    <div className="flex items-center gap-3">
+                      <UserProfileAvatar userId={user.id} />
+                      <div className="text-sm font-medium text-slate-100">{user.full_name}</div>
+                    </div>
                   </td>
                   <td className="sm:px-6 px-3 sm:py-4 py-2 whitespace-nowrap">
                     <div className="text-sm text-slate-300">{user.email}</div>

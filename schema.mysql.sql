@@ -92,6 +92,9 @@ CREATE TABLE IF NOT EXISTS users (
 -- Add location_ids column if it doesn't exist (for existing databases)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS location_ids JSON DEFAULT '[]';
 
+-- Add profile_picture column if it doesn't exist (for existing databases)
+ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture LONGBLOB DEFAULT NULL;
+
 -- Create system logs table
 CREATE TABLE IF NOT EXISTS system_logs (
   id CHAR(36) PRIMARY KEY DEFAULT (UUID()),

@@ -41,6 +41,8 @@ export const LogActions = {
   DELETE_USER: 'DELETE_USER',
   UPDATE_SETTINGS: 'UPDATE_SETTINGS',
   DOWNLOAD_BACKUP: 'DOWNLOAD_BACKUP',
+  UPDATE_PROFILE: 'UPDATE_PROFILE',
+  CHANGE_PASSWORD: 'CHANGE_PASSWORD',
 } as const;
 
 // Action açıklamaları ve Türkçe çeviriler
@@ -65,6 +67,8 @@ export const ActionDescriptions: Record<string, { tr: string; icon: string }> = 
   DELETE_USER: { tr: 'Kullanıcı Silindi', icon: '🗑️' },
   UPDATE_SETTINGS: { tr: 'Ayarlar Güncellendi', icon: '⚙️' },
   DOWNLOAD_BACKUP: { tr: 'Yedekleme İndirildi', icon: '💾' },
+  UPDATE_PROFILE: { tr: 'Profil Güncellendi', icon: '👤' },
+  CHANGE_PASSWORD: { tr: 'Parola Değiştirildi', icon: '🔐' },
 };
 
 // Detay özelleştiricisi - detay alanlarını Türkçe ve okunabilir hale getir
@@ -183,6 +187,30 @@ export function formatLogDetails(
       Object.entries(changes).forEach(([key, value]) => {
         lines.push(`🔹 ${key}: ${value}`);
       });
+    }
+  }
+
+  if (action === 'UPDATE_PROFILE') {
+    if (details.action === 'profile_update') {
+      lines.push(`🔹 İşlem: Profil Bilgileri Güncellendi`);
+    }
+    if (details.action === 'profile_picture_upload') {
+      lines.push(`🔹 İşlem: Profil Fotoğrafı Yüklendi`);
+    }
+    if (details.fields && Array.isArray(details.fields)) {
+      const fieldNames: Record<string, string> = {
+        full_name: 'Ad Soyad',
+        email: 'E-posta',
+        profile_picture: 'Profil Fotoğrafı',
+      };
+      const fields = (details.fields as string[]).map(f => fieldNames[f] || f).join(', ');
+      lines.push(`🔹 Güncellenen Alanlar: ${fields}`);
+    }
+  }
+
+  if (action === 'CHANGE_PASSWORD') {
+    if (details.success) {
+      lines.push(`🔹 İşlem: Parola Başarıyla Değiştirildi`);
     }
   }
 

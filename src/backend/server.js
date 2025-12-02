@@ -1138,6 +1138,65 @@ app.post('/api/profile/change-password', authenticateToken, async (req, res) => 
   }
 });
 
+// Upload profile picture
+app.post('/api/profile/upload-picture', authenticateToken, async (req, res) => {
+  try {
+    if (!req.body.imageData) {
+      return res.status(400).json({ error: 'Resim verisi gerekli' });
+    }
+
+    // Convert base64 to buffer
+    const imageData = req.body.imageData;
+    const base64Data = imageData.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+
+    // Check file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024;
+    if (buffer.length > maxSize) {
+      return res.status(400).json({ error: 'Dosya boyutu 5 MB\'den küçük olmalıdır' });
+    }
+
+    const connection = await pool.getConnection();
+    await connection.query(
+      'UPDATE users SET profile_picture = ? WHERE id = ?',
+      [buffer, req.user.id]
+    );
+    connection.release();
+
+    // Log action
+    await logAction(req.user.id, 'UPDATE_PROFILE', {
+      action: 'profile_picture_upload',
+    });
+
+    res.json({ success: true, message: 'Profil fotoğrafı başarıyla yüklendi' });
+  } catch (error) {
+    console.error('Profile picture upload error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get profile picture
+app.get('/api/profile/picture/:userId', async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+    const [rows] = await connection.query(
+      'SELECT profile_picture FROM users WHERE id = ?',
+      [req.params.userId]
+    );
+    connection.release();
+
+    if (rows.length === 0 || !rows[0].profile_picture) {
+      return res.status(404).json({ error: 'Profil fotoğrafı bulunamadı' });
+    }
+
+    res.set('Content-Type', 'image/jpeg');
+    res.send(rows[0].profile_picture);
+  } catch (error) {
+    console.error('Profile picture fetch error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ==================== NEAR-MISS REPORTS ENDPOINTS ====================
 
 app.get('/api/reports', authenticateToken, async (req, res) => {
