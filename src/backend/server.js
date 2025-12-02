@@ -466,16 +466,16 @@ app.post('/api/users', authenticateToken, adminOrExpert, async (req, res) => {
 
     // ISG Expert permission checks
     if (req.user.role === 'isg_expert') {
-      // ISG Expert cannot create admin users
-      if (role === 'admin') {
-        console.warn('[CREATE_USER] ISG Expert attempted to create admin user:', email);
-        await logAction(req.user.id, 'CREATE_USER_FAILED', { email, reason: 'isg_expert cannot create admin users' });
-        return res.status(403).json({ error: 'İSG Uzmanları admin kullanıcı oluşturamazlar' });
+      // ISG Expert can only create isg_expert users, not admin or viewer
+      if (role !== 'isg_expert') {
+        console.warn('[CREATE_USER] ISG Expert attempted to create non-expert user:', { email, role });
+        await logAction(req.user.id, 'CREATE_USER_FAILED', { email, role, reason: 'isg_expert can only create isg_expert users' });
+        return res.status(403).json({ error: 'Yalnızca İSG Uzmanı rolünde kullanıcı oluşturabilirsiniz' });
       }
 
       // ISG Expert can only assign users to their own locations
       if (!location_ids || location_ids.length === 0) {
-        console.warn('[CREATE_USER] No locations specified for non-admin user:', email);
+        console.warn('[CREATE_USER] No locations specified for isg_expert user:', email);
         await logAction(req.user.id, 'CREATE_USER_FAILED', { email, reason: 'no locations specified' });
         return res.status(400).json({ error: 'En az bir lokasyon seçiniz' });
       }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { signUp, getCurrentUser } from '../lib/auth';
-import { api } from '../lib/supabase';
+import { api } from '../lib/api';
 import { logAction, LogActions } from '../lib/logger';
 import { Plus, Edit2, Trash2, Users as UsersIcon, AlertCircle, CheckCircle2, Key, RefreshCw, Copy } from 'lucide-react';
 import { useI18n, useLanguageChange } from '../lib/i18n';
@@ -647,13 +647,23 @@ export function Users() {
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                   className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
+                  disabled={currentUser?.role === 'isg_expert'}
                 >
-                  {ROLES.map((role) => (
-                    <option key={role.value} value={role.value}>
-                      {role.label}
-                    </option>
-                  ))}
+                  {ROLES.map((role) => {
+                    // İSG Expert sadece isg_expert rolünü seçebilir
+                    if (currentUser?.role === 'isg_expert' && role.value !== 'isg_expert') {
+                      return null;
+                    }
+                    return (
+                      <option key={role.value} value={role.value}>
+                        {role.label}
+                      </option>
+                    );
+                  })}
                 </select>
+                {currentUser?.role === 'isg_expert' && (
+                  <p className="text-xs text-slate-400 mt-1">Yalnızca İSG Uzmanı rolünde kullanıcı ekleyebilirsiniz</p>
+                )}
               </div>
 
               <div>
