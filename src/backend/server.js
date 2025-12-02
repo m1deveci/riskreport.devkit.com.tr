@@ -732,23 +732,37 @@ app.put('/api/users/:id/password', authenticateToken, adminOrExpert, async (req,
 
 // ==================== LOCATIONS ENDPOINTS ====================
 
-// Get All Locations
-app.get('/api/locations', authenticateToken, async (req, res) => {
+// Get All Locations (Public - for QR code validation, authenticated users get filtered results)
+app.get('/api/locations', async (req, res) => {
   try {
     const connection = await pool.getConnection();
     let query = 'SELECT * FROM locations WHERE is_active = true';
     let params = [];
 
-    // ISG Expert: sadece kendi location_ids'lerine göre filtrele
-    if (req.user.role === 'isg_expert') {
-      const locationIds = req.user.location_ids || [];
-      if (locationIds.length === 0) {
-        connection.release();
-        return res.json([]); // ISG Expert'in yetki alanında location yok
+    // Check if request has authentication token
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (token) {
+      // If authenticated, verify token and filter by user role
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+
+        // ISG Expert: sadece kendi location_ids'lerine göre filtrele
+        if (decoded.role === 'isg_expert') {
+          const locationIds = decoded.location_ids || [];
+          if (locationIds.length === 0) {
+            connection.release();
+            return res.json([]); // ISG Expert'in yetki alanında location yok
+          }
+          const placeholders = locationIds.map(() => '?').join(',');
+          query += ` AND id IN (${placeholders})`;
+          params = locationIds;
+        }
+      } catch (err) {
+        // Token verification failed, but continue with public access
+        console.warn('Token verification failed, using public access:', err.message);
       }
-      const placeholders = locationIds.map(() => '?').join(',');
-      query += ` AND id IN (${placeholders})`;
-      params = locationIds;
     }
 
     const [rows] = await connection.query(query, params);
@@ -812,23 +826,37 @@ app.delete('/api/locations/:id', authenticateToken, adminOnly, async (req, res) 
 
 // ==================== REGIONS ENDPOINTS ====================
 
-// Get All Regions
-app.get('/api/regions', authenticateToken, async (req, res) => {
+// Get All Regions (Public - for QR code validation, authenticated users get filtered results)
+app.get('/api/regions', async (req, res) => {
   try {
     const connection = await pool.getConnection();
     let query = 'SELECT * FROM regions WHERE is_active = true';
     let params = [];
 
-    // ISG Expert: sadece kendi location_ids'lerine ait regions'ları göster
-    if (req.user.role === 'isg_expert') {
-      const locationIds = req.user.location_ids || [];
-      if (locationIds.length === 0) {
-        connection.release();
-        return res.json([]);
+    // Check if request has authentication token
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (token) {
+      // If authenticated, verify token and filter by user role
+      try {
+        const decoded = jwt.verify(token, JWT_SECRET);
+
+        // ISG Expert: sadece kendi location_ids'lerine ait regions'ları göster
+        if (decoded.role === 'isg_expert') {
+          const locationIds = decoded.location_ids || [];
+          if (locationIds.length === 0) {
+            connection.release();
+            return res.json([]);
+          }
+          const placeholders = locationIds.map(() => '?').join(',');
+          query += ` AND location_id IN (${placeholders})`;
+          params = locationIds;
+        }
+      } catch (err) {
+        // Token verification failed, but continue with public access
+        console.warn('Token verification failed, using public access:', err.message);
       }
-      const placeholders = locationIds.map(() => '?').join(',');
-      query += ` AND location_id IN (${placeholders})`;
-      params = locationIds;
     }
 
     const [rows] = await connection.query(query, params);
