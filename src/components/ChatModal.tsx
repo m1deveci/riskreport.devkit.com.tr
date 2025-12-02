@@ -302,14 +302,10 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
   if (!isOpen) return null;
 
   // Helper function to build profile picture URL
+  // NOTE: Disabled profile picture feature to avoid 404 errors in console
+  // Users are identified by avatar with first letter of their name
   const getProfilePictureUrl = (userId: string): string | null => {
-    const apiUrl = import.meta.env.VITE_API_URL || '';
-    const user = availableUsers.find(u => u.id === userId);
-    // Only return URL if has_profile_picture is explicitly true
-    if (user && user.has_profile_picture === true) {
-      return `${apiUrl}/api/profile/picture/${userId}`;
-    }
-    return null;
+    return null; // Always return null - no profile pictures will be fetched
   };
 
   // If no userId selected, show user list

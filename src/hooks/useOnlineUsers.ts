@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { isTokenValid } from '../lib/auth';
 
 export interface OnlineUser {
   id: string;
@@ -85,6 +86,11 @@ export const useOnlineUsers = () => {
   // Mark messages from a user as read
   const markUserRead = useCallback(async (userId: string) => {
     try {
+      // Check if token is valid before attempting API call
+      if (!isTokenValid()) {
+        return; // Silently return if token is expired
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/messages/batch-read`, {
         method: 'PUT',
         headers: {
@@ -108,7 +114,7 @@ export const useOnlineUsers = () => {
           )
         );
       } else if (response.status === 403) {
-        // Silently ignore 403 - user may not have permission to mark this sender's messages
+        // Silently ignore 403 - token may be expired or user may not have permission
         return;
       }
     } catch (error) {

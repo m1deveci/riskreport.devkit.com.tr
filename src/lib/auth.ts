@@ -9,6 +9,30 @@ export interface UserProfile {
   location_ids?: string[];
 }
 
+// Check if JWT token is valid and not expired
+export function isTokenValid(): boolean {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return false;
+
+    // JWT format: header.payload.signature
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+
+    // Decode payload
+    const payload = JSON.parse(atob(parts[1]));
+
+    // Check if expired (exp is in seconds)
+    if (payload.exp && Date.now() >= payload.exp * 1000) {
+      return false; // Token expired
+    }
+
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
 export async function signIn(email: string, password: string, turnstileToken?: string) {
   try {
     const res = await fetch(`${API_URL}/api/auth/login`, {

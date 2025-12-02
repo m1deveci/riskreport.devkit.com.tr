@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { isTokenValid } from '../lib/auth';
 
 interface Message {
   id: number;
@@ -143,6 +144,11 @@ export const useChat = (userId: string | null) => {
   // Mark all messages from a specific sender as read (batch read)
   const markBatchAsRead = useCallback(async (senderId: string) => {
     try {
+      // Check if token is valid before attempting API call
+      if (!isTokenValid()) {
+        return; // Silently return if token is expired
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/messages/batch-read`, {
         method: 'PUT',
         headers: {
@@ -161,7 +167,7 @@ export const useChat = (userId: string | null) => {
           )
         );
       } else if (response.status === 403) {
-        // Silently ignore 403 - user may not have permission to mark this sender's messages
+        // Silently ignore 403 - token may be expired or user may not have permission
         return;
       }
     } catch (error) {
