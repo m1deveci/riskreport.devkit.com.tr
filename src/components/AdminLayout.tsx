@@ -25,6 +25,15 @@ interface AdminLayoutProps {
   onNavigate: (page: string) => void;
 }
 
+const getRoleDisplayName = (role?: string): string => {
+  const roleMap: { [key: string]: string } = {
+    'admin': 'Yönetici',
+    'isg_expert': 'İSG Uzmanı',
+    'viewer': 'Görüntüleyici',
+  };
+  return roleMap[role || ''] || role || '';
+};
+
 const getMenuItems = (t: (key: string) => string, userRole?: string) => {
   const allItems = [
     { id: 'dashboard', label: t('sidebar.dashboard'), icon: LayoutDashboard },
@@ -129,7 +138,7 @@ export function AdminLayout({ children, currentUser, currentPage, onNavigate }: 
           <div className="flex items-center gap-4">
             <div className="hidden sm:block text-right">
               <p className="text-sm font-semibold text-white">{currentUser.full_name}</p>
-              <p className="text-xs text-slate-400 capitalize">{currentUser.role}</p>
+              <p className="text-xs text-slate-400">{getRoleDisplayName(currentUser.role)}</p>
             </div>
             {/* Dil Seçici - Dropdown */}
             <div className="relative">
