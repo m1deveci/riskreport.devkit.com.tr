@@ -217,6 +217,7 @@
     "phone": "Phone",
     "description": "Description",
     "viewDetails": "View Details",
+    "detail": "Detail",
     "name": "Full Name",
     "clearFilters": "Clear Filters",
     "reportsFound": "reports found",

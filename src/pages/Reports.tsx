@@ -607,7 +607,7 @@ export function Reports() {
                       className="text-blue-600 hover:text-blue-900 inline-flex items-center gap-1"
                     >
                       <Eye className="w-4 h-4" />
-                      {t('reports.detail') || 'Detay'}
+                      {t('reports.viewDetails') || 'Detayları Gör'}
                     </button>
                   </td>
                 </tr>
