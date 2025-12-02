@@ -45,7 +45,6 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
     markAllAsRead,
     markBatchAsRead,
     markAsRead,
-    selectedUser,
     loadMessages,
     editMessage: editMessageApi,
     deleteMessage: deleteMessageApi,
@@ -57,9 +56,26 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
 
   const conversation = userId ? getConversation() : [];
 
-  // Load users when modal opens and no userId is selected, and send heartbeat
+  // Get selectedUser from availableUsers to ensure online status is synced
+  // If user not found in availableUsers, create a placeholder from the conversation
+  const selectedUser = userId
+    ? availableUsers.find(u => u.id === userId) ||
+      (conversation.length > 0
+        ? {
+            id: userId,
+            full_name: conversation[0]?.sender_id === userId ? conversation[0].sender_name : 'Kullanıcı',
+            email: '',
+            last_login: '',
+            is_online: false,
+            last_activity: null,
+            unread_count: 0
+          }
+        : null)
+    : null;
+
+  // Load users when modal opens and send heartbeat
   useEffect(() => {
-    if (isOpen && !userId) {
+    if (isOpen) {
       const loadUsers = async () => {
         try {
           // Send heartbeat to update user's online status
@@ -70,7 +86,9 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
             }
           }).catch(err => console.error('Heartbeat error:', err));
 
-          setUsersLoading(true);
+          if (!userId) {
+            setUsersLoading(true);
+          }
           // Use the new API endpoint that includes online status and unread counts
           const response = await fetch('/api/messages/online/users-list', {
             headers: {
@@ -88,7 +106,9 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
         } catch (error) {
           console.error('Error loading users:', error);
         } finally {
-          setUsersLoading(false);
+          if (!userId) {
+            setUsersLoading(false);
+          }
         }
       };
 
@@ -97,6 +117,9 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
       // Refresh users list every 3 seconds
       const interval = setInterval(loadUsers, 3000);
       return () => clearInterval(interval);
+    } else if (!isOpen) {
+      // Reset state when modal closes
+      setShowOfflineUsers(false);
     }
   }, [isOpen, userId]);
 
