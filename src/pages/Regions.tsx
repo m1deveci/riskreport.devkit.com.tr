@@ -248,15 +248,15 @@ export function Regions() {
     try {
       const qrCanvas = document.createElement('canvas');
       await QRCode.toCanvas(qrCanvas, region.qr_code_url, {
-        width: 350,
+        width: 297, // %15 küçültme (350 * 0.85 = 297.5)
         margin: 2,
       });
 
-      // Get location name
+      // Get location name - use the actual location name from the relationship
       const locationName = (region.locations as unknown as { name: string })?.name || 'Lokasyon';
 
       // Create a new canvas with extra space for title and location info
-      const titleHeight = 140;
+      const titleHeight = 160;
       const finalCanvas = document.createElement('canvas');
       finalCanvas.width = qrCanvas.width;
       finalCanvas.height = qrCanvas.height + titleHeight;
@@ -270,25 +270,25 @@ export function Regions() {
 
       // Draw location name
       ctx.fillStyle = '#6B7280'; // Gray
-      ctx.font = 'bold 16px Arial, sans-serif';
+      ctx.font = 'bold 20px Arial, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'top';
-      ctx.fillText(`📍 ${locationName}`, finalCanvas.width / 2, 12);
+      ctx.fillText(`📍 ${locationName}`, finalCanvas.width / 2, 8);
 
       // Draw region name
       ctx.fillStyle = '#1F2937'; // Dark gray
-      ctx.font = 'bold 24px Arial, sans-serif';
-      ctx.fillText(region.name, finalCanvas.width / 2, 35);
+      ctx.font = 'bold 32px Arial, sans-serif';
+      ctx.fillText(region.name, finalCanvas.width / 2, 38);
 
       // Draw main title
       ctx.fillStyle = '#1F2937'; // Dark gray
-      ctx.font = 'bold 18px Arial, sans-serif';
-      ctx.fillText('Ramakkala Bildirimi Yap', finalCanvas.width / 2, 70);
+      ctx.font = 'bold 24px Arial, sans-serif';
+      ctx.fillText('Ramakkala Bildirimi Yap', finalCanvas.width / 2, 80);
 
       // Draw instruction text
       ctx.fillStyle = '#6B7280'; // Gray
-      ctx.font = '12px Arial, sans-serif';
-      ctx.fillText('QR kodu tarayarak rapor gönderin', finalCanvas.width / 2, 95);
+      ctx.font = 'bold 16px Arial, sans-serif';
+      ctx.fillText('QR kodu tarayarak rapor gönderin', finalCanvas.width / 2, 110);
 
       // Draw QR code on the canvas below title
       ctx.drawImage(qrCanvas, (finalCanvas.width - qrCanvas.width) / 2, titleHeight);
