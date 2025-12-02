@@ -31,6 +31,11 @@ interface User {
   profile_picture?: string | null;
 }
 
+// Helper function to build profile picture URL
+function getProfilePictureUrl(userId: string): string {
+  return (import.meta.env.VITE_API_URL || '') + `/api/profile/picture/${userId}`;
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 export const useChat = (userId: string | null) => {
@@ -78,7 +83,12 @@ export const useChat = (userId: string | null) => {
           const users = await response.json();
           const user = users.find((u: User) => u.id === userId);
           if (user) {
-            setSelectedUser(user);
+            // Set profile picture URL if user has a profile picture
+            const userWithPictureUrl = {
+              ...user,
+              profile_picture: user.profile_picture ? getProfilePictureUrl(user.id) : null
+            };
+            setSelectedUser(userWithPictureUrl);
           }
         }
       } catch (error) {

@@ -342,7 +342,9 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
                               {user.full_name?.charAt(0).toUpperCase()}
                             </div>
                           )}
-                          <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
+                          {user.is_online && (
+                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
+                          )}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
@@ -355,8 +357,8 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-green-600 dark:text-green-400 truncate">
-                            Çevrimiçi
+                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                            {user.last_activity ? `Son aktif: ${new Date(user.last_activity).toLocaleString('tr-TR')}` : 'Hiç aktif olmamış'}
                           </p>
                         </div>
                       </button>
@@ -393,7 +395,6 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
                               {user.full_name?.charAt(0).toUpperCase()}
                             </div>
                           )}
-                          <div className="absolute bottom-0 right-0 w-3 h-3 bg-gray-500 rounded-full border-2 border-white dark:border-gray-800"></div>
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
@@ -434,16 +435,33 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
             <div className="relative">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-bold">
-                {selectedUser.full_name?.charAt(0).toUpperCase()}
-              </div>
+              {selectedUser.profile_picture ? (
+                <img
+                  src={selectedUser.profile_picture}
+                  alt={selectedUser.full_name}
+                  className="w-10 h-10 rounded-full object-cover border-2 border-blue-500"
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-bold">
+                  {selectedUser.full_name?.charAt(0).toUpperCase()}
+                </div>
+              )}
+              {selectedUser.is_online && (
+                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
+              )}
             </div>
             <div>
               <h3 className="font-semibold text-gray-900 dark:text-gray-100">
                 {selectedUser.full_name}
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                {selectedUser.email}
+                {selectedUser.is_online ? (
+                  <span className="text-green-600 dark:text-green-400">🟢 Çevrimiçi</span>
+                ) : selectedUser.last_activity ? (
+                  `Son aktif: ${new Date(selectedUser.last_activity).toLocaleString('tr-TR')}`
+                ) : (
+                  'Hiç aktif olmamış'
+                )}
               </p>
             </div>
           </div>
