@@ -388,6 +388,10 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
                               src={getProfilePictureUrl(user.id) || ''}
                               alt={user.full_name}
                               className="w-10 h-10 rounded-full object-cover"
+                              onError={(e) => {
+                                // Silently handle 404 errors, show fallback avatar
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
                             />
                           ) : (
                             <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
@@ -451,6 +455,10 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
                               src={getProfilePictureUrl(user.id) || ''}
                               alt={user.full_name}
                               className="w-10 h-10 rounded-full object-cover"
+                              onError={(e) => {
+                                // Silently handle 404 errors, show fallback avatar
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
                             />
                           ) : (
                             <div className="w-10 h-10 rounded-full bg-gradient-to-r from-gray-400 to-gray-600 flex items-center justify-center text-white font-bold text-sm">
@@ -502,6 +510,10 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
                   src={getProfilePictureUrl(selectedUser.id) || ''}
                   alt={selectedUser.full_name}
                   className="w-10 h-10 rounded-full object-cover border-2 border-blue-500"
+                  onError={(e) => {
+                    // Silently handle 404 errors, show fallback avatar
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
                 />
               ) : (
                 <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-bold">

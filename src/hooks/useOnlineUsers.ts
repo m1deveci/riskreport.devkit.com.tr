@@ -107,9 +107,12 @@ export const useOnlineUsers = () => {
             user.id === userId ? { ...user, unread_count: 0 } : user
           )
         );
+      } else if (response.status === 403) {
+        // Silently ignore 403 - user may not have permission to mark this sender's messages
+        return;
       }
     } catch (error) {
-      console.error('Error marking user as read:', error);
+      // Silently ignore network errors for marking user as read
     }
   }, []);
 
