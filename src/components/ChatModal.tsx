@@ -122,8 +122,8 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
 
       loadUsers();
 
-      // Refresh users list every 3 seconds
-      const interval = setInterval(loadUsers, 3000);
+      // Refresh users list every 2 minutes
+      const interval = setInterval(loadUsers, 120000);
       return () => clearInterval(interval);
     } else if (!isOpen) {
       // Reset state when modal closes
