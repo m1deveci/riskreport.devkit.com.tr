@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Swal from 'sweetalert2';
 import { logAction, LogActions } from '../lib/logger';
 import { api } from '../lib/api';
 import { Search, Filter, X, AlertTriangle, Eye, Download, Image as ImageIcon, Lock, History, FileDown } from 'lucide-react';
@@ -61,6 +62,25 @@ const CATEGORIES = [
 ];
 
 const STATUSES = ['Yeni', 'İnceleniyor', 'Kapatıldı'];
+
+// Helper function to translate field names based on language
+const getFieldDisplayName = (fieldName: string, t: (key: string) => string): string => {
+  const fieldMap: { [key: string]: string } = {
+    'status': t('reports.fieldStatus') || 'Durum',
+    'internal_notes': t('reports.fieldInternalNotes') || 'İç Notlar',
+  };
+  return fieldMap[fieldName] || fieldName;
+};
+
+// Helper function to translate change descriptions
+const getChangeDescription = (fieldName: string, oldValue: string, newValue: string, t: (key: string) => string): string => {
+  if (fieldName === 'status') {
+    return `${t('reports.statusChanged') || 'Durum değiştirildi'}: ${oldValue} → ${newValue}`;
+  } else if (fieldName === 'internal_notes') {
+    return t('reports.notesChanged') || 'Not eklendi/değiştirildi';
+  }
+  return '';
+};
 
 export function Reports() {
   const { t } = useI18n();
@@ -254,6 +274,18 @@ export function Reports() {
     });
   }
 
+  function canEditReport(report: Report): boolean {
+    if (currentUser.role === 'admin') {
+      return true;
+    }
+    if (currentUser.role === 'isg_expert') {
+      // ISG Expert can only edit reports from their assigned locations
+      const userLocationIds = currentUser.location_ids || [];
+      return userLocationIds.includes(report.location_id);
+    }
+    return false;
+  }
+
   function openDetail(report: Report) {
     setSelectedReport(report);
     setEditNotes(report.internal_notes);
@@ -282,15 +314,33 @@ export function Reports() {
       });
 
       if (!response.ok) {
-        throw new Error(t('messages.errorUpdate'));
+        const errorData = await response.json();
+        throw new Error(errorData.error || t('messages.errorUpdate'));
       }
 
       await logAction(LogActions.UPDATE_NEARMISS, { report_id: selectedReport.id });
       await loadData();
       setShowDetailModal(false);
+
+      // Show success message with SweetAlert
+      await Swal.fire({
+        icon: 'success',
+        title: 'Başarılı',
+        text: 'Rapor başarıyla güncellenmiştir.',
+        confirmButtonColor: '#3b82f6',
+        confirmButtonText: 'Tamam',
+      });
     } catch (err) {
       console.error('Failed to update report:', err);
-      alert(t('messages.errorUpdate'));
+
+      // Show error message with SweetAlert
+      await Swal.fire({
+        icon: 'error',
+        title: 'Hata',
+        text: err instanceof Error ? err.message : t('messages.errorUpdate'),
+        confirmButtonColor: '#ef4444',
+        confirmButtonText: 'Tamam',
+      });
     }
   }
 
@@ -311,7 +361,19 @@ export function Reports() {
   async function handleDeleteReport() {
     if (!selectedReport) return;
 
-    if (!confirm(t('messages.confirmDeleteReport'))) {
+    // Show SweetAlert confirmation
+    const result = await Swal.fire({
+      icon: 'warning',
+      title: 'Raporu Sil?',
+      text: 'Bu işlem geri alınamaz. Raporu silmek istiyor musunuz?',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#6b7280',
+      confirmButtonText: 'Evet, Sil',
+      cancelButtonText: 'İptal',
+    });
+
+    if (!result.isConfirmed) {
       return;
     }
 
@@ -326,7 +388,8 @@ export function Reports() {
       });
 
       if (!response.ok) {
-        throw new Error(t('messages.errorDelete'));
+        const errorData = await response.json();
+        throw new Error(errorData.error || t('messages.errorDelete'));
       }
 
       // Detaylı bilgileri logla
@@ -339,9 +402,26 @@ export function Reports() {
       });
       await loadData();
       setShowDetailModal(false);
+
+      // Show success message with SweetAlert
+      await Swal.fire({
+        icon: 'success',
+        title: 'Başarılı',
+        text: 'Rapor başarıyla silinmiştir.',
+        confirmButtonColor: '#3b82f6',
+        confirmButtonText: 'Tamam',
+      });
     } catch (err) {
       console.error('Failed to delete report:', err);
-      alert(t('messages.errorDelete'));
+
+      // Show error message with SweetAlert
+      await Swal.fire({
+        icon: 'error',
+        title: 'Hata',
+        text: err instanceof Error ? err.message : t('messages.errorDelete'),
+        confirmButtonColor: '#ef4444',
+        confirmButtonText: 'Tamam',
+      });
     } finally {
       setIsDeleting(false);
     }
@@ -774,20 +854,24 @@ export function Reports() {
                   <History className="w-4 h-4" />
                   {t('reports.history') || 'Geçmiş'}
                 </button>
-                <button
-                  onClick={handleDeleteReport}
-                  disabled={isDeleting}
-                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {isDeleting ? (t('common.deleting') || 'Siliniyor...') : t('common.delete')}
-                </button>
-                <button
-                  onClick={handleUpdateReport}
-                  disabled={isDeleting}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                >
-                  {t('common.save')}
-                </button>
+                {selectedReport && canEditReport(selectedReport) && (
+                  <>
+                    <button
+                      onClick={handleDeleteReport}
+                      disabled={isDeleting}
+                      className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {isDeleting ? (t('common.deleting') || 'Siliniyor...') : t('common.delete')}
+                    </button>
+                    <button
+                      onClick={handleUpdateReport}
+                      disabled={isDeleting}
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {t('common.save')}
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -851,13 +935,15 @@ export function Reports() {
                       </div>
 
                       <p className="text-slate-100 mb-2">
-                        {item.change_description}
+                        {item.field_name && item.old_value && item.new_value
+                          ? getChangeDescription(item.field_name, item.old_value, item.new_value, t)
+                          : item.change_description}
                       </p>
 
                       {item.field_name && (
                         <div className="text-sm space-y-1 bg-slate-800/50 p-2 rounded border border-slate-700">
                           <p className="text-slate-400">
-                            <span className="font-medium">{t('reports.field') || 'Alan'}:</span> {item.field_name}
+                            <span className="font-medium">{t('reports.field') || 'Alan'}:</span> {getFieldDisplayName(item.field_name, t)}
                           </p>
                           {item.old_value && (
                             <p className="text-slate-400">

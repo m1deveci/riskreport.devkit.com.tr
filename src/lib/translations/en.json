@@ -234,6 +234,14 @@
     "notesPlaceholder": "Add your notes about this report here...",
     "history": "History",
     "changeHistory": "Change History",
-    "noHistoryFound": "No change history found"
+    "noHistoryFound": "No change history found",
+    "field": "Field",
+    "oldValue": "Old Value",
+    "newValue": "New Value",
+    "updated": "Updated",
+    "fieldStatus": "Status",
+    "fieldInternalNotes": "Internal Notes",
+    "statusChanged": "Status changed",
+    "notesChanged": "Notes added/changed"
   }
 }

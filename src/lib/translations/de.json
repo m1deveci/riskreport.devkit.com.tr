@@ -234,6 +234,14 @@
     "notesPlaceholder": "Fügen Sie Ihre Notizen zu diesem Bericht hier ein...",
     "history": "Geschichte",
     "changeHistory": "Änderungsverlauf",
-    "noHistoryFound": "Kein Änderungsverlauf gefunden"
+    "noHistoryFound": "Kein Änderungsverlauf gefunden",
+    "field": "Feld",
+    "oldValue": "Alter Wert",
+    "newValue": "Neuer Wert",
+    "updated": "Aktualisiert",
+    "fieldStatus": "Status",
+    "fieldInternalNotes": "Interne Notizen",
+    "statusChanged": "Status geändert",
+    "notesChanged": "Notizen hinzugefügt/geändert"
   }
 }

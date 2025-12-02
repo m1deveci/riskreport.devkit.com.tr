@@ -234,6 +234,14 @@
     "notesPlaceholder": "Rapor hakkında notlarınızı buraya ekleyin...",
     "history": "Geçmiş",
     "changeHistory": "Değişiklik Geçmişi",
-    "noHistoryFound": "Değişiklik geçmişi bulunamadı"
+    "noHistoryFound": "Değişiklik geçmişi bulunamadı",
+    "field": "Alan",
+    "oldValue": "Eski Değer",
+    "newValue": "Yeni Değer",
+    "updated": "Güncellendi",
+    "fieldStatus": "Durum",
+    "fieldInternalNotes": "İç Notlar",
+    "statusChanged": "Durum değiştirildi",
+    "notesChanged": "Not eklendi/değiştirildi"
   }
 }

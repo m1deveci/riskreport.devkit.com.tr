@@ -234,6 +234,14 @@
     "notesPlaceholder": "Voeg uw notities over dit rapport hier in...",
     "history": "Geschiedenis",
     "changeHistory": "Wijzigingsgeschiedenis",
-    "noHistoryFound": "Geen wijzigingsgeschiedenis gevonden"
+    "noHistoryFound": "Geen wijzigingsgeschiedenis gevonden",
+    "field": "Veld",
+    "oldValue": "Oude waarde",
+    "newValue": "Nieuwe waarde",
+    "updated": "Bijgewerkt",
+    "fieldStatus": "Status",
+    "fieldInternalNotes": "Interne notities",
+    "statusChanged": "Status gewijzigd",
+    "notesChanged": "Notities toegevoegd/gewijzigd"
   }
 }
