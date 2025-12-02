@@ -112,7 +112,9 @@ export function AdminLayout({ children, currentUser, currentPage, onNavigate }: 
     // Listen for chat user selection
     const handleSelectUser = (e: Event) => {
       const customEvent = e as CustomEvent;
-      setSelectedChatUserId(customEvent.detail);
+      const userId = customEvent.detail;
+      // Set both state immediately
+      setSelectedChatUserId(userId);
       setChatOpen(true);
     };
     window.addEventListener('selectUser', handleSelectUser);

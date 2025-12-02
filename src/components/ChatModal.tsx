@@ -325,8 +325,8 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
                       <button
                         key={user.id}
                         onClick={() => {
+                          // Emit event immediately, let parent handle it
                           window.dispatchEvent(new CustomEvent('selectUser', { detail: user.id }));
-                          onClose();
                         }}
                         className="w-full p-4 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center space-x-3 text-left"
                       >
@@ -376,8 +376,8 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
                       <button
                         key={user.id}
                         onClick={() => {
+                          // Emit event immediately, let parent handle it
                           window.dispatchEvent(new CustomEvent('selectUser', { detail: user.id }));
-                          onClose();
                         }}
                         className="w-full p-4 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center space-x-3 text-left opacity-75"
                       >
