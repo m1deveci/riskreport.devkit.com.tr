@@ -17,6 +17,9 @@ import {
 import { signOut } from '../lib/auth';
 import { useI18n, LANGUAGES, useLanguageChange } from '../lib/i18n';
 import type { UserProfile } from '../lib/auth';
+import ChatModal from './ChatModal';
+import { ChatBadge } from './ChatBadge';
+import { useOnlineUsers } from '../hooks/useOnlineUsers';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -60,6 +63,9 @@ export function AdminLayout({ children, currentUser, currentPage, onNavigate }: 
   const [menuItems, setMenuItems] = useState(() => getMenuItems(t, currentUser.role));
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
   const [newReportsCount, setNewReportsCount] = useState(0);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [selectedChatUserId, setSelectedChatUserId] = useState<string | null>(null);
+  const { getTotalUnread } = useOnlineUsers();
 
   // Dil değiştiğinde menu itemleri güncelle
   useLanguageChange(() => {
@@ -102,6 +108,15 @@ export function AdminLayout({ children, currentUser, currentPage, onNavigate }: 
       }
     }
     loadNewReportsCount();
+
+    // Listen for chat user selection
+    const handleSelectUser = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      setSelectedChatUserId(customEvent.detail);
+      setChatOpen(true);
+    };
+    window.addEventListener('selectUser', handleSelectUser);
+    return () => window.removeEventListener('selectUser', handleSelectUser);
   }, []);
 
   async function handleLogout() {
@@ -181,6 +196,15 @@ export function AdminLayout({ children, currentUser, currentPage, onNavigate }: 
                 </>
               )}
             </div>
+            {/* Chat Badge */}
+            <ChatBadge
+              unreadCount={getTotalUnread()}
+              onOpenChat={() => {
+                setChatOpen(true);
+                setSelectedChatUserId(null);
+              }}
+            />
+
             {/* Yeni Raporlar Bildirim Badge */}
             <button
               onClick={() => {
@@ -259,6 +283,16 @@ export function AdminLayout({ children, currentUser, currentPage, onNavigate }: 
       <main className="lg:pl-64 pt-16 min-h-screen">
         <div className="p-4 md:p-6 lg:p-8">{children}</div>
       </main>
+
+      {/* Chat Modal */}
+      <ChatModal
+        isOpen={chatOpen}
+        onClose={() => {
+          setChatOpen(false);
+          setSelectedChatUserId(null);
+        }}
+        userId={selectedChatUserId}
+      />
     </div>
   );
 }

@@ -169,6 +169,22 @@ BEGIN
 END //
 DELIMITER ;
 
+-- ==================== USER SESSIONS FOR ONLINE STATUS ====================
+
+-- Create user sessions table for tracking online/offline status
+CREATE TABLE IF NOT EXISTS user_sessions (
+  id CHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  user_id CHAR(36) NOT NULL UNIQUE,
+  is_online BOOLEAN DEFAULT true,
+  last_activity DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  login_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_user_sessions_user_id FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  INDEX idx_user_sessions_is_online (is_online),
+  INDEX idx_user_sessions_last_activity (last_activity),
+  INDEX idx_user_sessions_user_id (user_id)
+);
+
 -- ==================== CHAT SYSTEM TABLES ====================
 
 -- Create messages table (1-to-1 chat)

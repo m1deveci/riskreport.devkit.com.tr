@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Send, MessageCircle, Smile, Paperclip, Trash2, MoreVertical, Search, Users } from 'lucide-react';
 import { useChat } from '../hooks/useChat';
+import { useOnlineUsers } from '../hooks/useOnlineUsers';
 
 interface ChatModalProps {
   isOpen: boolean;
@@ -41,6 +42,7 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
     sendMessage,
     getConversation,
     markAllAsRead,
+    markBatchAsRead,
     markAsRead,
     selectedUser,
     loadMessages,
@@ -50,6 +52,8 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
     removeReaction
   } = useChat(userId);
 
+  const { onlineUsers, getUnreadCount, markUserRead } = useOnlineUsers();
+
   const conversation = userId ? getConversation() : [];
 
   // Load users when modal opens and no userId is selected
@@ -58,7 +62,8 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
       const loadUsers = async () => {
         try {
           setUsersLoading(true);
-          const response = await fetch('/api/messages', {
+          // Use the new API endpoint that includes online status and unread counts
+          const response = await fetch('/api/messages/online/users-list', {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
@@ -85,9 +90,15 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
   useEffect(() => {
     if (isOpen && userId) {
       loadMessages();
-      markAllAsRead();
+
+      // Auto-mark messages as read after 2 seconds
+      const autoReadTimer = setTimeout(() => {
+        markBatchAsRead(userId);
+      }, 2000);
+
+      return () => clearTimeout(autoReadTimer);
     }
-  }, [isOpen, userId, markAllAsRead, loadMessages]);
+  }, [isOpen, userId, markBatchAsRead, loadMessages]);
 
   useEffect(() => {
     if (!userScrolled && messagesEndRef.current) {
@@ -249,17 +260,9 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
       u.email.toLowerCase().includes(userSearch.toLowerCase())
     );
 
-    // Separate online and offline users
-    const isUserOnline = (lastLogin: string) => {
-      if (!lastLogin) return false;
-      const lastLoginTime = new Date(lastLogin).getTime();
-      const now = new Date().getTime();
-      const fiveMinutesAgo = now - 5 * 60 * 1000; // 5 dakika
-      return lastLoginTime > fiveMinutesAgo;
-    };
-
-    const onlineUsers = filteredUsers.filter(u => isUserOnline(u.last_login));
-    const offlineUsers = filteredUsers.filter(u => !isUserOnline(u.last_login));
+    // Separate online and offline users using is_online flag
+    const userOnlineUsers = filteredUsers.filter(u => u.is_online === true);
+    const userOfflineUsers = filteredUsers.filter(u => u.is_online !== true);
 
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -311,14 +314,14 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
             ) : (
               <div className="space-y-0">
                 {/* Online Users Section */}
-                {onlineUsers.length > 0 && (
+                {userOnlineUsers.length > 0 && (
                   <>
                     <div className="sticky top-0 px-4 py-2 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
                       <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-                        🟢 Çevrimiçi Kullanıcılar ({onlineUsers.length})
+                        🟢 Çevrimiçi Kullanıcılar ({userOnlineUsers.length})
                       </p>
                     </div>
-                    {onlineUsers.map((user) => (
+                    {userOnlineUsers.map((user) => (
                       <button
                         key={user.id}
                         onClick={() => {
@@ -328,15 +331,30 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
                         className="w-full p-4 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center space-x-3 text-left"
                       >
                         <div className="relative">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
-                            {user.full_name?.charAt(0).toUpperCase()}
-                          </div>
+                          {user.profile_picture ? (
+                            <img
+                              src={user.profile_picture}
+                              alt={user.full_name}
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-sm">
+                              {user.full_name?.charAt(0).toUpperCase()}
+                            </div>
+                          )}
                           <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
-                            {user.full_name}
-                          </p>
+                          <div className="flex items-center justify-between">
+                            <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                              {user.full_name}
+                            </p>
+                            {user.unread_count > 0 && (
+                              <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold text-white bg-red-500 rounded-full min-w-5 h-5">
+                                {user.unread_count > 99 ? '99+' : user.unread_count}
+                              </span>
+                            )}
+                          </div>
                           <p className="text-sm text-green-600 dark:text-green-400 truncate">
                             Çevrimiçi
                           </p>
@@ -347,14 +365,14 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
                 )}
 
                 {/* Offline Users Section */}
-                {offlineUsers.length > 0 && (
+                {userOfflineUsers.length > 0 && (
                   <>
                     <div className="sticky top-0 px-4 py-2 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
                       <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wide">
-                        ⚫ Çevrimdışı Kullanıcılar ({offlineUsers.length})
+                        ⚫ Çevrimdışı Kullanıcılar ({userOfflineUsers.length})
                       </p>
                     </div>
-                    {offlineUsers.map((user) => (
+                    {userOfflineUsers.map((user) => (
                       <button
                         key={user.id}
                         onClick={() => {
@@ -364,18 +382,33 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
                         className="w-full p-4 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center space-x-3 text-left opacity-75"
                       >
                         <div className="relative">
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-gray-400 to-gray-600 flex items-center justify-center text-white font-bold text-sm">
-                            {user.full_name?.charAt(0).toUpperCase()}
-                          </div>
+                          {user.profile_picture ? (
+                            <img
+                              src={user.profile_picture}
+                              alt={user.full_name}
+                              className="w-10 h-10 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-r from-gray-400 to-gray-600 flex items-center justify-center text-white font-bold text-sm">
+                              {user.full_name?.charAt(0).toUpperCase()}
+                            </div>
+                          )}
                           <div className="absolute bottom-0 right-0 w-3 h-3 bg-gray-500 rounded-full border-2 border-white dark:border-gray-800"></div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
-                            {user.full_name}
-                          </p>
+                          <div className="flex items-center justify-between">
+                            <p className="font-medium text-gray-900 dark:text-gray-100 truncate">
+                              {user.full_name}
+                            </p>
+                            {user.unread_count > 0 && (
+                              <span className="ml-2 inline-flex items-center justify-center px-2 py-1 text-xs font-bold text-white bg-red-500 rounded-full min-w-5 h-5">
+                                {user.unread_count > 99 ? '99+' : user.unread_count}
+                              </span>
+                            )}
+                          </div>
                           <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                            {user.last_login
-                              ? `Son aktif: ${new Date(user.last_login).toLocaleString('tr-TR')}`
+                            {user.last_activity
+                              ? `Son aktif: ${new Date(user.last_activity).toLocaleString('tr-TR')}`
                               : 'Hiç aktif olmamış'}
                           </p>
                         </div>

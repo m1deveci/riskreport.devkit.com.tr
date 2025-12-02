@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { useI18n, useLanguageChange } from '../lib/i18n';
-import { MapPin, AlertTriangle, TrendingUp, Calendar, Zap, Building2, BarChart3, Clock, Lock, Activity, Target, Download, MessageSquare } from 'lucide-react';
-import ChatModal from '../components/ChatModal';
+import { MapPin, AlertTriangle, TrendingUp, Calendar, Zap, Building2, BarChart3, Clock, Lock, Activity, Target, Download } from 'lucide-react';
 import type { UserProfile } from '../lib/auth';
 import {
   calculateLocationHealth,
@@ -55,21 +54,9 @@ export function Dashboard() {
     actionSpeedRanking: [],
   });
   const [loading, setLoading] = useState(true);
-  const [chatOpen, setChatOpen] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   useEffect(() => {
     loadStats();
-  }, []);
-
-  // Listen for user selection in chat modal
-  useEffect(() => {
-    const handleSelectUser = (event: any) => {
-      setSelectedUserId(event.detail);
-    };
-
-    window.addEventListener('selectUser', handleSelectUser);
-    return () => window.removeEventListener('selectUser', handleSelectUser);
   }, []);
 
   // Dil değişiminde sayfayı yeniden render et
@@ -715,21 +702,6 @@ export function Dashboard() {
         )}
       </div>
 
-      {/* Chat Button */}
-      <button
-        onClick={() => setChatOpen(true)}
-        className="fixed bottom-8 right-8 p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-all duration-200 hover:scale-110 flex items-center justify-center"
-        title="Sohbet Aç"
-      >
-        <MessageSquare className="w-6 h-6" />
-      </button>
-
-      {/* Chat Modal */}
-      <ChatModal
-        isOpen={chatOpen}
-        onClose={() => setChatOpen(false)}
-        userId={selectedUserId}
-      />
     </div>
   );
 }

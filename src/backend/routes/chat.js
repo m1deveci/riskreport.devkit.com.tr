@@ -400,5 +400,110 @@ export const createChatRouter = (pool, authenticateToken) => {
     }
   });
 
+  // Get online users with unread message counts
+  router.get('/online/users-list', authenticateToken, async (req, res) => {
+    try {
+      const connection = await pool.getConnection();
+
+      // Get all online users (active in last 1 minute) excluding current user
+      const [onlineUsers] = await connection.execute(
+        `SELECT u.id, u.full_name, u.email, u.profile_picture,
+                us.is_online, us.last_activity,
+                COALESCE(unread.unread_count, 0) as unread_count
+         FROM users u
+         LEFT JOIN user_sessions us ON u.id = us.user_id
+         LEFT JOIN (
+           SELECT sender_id, COUNT(*) as unread_count
+           FROM messages
+           WHERE receiver_id = ? AND is_read = FALSE
+           GROUP BY sender_id
+         ) unread ON u.id = unread.sender_id
+         WHERE u.id != ? AND u.is_active = TRUE
+         ORDER BY CASE WHEN us.is_online = TRUE THEN 0 ELSE 1 END,
+                  unread.unread_count DESC,
+                  u.full_name ASC`,
+        [req.user.id, req.user.id]
+      );
+
+      connection.release();
+      res.json(onlineUsers);
+    } catch (error) {
+      console.error('Get online users error:', error);
+      res.status(500).json({ error: 'Failed to get online users' });
+    }
+  });
+
+  // User heartbeat - update last_activity in user_sessions
+  router.post('/heartbeat', authenticateToken, async (req, res) => {
+    try {
+      const connection = await pool.getConnection();
+
+      await connection.execute(
+        `UPDATE user_sessions
+         SET last_activity = NOW()
+         WHERE user_id = ?`,
+        [req.user.id]
+      );
+
+      connection.release();
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Heartbeat error:', error);
+      res.status(500).json({ error: 'Failed to update heartbeat' });
+    }
+  });
+
+  // Get unread message summary (unread count per sender)
+  router.get('/messages/unread/summary', authenticateToken, async (req, res) => {
+    try {
+      const connection = await pool.getConnection();
+
+      const [counts] = await connection.execute(
+        `SELECT sender_id, COUNT(*) as unread_count
+         FROM messages
+         WHERE receiver_id = ? AND is_read = FALSE
+         GROUP BY sender_id`,
+        [req.user.id]
+      );
+
+      const unreadSummary = {};
+      counts.forEach((row) => {
+        unreadSummary[row.sender_id] = row.unread_count;
+      });
+
+      connection.release();
+      res.json(unreadSummary);
+    } catch (error) {
+      console.error('Get unread summary error:', error);
+      res.status(500).json({ error: 'Failed to get unread summary' });
+    }
+  });
+
+  // Batch mark messages as read from a specific sender
+  router.put('/messages/batch-read', authenticateToken, async (req, res) => {
+    try {
+      const { sender_id } = req.body;
+
+      if (!sender_id) {
+        return res.status(400).json({ error: 'Sender ID is required' });
+      }
+
+      const connection = await pool.getConnection();
+
+      const [result] = await connection.execute(
+        `UPDATE messages
+         SET is_read = TRUE, read_at = NOW()
+         WHERE sender_id = ? AND receiver_id = ? AND is_read = FALSE`,
+        [sender_id, req.user.id]
+      );
+
+      connection.release();
+      res.json({ success: true, updated: result.affectedRows });
+    } catch (error) {
+      console.error('Batch read error:', error);
+      res.status(500).json({ error: 'Failed to mark messages as read' });
+    }
+  });
+
   return router;
 };

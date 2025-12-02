@@ -25,6 +25,10 @@ interface User {
   full_name: string;
   email: string;
   last_login: string;
+  is_online?: boolean;
+  last_activity?: string;
+  unread_count?: number;
+  profile_picture?: string | null;
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '';
@@ -125,6 +129,32 @@ export const useChat = (userId: string | null) => {
     },
     [userId]
   );
+
+  // Mark all messages from a specific sender as read (batch read)
+  const markBatchAsRead = useCallback(async (senderId: string) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/messages/batch-read`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ sender_id: senderId })
+      });
+
+      if (response.ok) {
+        setMessages(prev =>
+          prev.map(msg =>
+            msg.sender_id === senderId && !msg.is_read
+              ? { ...msg, is_read: true, read_at: new Date().toISOString() }
+              : msg
+          )
+        );
+      }
+    } catch (error) {
+      console.error('Error marking batch as read:', error);
+    }
+  }, []);
 
   // Mark all messages as read
   const markAllAsRead = useCallback(async () => {
@@ -284,6 +314,7 @@ export const useChat = (userId: string | null) => {
     sendMessage,
     getConversation,
     markAllAsRead,
+    markBatchAsRead,
     markAsRead,
     editMessage,
     deleteMessage,

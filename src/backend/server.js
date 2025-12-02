@@ -343,12 +343,21 @@ app.post('/api/auth/login', async (req, res) => {
     // Clear failed attempts on successful login
     clearFailedAttempts(clientIp);
 
-    // Update last_login
+    // Update last_login and create/update user session
     const updateConnection = await pool.getConnection();
     await updateConnection.query(
       'UPDATE users SET last_login = NOW() WHERE id = ?',
       [user.id]
     );
+
+    // Create or update user session for online status tracking
+    await updateConnection.query(
+      `INSERT INTO user_sessions (user_id, is_online, last_activity, login_time)
+       VALUES (?, true, NOW(), NOW())
+       ON DUPLICATE KEY UPDATE is_online = true, last_activity = NOW()`,
+      [user.id]
+    );
+
     updateConnection.release();
 
     // Parse location_ids from JSON
@@ -398,6 +407,14 @@ app.post('/api/auth/login', async (req, res) => {
 // Logout Endpoint
 app.post('/api/auth/logout', authenticateToken, async (req, res) => {
   try {
+    // Delete user session to mark as offline
+    const connection = await pool.getConnection();
+    await connection.query(
+      'DELETE FROM user_sessions WHERE user_id = ?',
+      [req.user.id]
+    );
+    connection.release();
+
     // Logout'ı logla
     await logAction(req.user.id, 'LOGOUT', { email: req.user.email, full_name: req.user.full_name });
     res.json({ success: true, message: 'Başarıyla çıkış yapıldı' });
