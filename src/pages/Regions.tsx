@@ -254,8 +254,9 @@ export function Regions() {
         margin: 2,
       });
 
-      // Get location name - use the actual location name from the relationship
-      const locationName = (region.locations as unknown as { name: string })?.name || 'Lokasyon';
+      // Get location name from locations state
+      const location = locations.find(l => l.id === region.location_id);
+      const locationName = location?.name || (region.locations as unknown as { name: string })?.name || 'Lokasyon';
 
       // Create a new canvas with extra space for title and location info
       const titleHeight = 160;
@@ -317,14 +318,19 @@ export function Regions() {
         margin: 2,
       });
 
+      // Get location name from locations state
+      const location = locations.find(l => l.id === region.location_id);
+      const locationName = location?.name || (region.locations as unknown as { name: string })?.name || 'Lokasyon';
+
       // Create modal to display QR code
       const modal = document.createElement('div');
       modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4';
       modal.innerHTML = `
         <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-          <h2 class="text-xl font-semibold text-gray-900 mb-4">QR Kod</h2>
+          <h2 class="text-xl font-semibold text-gray-900 mb-2">📍 ${locationName}</h2>
+          <h3 class="text-lg font-medium text-gray-700 mb-4">${region.name}</h3>
           <div class="flex justify-center mb-4"></div>
-          <p class="text-sm text-gray-600 mb-2 text-center font-mono text-blue-600">${dynamicQrUrl}</p>
+          <p class="text-sm text-gray-600 mb-2 text-center font-mono text-blue-600 break-all">${dynamicQrUrl}</p>
           <button class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">Kopyala</button>
         </div>
       `;
