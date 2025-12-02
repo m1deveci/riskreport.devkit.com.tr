@@ -305,7 +305,8 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
   const getProfilePictureUrl = (userId: string): string | null => {
     const apiUrl = import.meta.env.VITE_API_URL || '';
     const user = availableUsers.find(u => u.id === userId);
-    if (user && (user.has_profile_picture || user.profile_picture)) {
+    // Only return URL if has_profile_picture is explicitly true
+    if (user && user.has_profile_picture === true) {
       return `${apiUrl}/api/profile/picture/${userId}`;
     }
     return null;
