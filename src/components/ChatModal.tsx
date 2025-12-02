@@ -84,8 +84,10 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
     if (isOpen) {
       const loadUsers = async () => {
         try {
+          const apiUrl = import.meta.env.VITE_API_URL || '';
+
           // Send heartbeat to update user's online status
-          await fetch('/api/messages/heartbeat', {
+          await fetch(`${apiUrl}/api/messages/heartbeat`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -96,7 +98,7 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
             setUsersLoading(true);
           }
           // Use the new API endpoint that includes online status and unread counts
-          const response = await fetch('/api/messages/online/users-list', {
+          const response = await fetch(`${apiUrl}/api/messages/online/users-list`, {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
@@ -200,9 +202,11 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
 
     if (!userId) return;
 
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+
     // Start typing indicator
     try {
-      await fetch('/api/messages/typing/start', {
+      await fetch(`${apiUrl}/api/messages/typing/start`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -222,7 +226,7 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
     // Stop typing after 2 seconds of inactivity
     const timeout = setTimeout(async () => {
       try {
-        await fetch('/api/messages/typing/stop', {
+        await fetch(`${apiUrl}/api/messages/typing/stop`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -268,9 +272,11 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
   useEffect(() => {
     if (!isOpen || !userId) return;
 
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+
     const checkTyping = async () => {
       try {
-        const response = await fetch(`/api/messages/typing/status/${userId}`, {
+        const response = await fetch(`${apiUrl}/api/messages/typing/status/${userId}`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
