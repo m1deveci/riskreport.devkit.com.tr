@@ -240,7 +240,10 @@ export function Regions() {
 
   // Generate dynamic QR code URL based on current region data
   function generateQRCodeUrl(region: Region): string {
-    return `${window.location.origin}/report/${region.location_id}/${region.qr_code_token}?region=${region.id}`;
+    // Use VITE_API_URL as base URL for domain portability
+    // This allows the project to be moved to different domains without updating QR codes
+    const baseUrl = import.meta.env.VITE_API_URL || window.location.origin;
+    return `${baseUrl}/report/${region.location_id}/${region.qr_code_token}?region=${region.id}`;
   }
 
   async function generateAndDownloadQRCode(region: Region) {
