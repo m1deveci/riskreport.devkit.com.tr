@@ -38,7 +38,8 @@ export const createChatRouter = (pool, authenticateToken) => {
     try {
       const connection = await pool.getConnection();
       const [users] = await connection.execute(
-        `SELECT DISTINCT u.id, u.full_name, u.email, u.last_login, u.profile_picture,
+        `SELECT DISTINCT u.id, u.full_name, u.email, u.last_login,
+                CASE WHEN u.profile_picture IS NOT NULL THEN true ELSE false END as has_profile_picture,
                 us.is_online, us.last_activity
          FROM users u
          LEFT JOIN user_sessions us ON u.id = us.user_id

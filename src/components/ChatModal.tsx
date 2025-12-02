@@ -266,6 +266,16 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
 
   if (!isOpen) return null;
 
+  // Helper function to build profile picture URL
+  const getProfilePictureUrl = (userId: string): string | null => {
+    const apiUrl = import.meta.env.VITE_API_URL || '';
+    const user = availableUsers.find(u => u.id === userId);
+    if (user && (user.has_profile_picture || user.profile_picture)) {
+      return `${apiUrl}/api/profile/picture/${userId}`;
+    }
+    return null;
+  };
+
   // If no userId selected, show user list
   if (!userId) {
     const filteredUsers = availableUsers.filter(u =>
@@ -344,9 +354,9 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
                         className="w-full p-4 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center space-x-3 text-left"
                       >
                         <div className="relative">
-                          {user.profile_picture ? (
+                          {getProfilePictureUrl(user.id) ? (
                             <img
-                              src={user.profile_picture}
+                              src={getProfilePictureUrl(user.id) || ''}
                               alt={user.full_name}
                               className="w-10 h-10 rounded-full object-cover"
                             />
@@ -407,9 +417,9 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
                         className="w-full p-4 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-center space-x-3 text-left opacity-75"
                       >
                         <div className="relative">
-                          {user.profile_picture ? (
+                          {getProfilePictureUrl(user.id) ? (
                             <img
-                              src={user.profile_picture}
+                              src={getProfilePictureUrl(user.id) || ''}
                               alt={user.full_name}
                               className="w-10 h-10 rounded-full object-cover"
                             />
@@ -458,18 +468,18 @@ const ChatModal: React.FC<ChatModalProps> = ({ isOpen, onClose, userId }) => {
         <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center space-x-3">
             <div className="relative">
-              {selectedUser.profile_picture ? (
+              {selectedUser && getProfilePictureUrl(selectedUser.id) ? (
                 <img
-                  src={selectedUser.profile_picture}
+                  src={getProfilePictureUrl(selectedUser.id) || ''}
                   alt={selectedUser.full_name}
                   className="w-10 h-10 rounded-full object-cover border-2 border-blue-500"
                 />
               ) : (
                 <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-bold">
-                  {selectedUser.full_name?.charAt(0).toUpperCase()}
+                  {selectedUser?.full_name?.charAt(0).toUpperCase()}
                 </div>
               )}
-              {selectedUser.is_online && (
+              {selectedUser?.is_online && (
                 <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-800"></div>
               )}
             </div>

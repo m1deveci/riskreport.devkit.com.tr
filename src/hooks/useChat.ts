@@ -86,7 +86,7 @@ export const useChat = (userId: string | null) => {
             // Set profile picture URL if user has a profile picture
             const userWithPictureUrl = {
               ...user,
-              profile_picture: user.profile_picture ? getProfilePictureUrl(user.id) : null
+              profile_picture: (user as any).has_profile_picture ? getProfilePictureUrl(user.id) : null
             };
             setSelectedUser(userWithPictureUrl);
           }
@@ -160,9 +160,12 @@ export const useChat = (userId: string | null) => {
               : msg
           )
         );
+      } else if (response.status === 403) {
+        // Silently ignore 403 - user may not have permission to mark this sender's messages
+        return;
       }
     } catch (error) {
-      console.error('Error marking batch as read:', error);
+      // Silently ignore network errors for batch read
     }
   }, []);
 
