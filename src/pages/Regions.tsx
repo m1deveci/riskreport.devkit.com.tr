@@ -376,7 +376,21 @@ export function Regions() {
 
               <div className="bg-slate-900/50 rounded p-3 mb-4">
                 <p className="text-xs text-slate-500 mb-1">{t('regions.qrCodeUrl') || 'QR Kod URL'}:</p>
-                <p className="text-xs text-slate-300 font-mono truncate">{region.qr_code_url}</p>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(region.qr_code_url);
+                    // Show toast notification
+                    const toast = document.createElement('div');
+                    toast.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg text-sm z-50 animate-fade-in-out';
+                    toast.textContent = 'Bağlantı kopyalandı!';
+                    document.body.appendChild(toast);
+                    setTimeout(() => toast.remove(), 2000);
+                  }}
+                  className="text-xs text-blue-400 font-mono hover:text-blue-300 hover:underline truncate text-left w-full transition-colors"
+                  title="Kopyalamak için tıklayın"
+                >
+                  {region.qr_code_url}
+                </button>
               </div>
 
               <div className="flex flex-col gap-2">
