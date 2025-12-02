@@ -408,11 +408,13 @@ export const createChatRouter = (pool, authenticateToken) => {
     try {
       const connection = await pool.getConnection();
 
-      // Get all online users (active in last 1 minute) excluding current user
+      // Get all users with calculated online status (active in last 3 minutes)
       const [onlineUsers] = await connection.execute(
         `SELECT u.id, u.full_name, u.email,
                 CASE WHEN u.profile_picture IS NOT NULL THEN true ELSE false END as has_profile_picture,
-                us.is_online, us.last_activity,
+                CASE WHEN us.last_activity IS NOT NULL AND us.last_activity > DATE_SUB(NOW(), INTERVAL 3 MINUTE)
+                     THEN true ELSE false END as is_online,
+                us.last_activity,
                 COALESCE(unread.unread_count, 0) as unread_count
          FROM users u
          LEFT JOIN user_sessions us ON u.id = us.user_id
@@ -423,7 +425,7 @@ export const createChatRouter = (pool, authenticateToken) => {
            GROUP BY sender_id
          ) unread ON u.id = unread.sender_id
          WHERE u.id != ? AND u.is_active = TRUE
-         ORDER BY CASE WHEN us.is_online = TRUE THEN 0 ELSE 1 END,
+         ORDER BY CASE WHEN us.last_activity IS NOT NULL AND us.last_activity > DATE_SUB(NOW(), INTERVAL 3 MINUTE) THEN 0 ELSE 1 END,
                   unread.unread_count DESC,
                   u.full_name ASC`,
         [req.user.id, req.user.id]
