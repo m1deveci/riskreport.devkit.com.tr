@@ -283,7 +283,7 @@ export function Regions() {
 
       // Draw region name
       ctx.fillStyle = '#1F2937'; // Dark gray
-      ctx.font = 'bold 32px Arial, sans-serif';
+      ctx.font = 'bold 24px Arial, sans-serif';
       ctx.fillText(region.name, finalCanvas.width / 2, 38);
 
       // Draw main title
@@ -416,71 +416,88 @@ export function Regions() {
         </select>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredRegions.map((region) => (
-          <div key={region.id} className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md hover:shadow-lg transition-shadow">
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-100 mb-1">{region.name}</h3>
-                  <p className="text-sm text-slate-400">
+      <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-600">
+                <th className="text-left p-4 text-sm font-semibold text-slate-300">{t('regions.name')}</th>
+                <th className="text-left p-4 text-sm font-semibold text-slate-300">{t('regions.location')}</th>
+                <th className="text-left p-4 text-sm font-semibold text-slate-300">{t('regions.description')}</th>
+                <th className="text-center p-4 text-sm font-semibold text-slate-300">{t('common.status') || 'Durum'}</th>
+                <th className="text-center p-4 text-sm font-semibold text-slate-300">{t('regions.qrCode') || 'QR Kod'}</th>
+                <th className="text-center p-4 text-sm font-semibold text-slate-300">{t('common.actions') || 'İşlemler'}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredRegions.map((region) => (
+                <tr key={region.id} className="border-b border-slate-700 hover:bg-slate-700/50 transition-colors">
+                  <td className="p-4">
+                    <div className="flex items-center gap-2">
+                      <QrCode className="w-5 h-5 text-blue-400 flex-shrink-0" />
+                      <span className="text-slate-100 font-medium">{region.name}</span>
+                    </div>
+                  </td>
+                  <td className="p-4 text-slate-300">
                     {(region.locations as unknown as { name: string })?.name}
-                  </p>
-                  <span
-                    className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-2 ${
-                      region.is_active
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}
-                  >
-                    {region.is_active ? t('common.active') : (t('common.inactive') || 'Pasif')}
-                  </span>
-                </div>
-                <QrCode className="w-8 h-8 text-blue-600" />
-              </div>
-
-              <p className="text-sm text-slate-400 mb-4 line-clamp-2">{region.description}</p>
-
-              <div className="bg-slate-900/50 rounded p-3 mb-4">
-                <p className="text-xs text-slate-500 mb-1">{t('regions.qrCodeUrl') || 'QR Kod URL'}:</p>
-                <button
-                  onClick={() => generateAndDisplayQRCode(region)}
-                  className="text-xs text-blue-400 font-mono hover:text-blue-300 hover:underline truncate text-left w-full transition-colors"
-                  title="QR kod oluştur ve görüntüle"
-                >
-                  {generateQRCodeUrl(region)}
-                </button>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={() => generateAndDownloadQRCode(region)}
-                  className="flex items-center justify-center gap-2 bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm"
-                >
-                  <Download className="w-4 h-4" />
-                  {t('regions.downloadQr') || 'QR Kodu İndir'}
-                </button>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => openModal(region)}
-                    disabled={user?.role === 'isg_expert' && !(user.location_ids || []).includes(region.location_id)}
-                    className="flex-1 flex items-center justify-center gap-2 bg-slate-700 text-slate-300 px-3 py-2 rounded-lg hover:bg-slate-600 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                    {t('common.edit')}
-                  </button>
-                  <button
-                    onClick={() => handleDelete(region.id)}
-                    disabled={user?.role === 'isg_expert' && !(user.location_ids || []).includes(region.location_id)}
-                    className="flex items-center justify-center gap-2 bg-red-100 text-red-700 px-3 py-2 rounded-lg hover:bg-red-200 transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
+                  </td>
+                  <td className="p-4 text-slate-400 text-sm max-w-xs truncate">
+                    {region.description || '-'}
+                  </td>
+                  <td className="p-4 text-center">
+                    <span
+                      className={`inline-block px-2 py-1 text-xs font-medium rounded-full ${
+                        region.is_active
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {region.is_active ? t('common.active') : (t('common.inactive') || 'Pasif')}
+                    </span>
+                  </td>
+                  <td className="p-4">
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => generateAndDisplayQRCode(region)}
+                        className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                        title={t('regions.viewQr') || 'QR Kodu Görüntüle'}
+                      >
+                        <QrCode className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => generateAndDownloadQRCode(region)}
+                        className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                        title={t('regions.downloadQr') || 'QR Kodu İndir'}
+                      >
+                        <Download className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    <div className="flex items-center justify-center gap-2">
+                      <button
+                        onClick={() => openModal(region)}
+                        disabled={user?.role === 'isg_expert' && !(user.location_ids || []).includes(region.location_id)}
+                        className="p-2 bg-slate-600 text-slate-300 rounded-lg hover:bg-slate-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={t('common.edit')}
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDelete(region.id)}
+                        disabled={user?.role === 'isg_expert' && !(user.location_ids || []).includes(region.location_id)}
+                        className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={t('common.delete') || 'Sil'}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {filteredRegions.length === 0 && (
