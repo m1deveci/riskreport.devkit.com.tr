@@ -143,10 +143,18 @@ export async function sendNearMissReportEmail(recipients, reportData, locationNa
       throw new Error('No recipients provided');
     }
 
+    // Escape all user-provided data to prevent XSS
+    const safeLocationName = escapeHtml(locationName);
+    const safeIncidentNumber = escapeHtml(reportData.incident_number);
+    const safeFullName = escapeHtml(reportData.full_name);
+    const safePhone = escapeHtml(reportData.phone || 'Belirtilmemiş');
+    const safeCategory = escapeHtml(reportData.category);
+    const safeDescription = escapeHtml(reportData.description || '-');
+
     const mailOptions = {
       from: `"${smtpConfig.fromName}" <${smtpConfig.fromEmail}>`,
       to: recipients.join(','),
-      subject: `Ramak Kala Bildirim - ${reportData.incident_number}`,
+      subject: `Ramak Kala Bildirim - ${safeIncidentNumber}`,
       html: `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #2c3e50; margin: 0; padding: 0; background-color: #f5f7fa;">
           <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f7fa; margin: 0; padding: 0;">
@@ -170,13 +178,13 @@ export async function sendNearMissReportEmail(recipients, reportData, locationNa
                         <tr>
                           <td style="padding: 8px 0; border-bottom: 1px solid #eee;">
                             <p style="margin: 0; font-size: 12px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px;">📍 Lokasyon</p>
-                            <p style="margin: 5px 0 0 0; font-size: 16px; font-weight: 600; color: #2c3e50;">${locationName}</p>
+                            <p style="margin: 5px 0 0 0; font-size: 16px; font-weight: 600; color: #2c3e50;">${safeLocationName}</p>
                           </td>
                         </tr>
                         <tr>
                           <td style="padding: 8px 0;">
                             <p style="margin: 0; font-size: 12px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px;">🔢 Olay No</p>
-                            <p style="margin: 5px 0 0 0; font-size: 16px; font-weight: 600; color: #d32f2f; font-family: 'Courier New', monospace;">${reportData.incident_number}</p>
+                            <p style="margin: 5px 0 0 0; font-size: 16px; font-weight: 600; color: #d32f2f; font-family: 'Courier New', monospace;">${safeIncidentNumber}</p>
                           </td>
                         </tr>
                       </table>
@@ -189,25 +197,25 @@ export async function sendNearMissReportEmail(recipients, reportData, locationNa
                       <!-- Başlayan Kişi -->
                       <div style="margin-bottom: 20px; background: #fafbfc; padding: 15px; border-left: 4px solid #d32f2f; border-radius: 4px;">
                         <p style="margin: 0 0 8px 0; font-size: 11px; color: #95a5a6; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">👤 Başlayan Kişi</p>
-                        <p style="margin: 0; font-size: 15px; color: #2c3e50; font-weight: 500;">${reportData.full_name}</p>
+                        <p style="margin: 0; font-size: 15px; color: #2c3e50; font-weight: 500;">${safeFullName}</p>
                       </div>
 
                       <!-- İletişim -->
                       <div style="margin-bottom: 20px; background: #fafbfc; padding: 15px; border-left: 4px solid #f39c12; border-radius: 4px; direction: ltr; text-align: left;">
                         <p style="margin: 0 0 8px 0; font-size: 11px; color: #95a5a6; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">📞 İletişim</p>
-                        <p style="margin: 0; font-size: 15px; color: #2c3e50; font-weight: 500; font-family: 'Courier New', monospace;">${reportData.phone || 'Belirtilmemiş'}</p>
+                        <p style="margin: 0; font-size: 15px; color: #2c3e50; font-weight: 500; font-family: 'Courier New', monospace;">${safePhone}</p>
                       </div>
 
                       <!-- Kategori -->
                       <div style="margin-bottom: 20px; background: #fafbfc; padding: 15px; border-left: 4px solid #3498db; border-radius: 4px;">
                         <p style="margin: 0 0 8px 0; font-size: 11px; color: #95a5a6; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">📋 Kategori</p>
-                        <p style="margin: 0; font-size: 15px; color: #2c3e50; font-weight: 500; background: #e8f4f8; padding: 8px 12px; border-radius: 4px; display: inline-block;">${reportData.category}</p>
+                        <p style="margin: 0; font-size: 15px; color: #2c3e50; font-weight: 500; background: #e8f4f8; padding: 8px 12px; border-radius: 4px; display: inline-block;">${safeCategory}</p>
                       </div>
 
                       <!-- Açıklama -->
                       <div style="margin-bottom: 20px; background: #fafbfc; padding: 15px; border-left: 4px solid #27ae60; border-radius: 4px;">
                         <p style="margin: 0 0 8px 0; font-size: 11px; color: #95a5a6; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">📝 Açıklama</p>
-                        <p style="margin: 0; font-size: 14px; color: #34495e; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;">${reportData.description || '-'}</p>
+                        <p style="margin: 0; font-size: 14px; color: #34495e; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word;">${safeDescription}</p>
                       </div>
 
                       <!-- Tarih -->
@@ -241,7 +249,7 @@ export async function sendNearMissReportEmail(recipients, reportData, locationNa
           </table>
         </div>
       `,
-      text: `Yeni Ramak Kala Bildirimi\n\nOlay No: ${reportData.incident_number}\nLokasyon: ${locationName}\nBaşlayan Kişi: ${reportData.full_name}\nİletişim: ${reportData.phone || 'Belirtilmemiş'}\nKategori: ${reportData.category}\nAçıklama: ${reportData.description || '-'}\n\nDetaylı bilgi için: https://riskreport.devkit.com.tr/#/logs`,
+      text: `Yeni Ramak Kala Bildirimi\n\nOlay No: ${safeIncidentNumber}\nLokasyon: ${safeLocationName}\nBaşlayan Kişi: ${safeFullName}\nİletişim: ${safePhone}\nKategori: ${safeCategory}\nAçıklama: ${safeDescription}\n\nDetaylı bilgi için: https://riskreport.devkit.com.tr/#/logs`,
     };
 
     const result = await transporter.sendMail(mailOptions);
@@ -268,6 +276,11 @@ export async function sendWelcomeEmail(email, fullName, plainPassword, locationI
       throw new Error('Email service not initialized. Please call initializeEmailService first.');
     }
 
+    // Escape all user-provided data to prevent XSS
+    const safeFullName = escapeHtml(fullName);
+    const safeEmail = escapeHtml(email);
+    const safePassword = escapeHtml(plainPassword);
+
     const loginUrl = 'https://riskreport.devkit.com.tr';
     const roleDisplay = {
       'admin': 'Yönetici',
@@ -276,7 +289,7 @@ export async function sendWelcomeEmail(email, fullName, plainPassword, locationI
     }[role] || role;
 
     const locationsList = locationNames && locationNames.length > 0
-      ? locationNames.map((name, idx) => `<li style="margin: 5px 0; font-size: 14px; color: #2c3e50;"><strong>${name}</strong></li>`).join('')
+      ? locationNames.map((name, idx) => `<li style="margin: 5px 0; font-size: 14px; color: #2c3e50;"><strong>${escapeHtml(name)}</strong></li>`).join('')
       : '<li style="margin: 5px 0; font-size: 14px; color: #666;">Hiç lokasyon atanmamış</li>';
 
     const mailOptions = {
@@ -304,7 +317,7 @@ export async function sendWelcomeEmail(email, fullName, plainPassword, locationI
                   <tr>
                     <td style="padding: 40px 30px;">
                       <p style="margin: 0 0 20px 0; font-size: 16px; color: #2c3e50; line-height: 1.6;">
-                        Merhaba <strong>${fullName}</strong>,
+                        Merhaba <strong>${safeFullName}</strong>,
                       </p>
                       <p style="margin: 0 0 25px 0; font-size: 15px; color: #555; line-height: 1.6;">
                         Ramakkala Raporlama Sistemi'nde bir hesap oluşturulmuştur. Aşağıdaki bilgileri kullanarak sisteme giriş yapabilirsiniz.
@@ -318,7 +331,7 @@ export async function sendWelcomeEmail(email, fullName, plainPassword, locationI
                         <div style="margin-bottom: 15px;">
                           <label style="display: block; font-size: 12px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 5px;">E-posta Adresi:</label>
                           <div style="background: white; padding: 12px; border-radius: 5px; border: 1px solid #e0e7ff; font-family: 'Courier New', monospace; font-size: 14px; color: #2c3e50; word-break: break-all;">
-                            ${email}
+                            ${safeEmail}
                           </div>
                         </div>
 
@@ -326,7 +339,7 @@ export async function sendWelcomeEmail(email, fullName, plainPassword, locationI
                         <div style="margin-bottom: 15px;">
                           <label style="display: block; font-size: 12px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 5px;">Parola:</label>
                           <div style="background: white; padding: 12px; border-radius: 5px; border: 1px solid #e0e7ff; font-family: 'Courier New', monospace; font-size: 14px; color: #2c3e50; letter-spacing: 2px;">
-                            ${plainPassword}
+                            ${safePassword}
                           </div>
                           <p style="margin: 8px 0 0 0; font-size: 12px; color: #ef4444;">⚠️ Parolayı güvenli bir yerde saklayın ve başkasıyla paylaşmayın</p>
                         </div>
@@ -390,7 +403,7 @@ export async function sendWelcomeEmail(email, fullName, plainPassword, locationI
           </table>
         </div>
       `,
-      text: `Hoş Geldiniz - Risk Report Sistemi\n\nMerhaba ${fullName},\n\nRisk Report Sistemi'nde bir hesap oluşturulmuştur. Aşağıdaki bilgileri kullanarak sisteme giriş yapabilirsiniz.\n\n--- GİRİŞ BİLGİLERİ ---\nE-posta: ${email}\nParola: ${plainPassword}\nRol: ${roleDisplay}\n\n--- YETKİLENDİRİLMİŞ LOKASYONLAR ---\n${locationNames && locationNames.length > 0 ? locationNames.join('\n') : 'Hiç lokasyon atanmamış'}\n\nGiriş URL'si: ${loginUrl}\n\nRisk Report Sistemi`
+      text: `Hoş Geldiniz - Risk Report Sistemi\n\nMerhaba ${safeFullName},\n\nRisk Report Sistemi'nde bir hesap oluşturulmuştur. Aşağıdaki bilgileri kullanarak sisteme giriş yapabilirsiniz.\n\n--- GİRİŞ BİLGİLERİ ---\nE-posta: ${safeEmail}\nParola: ${safePassword}\nRol: ${roleDisplay}\n\n--- YETKİLENDİRİLMİŞ LOKASYONLAR ---\n${locationNames && locationNames.length > 0 ? locationNames.map(n => escapeHtml(n)).join('\n') : 'Hiç lokasyon atanmamış'}\n\nGiriş URL'si: ${loginUrl}\n\nRisk Report Sistemi`
     };
 
     const result = await transporter.sendMail(mailOptions);
@@ -413,6 +426,11 @@ export async function sendPasswordResetNotificationEmail(email, fullName, plainP
     if (!transporter) {
       throw new Error('Email service not initialized. Please call initializeEmailService first.');
     }
+
+    // Escape all user-provided data to prevent XSS
+    const safeFullName = escapeHtml(fullName);
+    const safeEmail = escapeHtml(email);
+    const safePassword = escapeHtml(plainPassword);
 
     const loginUrl = 'https://riskreport.devkit.com.tr';
 
@@ -441,7 +459,7 @@ export async function sendPasswordResetNotificationEmail(email, fullName, plainP
                   <tr>
                     <td style="padding: 40px 30px;">
                       <p style="margin: 0 0 20px 0; font-size: 16px; color: #2c3e50; line-height: 1.6;">
-                        Merhaba <strong>${fullName}</strong>,
+                        Merhaba <strong>${safeFullName}</strong>,
                       </p>
                       <p style="margin: 0 0 25px 0; font-size: 15px; color: #555; line-height: 1.6;">
                         Parolanız sistem yöneticisi tarafından sıfırlanmıştır. Aşağıdaki yeni bilgileri kullanarak sisteme giriş yapabilirsiniz.
@@ -455,7 +473,7 @@ export async function sendPasswordResetNotificationEmail(email, fullName, plainP
                         <div style="margin-bottom: 15px;">
                           <label style="display: block; font-size: 12px; color: #92400e; text-transform: uppercase; margin-bottom: 5px;">E-posta Adresi:</label>
                           <div style="background: white; padding: 12px; border-radius: 5px; border: 1px solid #fbbf24; font-family: 'Courier New', monospace; font-size: 14px; color: #2c3e50; word-break: break-all;">
-                            ${email}
+                            ${safeEmail}
                           </div>
                         </div>
 
@@ -463,7 +481,7 @@ export async function sendPasswordResetNotificationEmail(email, fullName, plainP
                         <div>
                           <label style="display: block; font-size: 12px; color: #92400e; text-transform: uppercase; margin-bottom: 5px;">Yeni Parola:</label>
                           <div style="background: white; padding: 12px; border-radius: 5px; border: 1px solid #fbbf24; font-family: 'Courier New', monospace; font-size: 14px; color: #2c3e50; letter-spacing: 2px; font-weight: 600;">
-                            ${plainPassword}
+                            ${safePassword}
                           </div>
                           <p style="margin: 8px 0 0 0; font-size: 12px; color: #ef4444;">⚠️ Parolayı güvenli bir yerde saklayın ve başkasıyla paylaşmayın</p>
                         </div>
@@ -515,7 +533,7 @@ export async function sendPasswordResetNotificationEmail(email, fullName, plainP
           </table>
         </div>
       `,
-      text: `Parolanız Sıfırlandı\n\nMerhaba ${fullName},\n\nParolanız sistem yöneticisi tarafından sıfırlanmıştır. Aşağıdaki yeni bilgileri kullanarak sisteme giriş yapabilirsiniz.\n\n--- YENİ GİRİŞ BİLGİLERİ ---\nE-posta: ${email}\nYeni Parola: ${plainPassword}\n\nGiriş URL'si: ${loginUrl}\n\nIlk giriş yaptığınızda parolanızı değiştirmenizi tavsiye ederiz.\n\nRisk Report Sistemi`
+      text: `Parolanız Sıfırlandı\n\nMerhaba ${safeFullName},\n\nParolanız sistem yöneticisi tarafından sıfırlanmıştır. Aşağıdaki yeni bilgileri kullanarak sisteme giriş yapabilirsiniz.\n\n--- YENİ GİRİŞ BİLGİLERİ ---\nE-posta: ${safeEmail}\nYeni Parola: ${safePassword}\n\nGiriş URL'si: ${loginUrl}\n\nIlk giriş yaptığınızda parolanızı değiştirmenizi tavsiye ederiz.\n\nRisk Report Sistemi`
     };
 
     const result = await transporter.sendMail(mailOptions);
