@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
 import { logAction, LogActions } from '../lib/logger';
 import { api } from '../lib/api';
-import { Search, Filter, X, AlertTriangle, Eye, Download, Image as ImageIcon, Lock, History, FileDown } from 'lucide-react';
+import { Search, Filter, X, AlertTriangle, Eye, Download, Image as ImageIcon, Lock, History, FileDown, UserPlus, Users } from 'lucide-react';
 import type { UserProfile } from '../lib/auth';
 import { useI18n, useLanguageChange } from '../lib/i18n';
 import { exportReportsAsPDF, exportReportsAsExcel, type ReportExportData } from '../lib/exportUtils';
@@ -24,6 +24,8 @@ interface Report {
   region_name?: string;
   locations?: { name: string };
   regions?: { name: string };
+  assigned_user_id?: string;
+  assigned_user_name?: string;
 }
 
 interface Location {
@@ -50,6 +52,14 @@ interface ReportHistory {
   created_at: string;
 }
 
+interface User {
+  id: string;
+  full_name: string;
+  email: string;
+  role: string;
+  location_ids: string[];
+}
+
 const CATEGORIES = [
   'Kayma/Düşme',
   'Elektrik',
@@ -61,7 +71,7 @@ const CATEGORIES = [
   'Diğer',
 ];
 
-const STATUSES = ['Yeni', 'İnceleniyor', 'Kapatıldı'];
+const STATUSES = ['Yeni', 'Devam Ediyor', 'Tamamlandı'];
 
 // Helper function to translate field names based on language
 const getFieldDisplayName = (fieldName: string, t: (key: string) => string): string => {
@@ -93,10 +103,19 @@ export function Reports() {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showHistoryModal, setShowHistoryModal] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [showAssignModal, setShowAssignModal] = useState(false);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [reportHistory, setReportHistory] = useState<ReportHistory[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [showQuickAddUser, setShowQuickAddUser] = useState(false);
+  const [newUserData, setNewUserData] = useState({
+    full_name: '',
+    email: '',
+    password: '',
+  });
   const [filters, setFilters] = useState({
     location_id: '',
     region_id: '',
@@ -283,6 +302,22 @@ export function Reports() {
       const userLocationIds = currentUser.location_ids || [];
       return userLocationIds.includes(report.location_id);
     }
+    if (currentUser.role === 'viewer') {
+      // Viewer can only edit reports assigned to them
+      return report.assigned_user_id === currentUser.id;
+    }
+    return false;
+  }
+
+  function canDeleteReport(report: Report): boolean {
+    // Only admin and isg_expert can delete reports
+    if (currentUser.role === 'admin') {
+      return true;
+    }
+    if (currentUser.role === 'isg_expert') {
+      const userLocationIds = currentUser.location_ids || [];
+      return userLocationIds.includes(report.location_id);
+    }
     return false;
   }
 
@@ -424,6 +459,123 @@ export function Reports() {
       });
     } finally {
       setIsDeleting(false);
+    }
+  }
+
+  async function loadUsers() {
+    try {
+      const data = await api.users.getList();
+      setUsers(data || []);
+    } catch (err) {
+      console.error('Failed to load users:', err);
+    }
+  }
+
+  function openAssignModal(report: Report) {
+    setSelectedReport(report);
+    setShowAssignModal(true);
+    setSelectedUserId('');
+    setShowQuickAddUser(false);
+    loadUsers();
+  }
+
+  async function handleAssignReport() {
+    if (!selectedReport || !selectedUserId) {
+      await Swal.fire({
+        icon: 'warning',
+        title: 'Uyarı',
+        text: 'Lütfen bir kullanıcı seçin',
+        confirmButtonColor: '#f59e0b',
+        confirmButtonText: 'Tamam',
+      });
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:6000'}/api/reports/${selectedReport.id}/assign`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ user_id: selectedUserId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Rapor atama başarısız');
+      }
+
+      await loadData();
+      setShowAssignModal(false);
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Başarılı',
+        text: 'Rapor başarıyla kullanıcıya atandı ve e-posta gönderildi',
+        confirmButtonColor: '#3b82f6',
+        confirmButtonText: 'Tamam',
+      });
+    } catch (err) {
+      console.error('Failed to assign report:', err);
+      await Swal.fire({
+        icon: 'error',
+        title: 'Hata',
+        text: err instanceof Error ? err.message : 'Rapor atama başarısız',
+        confirmButtonColor: '#ef4444',
+        confirmButtonText: 'Tamam',
+      });
+    }
+  }
+
+  async function handleQuickAddUser() {
+    if (!newUserData.full_name || !newUserData.email || !newUserData.password) {
+      await Swal.fire({
+        icon: 'warning',
+        title: 'Uyarı',
+        text: 'Tüm alanları doldurun',
+        confirmButtonColor: '#f59e0b',
+        confirmButtonText: 'Tamam',
+      });
+      return;
+    }
+
+    if (!selectedReport) return;
+
+    try {
+      const userData = {
+        full_name: newUserData.full_name,
+        email: newUserData.email,
+        password: newUserData.password,
+        role: 'viewer',
+        location_ids: [selectedReport.location_id],
+      };
+
+      const result = await api.users.create(userData);
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Başarılı',
+        text: 'Kullanıcı başarıyla oluşturuldu',
+        confirmButtonColor: '#3b82f6',
+        confirmButtonText: 'Tamam',
+      });
+
+      // Reload users and select the new user
+      await loadUsers();
+      setSelectedUserId(result.id);
+      setShowQuickAddUser(false);
+      setNewUserData({ full_name: '', email: '', password: '' });
+    } catch (err) {
+      console.error('Failed to create user:', err);
+      await Swal.fire({
+        icon: 'error',
+        title: 'Hata',
+        text: err instanceof Error ? err.message : 'Kullanıcı oluşturma başarısız',
+        confirmButtonColor: '#ef4444',
+        confirmButtonText: 'Tamam',
+      });
     }
   }
 
@@ -682,13 +834,24 @@ export function Reports() {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => openDetail(report)}
-                      className="text-blue-600 hover:text-blue-900 inline-flex items-center gap-1"
-                    >
-                      <Eye className="w-4 h-4" />
-                      {t('reports.viewDetails') || 'Detayları Gör'}
-                    </button>
+                    <div className="flex items-center justify-end gap-3">
+                      <button
+                        onClick={() => openDetail(report)}
+                        className="text-blue-600 hover:text-blue-900 inline-flex items-center gap-1"
+                      >
+                        <Eye className="w-4 h-4" />
+                        {t('reports.viewDetails') || 'Detayları Gör'}
+                      </button>
+                      {(currentUser?.role === 'admin' || currentUser?.role === 'isg_expert') && (
+                        <button
+                          onClick={() => openAssignModal(report)}
+                          className="text-green-600 hover:text-green-900 inline-flex items-center gap-1"
+                          title="Kullanıcıya Ata"
+                        >
+                          <UserPlus className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -772,7 +935,8 @@ export function Reports() {
                   <select
                     value={editStatus}
                     onChange={(e) => setEditStatus(e.target.value)}
-                    className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    disabled={!canEditReport(selectedReport)}
+                    className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {STATUSES.map((status) => (
                       <option key={status} value={status}>
@@ -834,7 +998,8 @@ export function Reports() {
                   value={editNotes}
                   onChange={(e) => setEditNotes(e.target.value)}
                   rows={4}
-                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  disabled={!canEditReport(selectedReport)}
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder={t('reports.notesPlaceholder') || 'Rapor hakkında notlarınızı buraya ekleyin...'}
                 />
               </div>
@@ -854,23 +1019,23 @@ export function Reports() {
                   <History className="w-4 h-4" />
                   {t('reports.history') || 'Geçmiş'}
                 </button>
+                {selectedReport && canDeleteReport(selectedReport) && (
+                  <button
+                    onClick={handleDeleteReport}
+                    disabled={isDeleting}
+                    className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {isDeleting ? (t('common.deleting') || 'Siliniyor...') : t('common.delete')}
+                  </button>
+                )}
                 {selectedReport && canEditReport(selectedReport) && (
-                  <>
-                    <button
-                      onClick={handleDeleteReport}
-                      disabled={isDeleting}
-                      className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      {isDeleting ? (t('common.deleting') || 'Siliniyor...') : t('common.delete')}
-                    </button>
-                    <button
-                      onClick={handleUpdateReport}
-                      disabled={isDeleting}
-                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      {t('common.save')}
-                    </button>
-                  </>
+                  <button
+                    onClick={handleUpdateReport}
+                    disabled={isDeleting}
+                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {t('common.save')}
+                  </button>
                 )}
               </div>
             </div>
@@ -972,6 +1137,147 @@ export function Reports() {
               >
                 {t('common.close') || 'Kapat'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAssignModal && selectedReport && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 shadow-xl backdrop-blur-md max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-slate-700 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Users className="w-6 h-6 text-green-400" />
+                <div>
+                  <h2 className="text-xl font-semibold text-white">Kullanıcıya Ata</h2>
+                  <p className="text-sm text-slate-400">{selectedReport.incident_number}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowAssignModal(false)}
+                className="text-slate-400 hover:text-slate-300"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              {!showQuickAddUser ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Kullanıcı Seçin
+                    </label>
+                    <select
+                      value={selectedUserId}
+                      onChange={(e) => setSelectedUserId(e.target.value)}
+                      className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">Kullanıcı seçin...</option>
+                      {users
+                        .filter((user) => {
+                          // Admin sees all users
+                          if (currentUser?.role === 'admin') return true;
+                          // ISG Expert sees only users from their locations
+                          if (currentUser?.role === 'isg_expert') {
+                            const userLocationIds = currentUser.location_ids || [];
+                            return user.location_ids.some((locId) => userLocationIds.includes(locId));
+                          }
+                          return false;
+                        })
+                        .map((user) => (
+                          <option key={user.id} value={user.id}>
+                            {user.full_name} ({user.email})
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleAssignReport}
+                      disabled={!selectedUserId}
+                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    >
+                      Atama Yap
+                    </button>
+                    <button
+                      onClick={() => setShowQuickAddUser(true)}
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      <UserPlus className="w-4 h-4 inline mr-2" />
+                      Hızlı Kullanıcı Ekle
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h3 className="text-lg font-semibold text-white mb-4">Yeni Kullanıcı Oluştur</h3>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Ad Soyad
+                    </label>
+                    <input
+                      type="text"
+                      value={newUserData.full_name}
+                      onChange={(e) => setNewUserData({ ...newUserData, full_name: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Ad Soyad"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      E-posta
+                    </label>
+                    <input
+                      type="email"
+                      value={newUserData.email}
+                      onChange={(e) => setNewUserData({ ...newUserData, email: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="email@example.com"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-2">
+                      Parola
+                    </label>
+                    <input
+                      type="password"
+                      value={newUserData.password}
+                      onChange={(e) => setNewUserData({ ...newUserData, password: e.target.value })}
+                      className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Parola (min. 6 karakter)"
+                    />
+                  </div>
+
+                  <div className="bg-blue-900/30 border border-blue-700 rounded-lg p-3">
+                    <p className="text-sm text-blue-300">
+                      ℹ️ Kullanıcı <strong>Çalışan (Viewer)</strong> rolüyle ve <strong>{locations.find(l => l.id === selectedReport.location_id)?.name || 'seçili'}</strong> lokasyonuna atanarak oluşturulacaktır.
+                    </p>
+                    <p className="text-sm text-blue-200 mt-2">
+                      💡 Bu kullanıcı sadece kendisine atanan raporları görebilir ve düzenleyebilir. İSG Uzmanı eklemek için Users sayfasını kullanın.
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowQuickAddUser(false)}
+                      className="flex-1 px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
+                    >
+                      Geri
+                    </button>
+                    <button
+                      onClick={handleQuickAddUser}
+                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      Kullanıcı Oluştur ve Devam Et
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

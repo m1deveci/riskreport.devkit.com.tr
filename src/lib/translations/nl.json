@@ -14,6 +14,7 @@
     "close": "Sluiten",
     "active": "Actief",
     "inactive": "Inactief",
+    "status": "Status",
     "actions": "Acties",
     "all": "Alles",
     "unknown": "Onbekend",
@@ -33,7 +34,7 @@
     "dashboard": "Dashboard",
     "locations": "Locaties",
     "regions": "Regio's",
-    "reports": "Bijna-Ongevallen Rapporten",
+    "reports": "Bijna-Ongevallen en Gevaar Rapporten",
     "logs": "Systeemlogboeken",
     "users": "Gebruikers en Experts",
     "settings": "Instellingen"
@@ -197,10 +198,12 @@
     "createFirstRegion": "Maak uw eerste regio aan om te beginnen",
     "selectLocation": "Locatie selecteren",
     "qrCodeUrl": "QR-Code URL",
+    "scanCount": "Scan-aantal",
+    "viewQr": "QR-code bekijken",
     "downloadQr": "QR-code downloaden"
   },
   "reports": {
-    "title": "Bijna-Ongevallen Rapporten",
+    "title": "Bijna-Ongevallen en Gevaar Rapporten",
     "subtitle": "Bekijk en beheer alle bijna-ongelukken",
     "search": "Rapporten zoeken...",
     "filter": "Filteren",

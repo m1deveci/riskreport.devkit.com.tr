@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { signOut } from '../lib/auth';
 import { useI18n, LANGUAGES, useLanguageChange } from '../lib/i18n';
+import ChatPopup from './ChatPopup';
+import ChatPortal from './ChatPortal';
 import type { UserProfile } from '../lib/auth';
 
 interface AdminLayoutProps {
@@ -44,6 +46,11 @@ const getMenuItems = (t: (key: string) => string, userRole?: string) => {
     { id: 'users', label: t('sidebar.users'), icon: Users },
     { id: 'settings', label: t('sidebar.settings'), icon: Settings, adminOnly: true },
   ];
+
+  // Viewer (atanan kullanıcılar) sadece Reports sayfasını görebilir
+  if (userRole === 'viewer') {
+    return allItems.filter(item => item.id === 'reports');
+  }
 
   // ISG Expert kullanıcıları logs ve settings'i görmemeli
   if (userRole === 'isg_expert') {
@@ -104,6 +111,32 @@ export function AdminLayout({ children, currentUser, currentPage, onNavigate }: 
     loadNewReportsCount();
   }, []);
 
+  // Update user last_activity every minute to keep user online status
+  useEffect(() => {
+    const updateActivity = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        await fetch('/api/auth/activity', {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      } catch (err) {
+        console.error('Failed to update activity:', err);
+      }
+    };
+
+    // Update immediately and then every minute
+    updateActivity();
+    const interval = setInterval(updateActivity, 60000); // 60 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
   async function handleLogout() {
     try {
       await signOut();
@@ -114,7 +147,8 @@ export function AdminLayout({ children, currentUser, currentPage, onNavigate }: 
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+    <>
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
       {/* Header */}
       <div className="fixed top-0 left-0 right-0 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-700 z-50 backdrop-blur-md h-16">
         <div className="flex items-center justify-between px-3 sm:px-4 h-full gap-2 sm:gap-4">
@@ -261,5 +295,11 @@ export function AdminLayout({ children, currentUser, currentPage, onNavigate }: 
         <div className="p-4 md:p-6 lg:p-8">{children}</div>
       </main>
     </div>
+
+      {/* Chat Popup Portal - Rendered in document.body to avoid layout constraints */}
+      <ChatPortal>
+        <ChatPopup currentUser={currentUser} />
+      </ChatPortal>
+    </>
   );
 }

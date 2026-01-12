@@ -14,6 +14,7 @@
     "close": "Schließen",
     "active": "Aktiv",
     "inactive": "Inaktiv",
+    "status": "Status",
     "actions": "Aktionen",
     "all": "Alles",
     "unknown": "Unbekannt",
@@ -33,7 +34,7 @@
     "dashboard": "Übersicht",
     "locations": "Standorte",
     "regions": "Regionen",
-    "reports": "Beinahe-Unfälle-Berichte",
+    "reports": "Beinahe-Unfälle- und Gefahren-Berichte",
     "logs": "Systemprotokolle",
     "users": "Benutzer und Experten",
     "settings": "Einstellungen"
@@ -197,10 +198,12 @@
     "createFirstRegion": "Erstellen Sie Ihre erste Region, um zu beginnen",
     "selectLocation": "Standort wählen",
     "qrCodeUrl": "QR-Code-URL",
+    "scanCount": "Scan-Anzahl",
+    "viewQr": "QR-Code ansehen",
     "downloadQr": "QR-Code herunterladen"
   },
   "reports": {
-    "title": "Beinahe-Unfälle-Berichte",
+    "title": "Beinahe-Unfälle- und Gefahren-Berichte",
     "subtitle": "Alle Beinahe-Unfälle anzeigen und verwalten",
     "search": "Berichte suchen...",
     "filter": "Filtern",

@@ -513,6 +513,254 @@ export async function sendPasswordResetNotificationEmail(email, fullName, plainP
 }
 
 /**
+ * Send report assignment notification email
+ * @param {string} email - Recipient email address
+ * @param {string} userName - User's full name
+ * @param {Object} reportData - Report data
+ * @param {string} locationName - Location name
+ */
+export async function sendReportAssignmentEmail(email, userName, reportData, locationName) {
+  try {
+    if (!transporter) {
+      throw new Error('Email service not initialized. Please call initializeEmailService first.');
+    }
+
+    const reportUrl = `https://riskreport.devkit.com.tr/#/reports`;
+
+    const mailOptions = {
+      from: `"${smtpConfig.fromName}" <${smtpConfig.fromEmail}>`,
+      to: email,
+      subject: `Size Bir Rapor Atandı - ${reportData.incident_number}`,
+      html: `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f7fa; margin: 0; padding: 0;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f7fa;">
+            <tr>
+              <td align="center" style="padding: 40px 20px;">
+                <table width="100%" max-width="600px" cellpadding="0" cellspacing="0" style="background-color: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+
+                  <!-- Header -->
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 40px 30px; text-align: center;">
+                      <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: white;">📋 Size Bir Rapor Atandı</h1>
+                      <p style="margin: 10px 0 0 0; font-size: 16px; color: rgba(255,255,255,0.9);">Lütfen aşağıdaki raporu inceleyin ve gerekli işlemleri yapın</p>
+                    </td>
+                  </tr>
+
+                  <!-- Content -->
+                  <tr>
+                    <td style="padding: 40px 30px;">
+                      <p style="margin: 0 0 20px 0; font-size: 16px; color: #2c3e50; line-height: 1.6;">
+                        Merhaba <strong>${userName}</strong>,
+                      </p>
+                      <p style="margin: 0 0 25px 0; font-size: 15px; color: #555; line-height: 1.6;">
+                        Size bir Ramak Kala ve Tehlike raporu atanmıştır. Lütfen raporun detaylarını aşağıda inceleyip gerekli işlemleri yapınız.
+                      </p>
+
+                      <!-- Report Details Card -->
+                      <div style="background: linear-gradient(135deg, #f0f4ff 0%, #f9fbff 100%); border: 2px solid #dbeafe; border-radius: 8px; padding: 25px; margin-bottom: 25px;">
+                        <p style="margin: 0 0 15px 0; font-size: 13px; color: #7f8c8d; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">📄 Rapor Bilgileri</p>
+
+                        <div style="margin-bottom: 15px;">
+                          <label style="display: block; font-size: 12px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 5px;">Olay Numarası:</label>
+                          <div style="background: white; padding: 12px; border-radius: 5px; border: 1px solid #e0e7ff; font-family: 'Courier New', monospace; font-size: 14px; color: #2c3e50; font-weight: 600;">
+                            ${reportData.incident_number}
+                          </div>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                          <label style="display: block; font-size: 12px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 5px;">Lokasyon:</label>
+                          <div style="background: white; padding: 12px; border-radius: 5px; border: 1px solid #e0e7ff; font-size: 14px; color: #2c3e50;">
+                            ${locationName}
+                          </div>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                          <label style="display: block; font-size: 12px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 5px;">Kategori:</label>
+                          <div style="background: #dbeafe; padding: 12px; border-radius: 5px; border: 1px solid #93c5fd; font-size: 14px; color: #1e40af; font-weight: 600;">
+                            ${reportData.category}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label style="display: block; font-size: 12px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 5px;">Açıklama:</label>
+                          <div style="background: white; padding: 12px; border-radius: 5px; border: 1px solid #e0e7ff; font-size: 14px; color: #2c3e50; line-height: 1.6;">
+                            ${reportData.description || 'Açıklama girilmemiş'}
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- CTA Button -->
+                      <div style="text-align: center; margin-bottom: 30px;">
+                        <a href="${reportUrl}" style="display: inline-block; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; padding: 14px 40px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);">
+                          🔍 Raporu Görüntüle
+                        </a>
+                      </div>
+
+                      <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 6px; padding: 15px;">
+                        <p style="margin: 0; font-size: 13px; color: #92400e; line-height: 1.6;">
+                          <strong>ℹ️ Not:</strong> Bu raporu sisteme giriş yaptıktan sonra Raporlar sayfasında detaylı olarak inceleyebilirsiniz.
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- Footer -->
+                  <tr>
+                    <td style="background-color: #1f2937; color: rgba(255,255,255,0.8); padding: 25px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+                      <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600;">Ramak Kala ve Tehlike Raporlama Sistemi</p>
+                      <p style="margin: 0; font-size: 12px; opacity: 0.8;">Güvenli ve Sağlıklı Çalışma Ortamı İçin</p>
+                      <p style="margin: 10px 0 0 0; font-size: 11px; opacity: 0.6;">Bu e-posta otomatik olarak oluşturulmuştur.</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </div>
+      `,
+      text: `Size Bir Rapor Atandı\n\nMerhaba ${userName},\n\nSize bir Ramak Kala ve Tehlike raporu atanmıştır.\n\n--- RAPOR BİLGİLERİ ---\nOlay Numarası: ${reportData.incident_number}\nLokasyon: ${locationName}\nKategori: ${reportData.category}\nAçıklama: ${reportData.description || 'Açıklama girilmemiş'}\n\nRaporu görüntülemek için: ${reportUrl}\n\nRamak Kala ve Tehlike Raporlama Sistemi`
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log('[REPORT_ASSIGNMENT] Email sent to:', email, '- Message ID:', result.messageId);
+    return result;
+  } catch (error) {
+    console.error('[REPORT_ASSIGNMENT] Error sending email:', error);
+    throw new Error('Rapor atama e-postası gönderilemedi');
+  }
+}
+
+/**
+ * Send report update notification to ISG Experts
+ * @param {Array} recipients - Array of ISG Expert email addresses
+ * @param {string} userName - User who made the changes
+ * @param {Object} reportData - Report data
+ * @param {Array} changes - Array of changes made
+ * @param {string} locationName - Location name
+ */
+export async function sendReportUpdateNotification(recipients, userName, reportData, changes, locationName) {
+  try {
+    if (!transporter) {
+      throw new Error('Email service not initialized. Please call initializeEmailService first.');
+    }
+
+    if (!recipients || recipients.length === 0) {
+      throw new Error('No recipients provided');
+    }
+
+    const changesHtml = changes.map(change => `
+      <div style="background: #f3f4f6; padding: 12px; border-radius: 5px; margin-bottom: 10px;">
+        <p style="margin: 0; font-size: 13px; color: #6b7280; font-weight: 600;">${change.field_display}</p>
+        <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
+          <span style="color: #ef4444; font-size: 14px;">${change.old_value || '-'}</span>
+          <span style="color: #6b7280;">→</span>
+          <span style="color: #10b981; font-size: 14px; font-weight: 600;">${change.new_value || '-'}</span>
+        </div>
+      </div>
+    `).join('');
+
+    const reportUrl = `https://riskreport.devkit.com.tr/#/reports`;
+
+    const mailOptions = {
+      from: `"${smtpConfig.fromName}" <${smtpConfig.fromEmail}>`,
+      to: recipients.join(','),
+      subject: `Rapor Güncellendi - ${reportData.incident_number}`,
+      html: `
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f7fa; margin: 0; padding: 0;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f7fa;">
+            <tr>
+              <td align="center" style="padding: 40px 20px;">
+                <table width="100%" max-width="600px" cellpadding="0" cellspacing="0" style="background-color: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden;">
+
+                  <!-- Header -->
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); padding: 40px 30px; text-align: center;">
+                      <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: white;">🔔 Rapor Güncellendi</h1>
+                      <p style="margin: 10px 0 0 0; font-size: 16px; color: rgba(255,255,255,0.9);">Bir raporda değişiklik yapıldı</p>
+                    </td>
+                  </tr>
+
+                  <!-- Content -->
+                  <tr>
+                    <td style="padding: 40px 30px;">
+                      <p style="margin: 0 0 20px 0; font-size: 16px; color: #2c3e50; line-height: 1.6;">
+                        <strong>${userName}</strong> tarafından bir raporda değişiklik yapıldı.
+                      </p>
+
+                      <!-- Report Details Card -->
+                      <div style="background: linear-gradient(135deg, #fef3c7 0%, #fef9e7 100%); border: 2px solid #fcd34d; border-radius: 8px; padding: 25px; margin-bottom: 25px;">
+                        <p style="margin: 0 0 15px 0; font-size: 13px; color: #92400e; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">📄 Rapor Bilgileri</p>
+
+                        <div style="margin-bottom: 15px;">
+                          <label style="display: block; font-size: 12px; color: #92400e; text-transform: uppercase; margin-bottom: 5px;">Olay Numarası:</label>
+                          <div style="background: white; padding: 12px; border-radius: 5px; border: 1px solid #fbbf24; font-family: 'Courier New', monospace; font-size: 14px; color: #2c3e50; font-weight: 600;">
+                            ${reportData.incident_number}
+                          </div>
+                        </div>
+
+                        <div style="margin-bottom: 15px;">
+                          <label style="display: block; font-size: 12px; color: #92400e; text-transform: uppercase; margin-bottom: 5px;">Lokasyon:</label>
+                          <div style="background: white; padding: 12px; border-radius: 5px; border: 1px solid #fbbf24; font-size: 14px; color: #2c3e50;">
+                            ${locationName}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label style="display: block; font-size: 12px; color: #92400e; text-transform: uppercase; margin-bottom: 5px;">Kategori:</label>
+                          <div style="background: white; padding: 12px; border-radius: 5px; border: 1px solid #fbbf24; font-size: 14px; color: #2c3e50;">
+                            ${reportData.category}
+                          </div>
+                        </div>
+                      </div>
+
+                      <!-- Changes Card -->
+                      <div style="background: linear-gradient(135deg, #e0e7ff 0%, #f0f4ff 100%); border: 2px solid #818cf8; border-radius: 8px; padding: 25px; margin-bottom: 25px;">
+                        <p style="margin: 0 0 15px 0; font-size: 13px; color: #3730a3; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600;">🔄 Yapılan Değişiklikler</p>
+                        ${changesHtml}
+                      </div>
+
+                      <!-- CTA Button -->
+                      <div style="text-align: center; margin-bottom: 30px;">
+                        <a href="${reportUrl}" style="display: inline-block; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 14px 40px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
+                          🔍 Raporu Görüntüle
+                        </a>
+                      </div>
+
+                      <div style="background: #e0f2fe; border: 1px solid #7dd3fc; border-radius: 6px; padding: 15px;">
+                        <p style="margin: 0; font-size: 13px; color: #075985; line-height: 1.6;">
+                          <strong>ℹ️ Not:</strong> Bu değişiklikler rapor geçmişinde kayıt altına alınmıştır.
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+
+                  <!-- Footer -->
+                  <tr>
+                    <td style="background-color: #1f2937; color: rgba(255,255,255,0.8); padding: 25px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
+                      <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600;">Ramak Kala ve Tehlike Raporlama Sistemi</p>
+                      <p style="margin: 0; font-size: 12px; opacity: 0.8;">İSG Yönetim Platformu</p>
+                      <p style="margin: 10px 0 0 0; font-size: 11px; opacity: 0.6;">Bu e-posta otomatik olarak oluşturulmuştur.</p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </div>
+      `,
+      text: `Rapor Güncellendi\n\n${userName} tarafından bir raporda değişiklik yapıldı.\n\n--- RAPOR BİLGİLERİ ---\nOlay Numarası: ${reportData.incident_number}\nLokasyon: ${locationName}\nKategori: ${reportData.category}\n\n--- YAPILAN DEĞİŞİKLİKLER ---\n${changes.map(c => `${c.field_display}: ${c.old_value || '-'} → ${c.new_value || '-'}`).join('\n')}\n\nRaporu görüntülemek için: ${reportUrl}\n\nRamak Kala ve Tehlike Raporlama Sistemi`
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log('[REPORT_UPDATE] Email sent to', recipients.length, 'ISG Experts:', result.messageId);
+    return result;
+  } catch (error) {
+    console.error('[REPORT_UPDATE] Error sending email:', error);
+    throw new Error('Rapor güncelleme e-postası gönderilemedi');
+  }
+}
+
+/**
  * Verify SMTP connection
  */
 export async function verifyEmailConnection() {

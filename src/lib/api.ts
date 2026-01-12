@@ -49,12 +49,12 @@ export const api = {
     delete: async (id: string) => apiCall(`/users/${id}`, { method: 'DELETE' }),
   },
   settings: {
-    getList: async () => apiCall('/system-settings'),
+    getList: async () => apiCall('/settings'),
     get: async () => {
-      const settings = await apiCall('/system-settings');
+      const settings = await apiCall('/settings');
       return Array.isArray(settings) ? settings[0] : settings;
     },
-    update: async (id: string, data: any) => apiCall(`/system-settings/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    update: async (data: any) => apiCall('/settings', { method: 'PUT', body: JSON.stringify(data) }),
   },
   logs: {
     getList: async () => apiCall('/logs'),

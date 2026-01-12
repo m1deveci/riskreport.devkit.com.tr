@@ -12,7 +12,10 @@ import multer from 'multer';
 import fs from 'fs';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import { sendPasswordResetEmail, sendNearMissReportEmail, sendWelcomeEmail, verifyEmailConnection, initializeEmailService, sendPasswordResetNotificationEmail } from './emailService.js';
+import { createServer } from 'http';
+import { Server } from 'socket.io';
+import mongoose from 'mongoose';
+import { sendPasswordResetEmail, sendNearMissReportEmail, sendWelcomeEmail, verifyEmailConnection, initializeEmailService, sendPasswordResetNotificationEmail, sendReportAssignmentEmail, sendReportUpdateNotification } from './emailService.js';
 
 // Load environment variables
 dotenv.config();
@@ -21,6 +24,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: process.env.ALLOWED_ORIGINS || '*',
+    methods: ['GET', 'POST'],
+    credentials: true
+  },
+  path: '/socket.io/',
+  transports: ['websocket', 'polling']
+});
 const port = process.env.BACKEND_PORT || 6000;
 const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_jwt_key_change_this_in_production';
 const JWT_EXPIRY = process.env.JWT_EXPIRY || '24h';
@@ -77,6 +90,59 @@ const pool = mysql.createPool({
   connectionLimit: 10,
   queueLimit: 0
 });
+
+// MongoDB Connection
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/riskreport';
+mongoose.connect(MONGODB_URI)
+  .then(() => console.log('✓ MongoDB connected'))
+  .catch((err) => {
+    console.error('✗ MongoDB connection error:', err);
+    process.exit(1);
+  });
+
+// ==================== MONGOOSE SCHEMAS ====================
+
+// Message Schema for Direct Messaging
+const messageSchema = new mongoose.Schema({
+  conversationId: {
+    type: String,
+    required: true,
+    index: true
+  },
+  senderId: {
+    type: String,
+    required: true,
+    index: true
+  },
+  receiverId: {
+    type: String,
+    required: true,
+    index: true
+  },
+  text: {
+    type: String,
+    required: true
+  },
+  is_read: {
+    type: Boolean,
+    default: false,
+    index: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+    index: true
+  }
+});
+
+// Create indexes for efficient querying
+messageSchema.index({ conversationId: 1, createdAt: -1 });
+messageSchema.index({ senderId: 1, createdAt: -1 });
+messageSchema.index({ receiverId: 1, createdAt: -1 });
+messageSchema.index({ receiverId: 1, is_read: 1, createdAt: -1 });
+
+// Register the Message model
+const Message = mongoose.model('Message', messageSchema);
 
 // ==================== JWT MIDDLEWARE ====================
 
@@ -186,6 +252,15 @@ function clearFailedAttempts(ip) {
     loginAttempts.delete(ip);
     console.log('[RATE_LIMIT] Failed attempts cleared for IP:', ip);
   }
+}
+
+// Helper function to determine if user is online
+function isUserOnline(lastActivity) {
+  if (!lastActivity) return false;
+  const lastActivityTime = new Date(lastActivity).getTime();
+  const currentTime = new Date().getTime();
+  const fiveMinutesInMs = 5 * 60 * 1000;
+  return (currentTime - lastActivityTime) < fiveMinutesInMs;
 }
 
 // ==================== LOGGING HELPER ====================
@@ -423,6 +498,25 @@ app.post('/api/auth/logout', authenticateToken, async (req, res) => {
   }
 });
 
+// Update User Activity Endpoint - Keeps user online status current
+app.put('/api/auth/activity', authenticateToken, async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+    await connection.query(
+      `UPDATE user_sessions
+       SET last_activity = NOW(), is_online = true
+       WHERE user_id = ?`,
+      [req.user.id]
+    );
+    connection.release();
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating activity:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Token Doğrula Endpoint
 app.get('/api/auth/verify', authenticateToken, (req, res) => {
   res.json({
@@ -432,6 +526,58 @@ app.get('/api/auth/verify', authenticateToken, (req, res) => {
 });
 
 // ==================== USER ENDPOINTS ====================
+
+// Get Users for Messaging (All authenticated users can see all active users)
+// MUST be before /api/users (order matters in Express!)
+app.get('/api/users/for-messaging', authenticateToken, async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+    const [rows] = await connection.query(
+      `SELECT
+        u.id,
+        u.full_name,
+        u.email,
+        u.role,
+        u.profile_picture,
+        u.is_active,
+        u.last_login,
+        u.created_at,
+        COALESCE(us.is_online, 0) as is_online,
+        us.last_activity
+      FROM users u
+      LEFT JOIN user_sessions us ON u.id = us.user_id
+      ORDER BY u.full_name ASC`
+    );
+    connection.release();
+
+    // Format response for messaging
+    const users = rows
+      .filter((user) => user.id !== req.user.id) // Exclude current user
+      .map((user) => {
+        // Check if user is online: must have session AND last_activity within 5 minutes
+        const lastActivity = user.last_activity || user.last_login;
+        const isOnline = Boolean(user.is_online) && lastActivity &&
+          (new Date() - new Date(lastActivity)) < 5 * 60 * 1000; // 5 minutes
+
+        return {
+          id: user.id,
+          full_name: user.full_name,
+          name: user.full_name,
+          email: user.email,
+          role: user.role,
+          profile_picture: user.profile_picture,
+          is_online: isOnline,
+          last_activity: lastActivity,
+          created_at: user.created_at
+        };
+      });
+
+    res.json(users);
+  } catch (error) {
+    console.error('Error fetching messaging users:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // Get All Users (Admin Only)
 app.get('/api/users', authenticateToken, async (req, res) => {
@@ -1050,6 +1196,44 @@ app.delete('/api/regions/:id', authenticateToken, adminOrExpert, async (req, res
   }
 });
 
+// Increment region scan count (public endpoint - no auth required)
+app.post('/api/regions/:id/increment-scan', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const connection = await pool.getConnection();
+
+    // Check if region exists and is active
+    const [regionRows] = await connection.query(
+      'SELECT id, is_active FROM regions WHERE id = ?',
+      [id]
+    );
+
+    if (regionRows.length === 0) {
+      connection.release();
+      return res.status(404).json({ error: 'Bölge bulunamadı' });
+    }
+
+    if (!regionRows[0].is_active) {
+      connection.release();
+      return res.status(400).json({ error: 'Bu bölge aktif değil' });
+    }
+
+    // Increment scan count
+    await connection.query(
+      'UPDATE regions SET scan_count = scan_count + 1 WHERE id = ?',
+      [id]
+    );
+
+    connection.release();
+
+    res.json({ success: true, message: 'QR kod tarama sayısı güncellendi' });
+  } catch (error) {
+    console.error('Error incrementing scan count:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ==================== PROFILE ENDPOINTS ====================
 
 // Get current user profile
@@ -1231,9 +1415,13 @@ app.get('/api/reports', authenticateToken, async (req, res) => {
 
     const params = [];
 
-    // If user is not admin, filter by their assigned locations
-    if (req.user.role !== 'admin') {
-      // Parse location_ids from token
+    // Role-based filtering
+    if (req.user.role === 'viewer') {
+      // Viewer: only see reports assigned to them
+      query += ` WHERE nmr.assigned_user_id = ?`;
+      params.push(req.user.id);
+    } else if (req.user.role === 'isg_expert') {
+      // ISG Expert: see reports from their assigned locations
       const locationIds = req.user.location_ids || [];
 
       // If user has no assigned locations, return empty
@@ -1247,6 +1435,7 @@ app.get('/api/reports', authenticateToken, async (req, res) => {
       query += ` WHERE nmr.location_id IN (${placeholders})`;
       params.push(...locationIds);
     }
+    // Admin: see all reports (no WHERE clause)
 
     query += ` ORDER BY nmr.created_at DESC LIMIT 100`;
 
@@ -1267,9 +1456,13 @@ app.get('/api/reports/count/new', authenticateToken, async (req, res) => {
     let query = `SELECT COUNT(*) as count FROM near_miss_reports WHERE status = 'Yeni'`;
     const params = [];
 
-    // If user is not admin, filter by their assigned locations
-    if (req.user.role !== 'admin') {
-      // Parse location_ids from token
+    // Role-based filtering
+    if (req.user.role === 'viewer') {
+      // Viewer: count only reports assigned to them
+      query += ` AND assigned_user_id = ?`;
+      params.push(req.user.id);
+    } else if (req.user.role === 'isg_expert') {
+      // ISG Expert: count reports from their assigned locations
       const locationIds = req.user.location_ids || [];
 
       // If user has no assigned locations, return 0
@@ -1283,6 +1476,7 @@ app.get('/api/reports/count/new', authenticateToken, async (req, res) => {
       query += ` AND location_id IN (${placeholders})`;
       params.push(...locationIds);
     }
+    // Admin: count all new reports (no additional WHERE clause)
 
     const [rows] = await connection.query(query, params);
     connection.release();
@@ -1421,7 +1615,7 @@ app.post('/api/reports', async (req, res) => {
 });
 
 // Update Report Status and Notes (Admin Only)
-app.put('/api/reports/:id', authenticateToken, adminOnly, async (req, res) => {
+app.put('/api/reports/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { status, internal_notes } = req.body;
@@ -1430,7 +1624,7 @@ app.put('/api/reports/:id', authenticateToken, adminOnly, async (req, res) => {
 
     // Rapor güncellemeden önce eski değerleri al
     const [oldReportRows] = await connection.query(
-      'SELECT status, internal_notes FROM near_miss_reports WHERE id = ?',
+      'SELECT status, internal_notes, location_id, assigned_user_id FROM near_miss_reports WHERE id = ?',
       [id]
     );
 
@@ -1439,7 +1633,28 @@ app.put('/api/reports/:id', authenticateToken, adminOnly, async (req, res) => {
       return res.status(404).json({ error: 'Rapor bulunamadı' });
     }
 
+    // Check permissions: Admin can edit all, ISG Expert can edit reports from their locations, Viewer can edit assigned reports
     const oldReport = oldReportRows[0];
+    if (req.user.role === 'admin') {
+      // Admin can edit all reports
+    } else if (req.user.role === 'isg_expert') {
+      // ISG Expert can only edit reports from their assigned locations
+      const userLocationIds = req.user.location_ids || [];
+      if (!userLocationIds.includes(oldReport.location_id)) {
+        connection.release();
+        return res.status(403).json({ error: 'Bu rapora erişim izniniz yok' });
+      }
+    } else if (req.user.role === 'viewer') {
+      // Viewer can only edit reports assigned to them
+      if (oldReport.assigned_user_id !== req.user.id) {
+        connection.release();
+        return res.status(403).json({ error: 'Bu raporu düzenleme izniniz yok' });
+      }
+    } else {
+      connection.release();
+      return res.status(403).json({ error: 'Rapor düzenleme izniniz yok' });
+    }
+
     const changes = [];
 
     // Durum değişikliğini takip et
@@ -1491,7 +1706,61 @@ app.put('/api/reports/:id', authenticateToken, adminOnly, async (req, res) => {
       });
     }
 
+    // Get location name and report details for email
+    const [locationRows] = await connection.query(
+      'SELECT name FROM locations WHERE id = ?',
+      [oldReport.location_id]
+    );
+    const locationName = locationRows.length > 0 ? locationRows[0].name : 'Bilinmeyen Lokasyon';
+
+    // Get full report details for email
+    const [reportRows] = await connection.query(
+      'SELECT incident_number, category FROM near_miss_reports WHERE id = ?',
+      [id]
+    );
+    const reportData = reportRows.length > 0 ? reportRows[0] : { incident_number: 'Bilinmiyor', category: 'Bilinmiyor' };
+
     connection.release();
+
+    // Send email notification to ISG Experts if there are changes
+    if (changes.length > 0) {
+      try {
+        const isgConnection = await pool.getConnection();
+
+        // Get all isg_expert users assigned to this location
+        const [experts] = await isgConnection.query(
+          `SELECT email, full_name FROM users
+           WHERE role = 'isg_expert' AND is_active = true
+           AND JSON_CONTAINS(COALESCE(location_ids, '[]'), JSON_QUOTE(?))`,
+          [oldReport.location_id]
+        );
+
+        isgConnection.release();
+
+        const recipientEmails = experts.map(user => user.email);
+
+        if (recipientEmails.length > 0) {
+          // Prepare changes for email with display names
+          const changesForEmail = changes.map(c => ({
+            field_display: c.field === 'status' ? 'Durum' : 'İç Notlar',
+            old_value: c.old || 'Boş',
+            new_value: c.new || 'Boş'
+          }));
+
+          await sendReportUpdateNotification(
+            recipientEmails,
+            req.user.full_name,
+            reportData,
+            changesForEmail,
+            locationName
+          );
+          console.log('[REPORT_UPDATE] Notification emails sent to', recipientEmails.length, 'ISG Experts');
+        }
+      } catch (emailError) {
+        console.error('[REPORT_UPDATE] Failed to send notification emails:', emailError);
+        // Don't fail the update if email fails
+      }
+    }
 
     res.json({
       success: true,
@@ -1505,17 +1774,38 @@ app.put('/api/reports/:id', authenticateToken, adminOnly, async (req, res) => {
 });
 
 // Delete Report (Admin Only)
-app.delete('/api/reports/:id', authenticateToken, adminOnly, async (req, res) => {
+app.delete('/api/reports/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
     const connection = await pool.getConnection();
 
-    // Get the report first to check for image
+    // Get the report first to check for image and location
     const [reports] = await connection.query(
-      'SELECT image_path FROM near_miss_reports WHERE id = ?',
+      'SELECT image_path, location_id FROM near_miss_reports WHERE id = ?',
       [id]
     );
+
+    if (reports.length === 0) {
+      connection.release();
+      return res.status(404).json({ error: 'Rapor bulunamadı' });
+    }
+
+    // Check permissions: Admin can delete all, ISG Expert can delete reports from their locations
+    const report = reports[0];
+    if (req.user.role !== 'admin') {
+      // ISG Expert can only delete reports from their assigned locations
+      if (req.user.role === 'isg_expert') {
+        const userLocationIds = req.user.location_ids || [];
+        if (!userLocationIds.includes(report.location_id)) {
+          connection.release();
+          return res.status(403).json({ error: 'Bu rapora erişim izniniz yok' });
+        }
+      } else {
+        connection.release();
+        return res.status(403).json({ error: 'Rapor silme izniniz yok' });
+      }
+    }
 
     if (reports.length > 0 && reports[0].image_path) {
       try {
@@ -1559,6 +1849,121 @@ app.get('/api/reports/:id/history', async (req, res) => {
 
     res.json(history);
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Assign Report to User
+app.post('/api/reports/:id/assign', authenticateToken, adminOrExpert, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { user_id } = req.body;
+
+    if (!user_id) {
+      return res.status(400).json({ error: 'Kullanıcı ID gereklidir' });
+    }
+
+    const connection = await pool.getConnection();
+
+    // Get report details
+    const [reports] = await connection.query(
+      'SELECT * FROM near_miss_reports WHERE id = ?',
+      [id]
+    );
+
+    if (reports.length === 0) {
+      connection.release();
+      return res.status(404).json({ error: 'Rapor bulunamadı' });
+    }
+
+    const report = reports[0];
+
+    // Check permissions: Admin can assign all, ISG Expert can assign reports from their locations
+    if (req.user.role !== 'admin') {
+      if (req.user.role === 'isg_expert') {
+        const userLocationIds = req.user.location_ids || [];
+        if (!userLocationIds.includes(report.location_id)) {
+          connection.release();
+          return res.status(403).json({ error: 'Bu rapora erişim izniniz yok' });
+        }
+      } else {
+        connection.release();
+        return res.status(403).json({ error: 'Rapor atama izniniz yok' });
+      }
+    }
+
+    // Get user details
+    const [users] = await connection.query(
+      'SELECT id, full_name, email, location_ids FROM users WHERE id = ?',
+      [user_id]
+    );
+
+    if (users.length === 0) {
+      connection.release();
+      return res.status(404).json({ error: 'Kullanıcı bulunamadı' });
+    }
+
+    const user = users[0];
+
+    // Get location name for email
+    const [locations] = await connection.query(
+      'SELECT name FROM locations WHERE id = ?',
+      [report.location_id]
+    );
+    const locationName = locations.length > 0 ? locations[0].name : 'Bilinmeyen';
+
+    // Update report with assigned user (if column exists, otherwise skip)
+    try {
+      await connection.query(
+        'UPDATE near_miss_reports SET assigned_user_id = ?, assigned_user_name = ? WHERE id = ?',
+        [user_id, user.full_name, id]
+      );
+    } catch (updateError) {
+      // Column might not exist yet, log but continue
+      console.log('Note: Could not update assigned_user fields (columns may not exist yet):', updateError.message);
+    }
+
+    // Record history
+    await recordReportHistory(
+      id,
+      req.user.id,
+      req.user.full_name,
+      'ASSIGN',
+      'assigned_user',
+      null,
+      user.full_name,
+      `Rapor ${user.full_name} kullanıcısına atandı`
+    );
+
+    connection.release();
+
+    // Send email notification
+    try {
+      await sendReportAssignmentEmail(user.email, user.full_name, {
+        incident_number: report.incident_number,
+        category: report.category,
+        description: report.description,
+      }, locationName);
+      console.log('[REPORT_ASSIGNMENT] Email sent successfully to:', user.email);
+    } catch (emailError) {
+      console.error('[REPORT_ASSIGNMENT] Failed to send email:', emailError);
+      // Don't fail the assignment if email fails
+    }
+
+    // Log action
+    await logAction(req.user.id, 'ASSIGN_REPORT', {
+      report_id: id,
+      incident_number: report.incident_number,
+      assigned_to: user.full_name,
+      assigned_to_email: user.email,
+    });
+
+    res.json({
+      success: true,
+      message: 'Rapor başarıyla atandı ve kullanıcıya e-posta gönderildi',
+    });
+  } catch (error) {
+    console.error('[REPORT_ASSIGNMENT] Error:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -2191,6 +2596,250 @@ app.post('/api/password-reset/admin/:id', authenticateToken, adminOrExpert, asyn
   }
 });
 
+// ==================== MESSAGING ENDPOINTS ====================
+
+// Get conversation history between two users
+app.get('/api/messages/:conversationId', authenticateToken, async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const limit = Math.min(parseInt(req.query.limit) || 50, 500);
+    const offset = parseInt(req.query.offset) || 0;
+
+    const messages = await Message.find({ conversationId })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .skip(offset)
+      .lean();
+
+    res.json({
+      conversationId,
+      messages: messages.reverse(),
+      total: await Message.countDocuments({ conversationId })
+    });
+  } catch (error) {
+    console.error('Error fetching messages:', error);
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+// Get unread message count for current user
+app.get('/api/messages/unread/count', authenticateToken, async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get total unread count for this user
+    const unreadCount = await Message.countDocuments({
+      receiverId: userId,
+      is_read: false
+    });
+
+    res.json({ unreadCount });
+  } catch (error) {
+    console.error('Error fetching unread count:', error);
+    res.status(500).json({ error: 'Failed to fetch unread count' });
+  }
+});
+
+// Get unread message count per conversation (for specific sender)
+app.get('/api/messages/unread/:senderId', authenticateToken, async (req, res) => {
+  try {
+    const { senderId } = req.params;
+    const receiverId = req.user.id;
+
+    const unreadCount = await Message.countDocuments({
+      senderId,
+      receiverId,
+      is_read: false
+    });
+
+    res.json({ unreadCount, senderId });
+  } catch (error) {
+    console.error('Error fetching unread count:', error);
+    res.status(500).json({ error: 'Failed to fetch unread count' });
+  }
+});
+
+// Mark messages as read in a conversation
+app.put('/api/messages/:conversationId/read', authenticateToken, async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user.id;
+
+    // Mark all unread messages from other users in this conversation as read
+    const result = await Message.updateMany(
+      {
+        conversationId,
+        receiverId: userId,
+        is_read: false
+      },
+      {
+        $set: { is_read: true }
+      }
+    );
+
+    res.json({
+      success: true,
+      modifiedCount: result.modifiedCount
+    });
+  } catch (error) {
+    console.error('Error marking messages as read:', error);
+    res.status(500).json({ error: 'Failed to mark messages as read' });
+  }
+});
+
+// Mark specific message as read
+app.put('/api/messages/:messageId/mark-read', authenticateToken, async (req, res) => {
+  try {
+    const { messageId } = req.params;
+
+    const result = await Message.findByIdAndUpdate(
+      messageId,
+      { $set: { is_read: true } },
+      { new: true }
+    );
+
+    if (!result) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+
+    res.json({ success: true, message: result });
+  } catch (error) {
+    console.error('Error marking message as read:', error);
+    res.status(500).json({ error: 'Failed to mark message as read' });
+  }
+});
+
+// ==================== SOCKET.IO HANDLERS ====================
+
+// Helper function to generate conversation ID
+function generateConversationId(userId1, userId2) {
+  return [userId1, userId2].sort().join('_');
+}
+
+// Track connected users: { userId: socketId }
+const connectedUsers = new Map();
+
+// Socket connection handler
+io.on('connection', (socket) => {
+  console.log(`User connected: ${socket.id}`);
+
+  // Join conversation room
+  socket.on('join-conversation', (data) => {
+    try {
+      const { userId, targetUserId } = data;
+
+      if (!userId || !targetUserId) {
+        socket.emit('error', { message: 'User IDs are required' });
+        return;
+      }
+
+      const conversationId = generateConversationId(userId, targetUserId);
+
+      // Store user connection
+      connectedUsers.set(userId, socket.id);
+
+      // Join socket room
+      socket.join(conversationId);
+      socket.conversationId = conversationId;
+      socket.userId = userId;
+      socket.targetUserId = targetUserId;
+
+      console.log(`User ${userId} joined conversation: ${conversationId}`);
+
+      // Notify the other user that someone joined
+      io.to(conversationId).emit('user-status-changed', {
+        userId,
+        status: 'online',
+        timestamp: new Date()
+      });
+    } catch (error) {
+      console.error('Error joining conversation:', error);
+      socket.emit('error', { message: 'Failed to join conversation' });
+    }
+  });
+
+  // Handle incoming messages
+  socket.on('send-message', async (data) => {
+    try {
+      const { conversationId, senderId, receiverId, text } = data;
+
+      if (!conversationId || !senderId || !receiverId || !text) {
+        socket.emit('error', { message: 'Missing required fields' });
+        return;
+      }
+
+      // Save message to database
+      const message = new Message({
+        conversationId,
+        senderId,
+        receiverId,
+        text
+      });
+
+      await message.save();
+
+      // Broadcast message to conversation room
+      io.to(conversationId).emit('message-received', {
+        id: message._id,
+        conversationId,
+        senderId,
+        receiverId,
+        text,
+        is_read: message.is_read,
+        createdAt: message.createdAt,
+        timestamp: new Date()
+      });
+
+      // Notify receiver that they have a new unread message (for UI updates)
+      io.to(conversationId).emit('unread-message-received', {
+        senderId,
+        receiverId,
+        conversationId
+      });
+
+      console.log(`Message sent in ${conversationId}: ${text.substring(0, 30)}...`);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      socket.emit('error', { message: 'Failed to send message' });
+    }
+  });
+
+  // Handle typing indicator
+  socket.on('typing', (data) => {
+    const { conversationId, userId } = data;
+    socket.to(conversationId).emit('user-typing', { userId, timestamp: new Date() });
+  });
+
+  // Handle stop typing
+  socket.on('stop-typing', (data) => {
+    const { conversationId, userId } = data;
+    socket.to(conversationId).emit('user-stopped-typing', { userId, timestamp: new Date() });
+  });
+
+  // Disconnect handler
+  socket.on('disconnect', () => {
+    const userId = socket.userId;
+    const conversationId = socket.conversationId;
+
+    if (userId && conversationId) {
+      connectedUsers.delete(userId);
+      io.to(conversationId).emit('user-status-changed', {
+        userId,
+        status: 'offline',
+        timestamp: new Date()
+      });
+      console.log(`User ${userId} disconnected from ${conversationId}`);
+    }
+
+    console.log(`User disconnected: ${socket.id}`);
+  });
+
+  // Error handling
+  socket.on('error', (error) => {
+    console.error(`Socket error for ${socket.id}:`, error);
+  });
+});
+
 // ==================== SPA ROUTING ====================
 
 app.get('*', (req, res) => {
@@ -2213,7 +2862,7 @@ app.use((err, req, res, next) => {
 // Initialize email service
 await initializeEmailService(pool);
 
-app.listen(port, '0.0.0.0', () => {
+httpServer.listen(port, '0.0.0.0', () => {
   console.log(`\n╔════════════════════════════════════════╗`);
   console.log(`║  Ramak Kala Reporting System (MySQL)   ║`);
   console.log(`║  Server running on port ${port}              ║`);
@@ -2221,5 +2870,7 @@ app.listen(port, '0.0.0.0', () => {
   console.log(`║  User: ${process.env.MYSQL_USER}                         ║`);
   console.log(`║  JWT Authentication: ✓ ENABLED         ║`);
   console.log(`║  Email Service: ✓ INITIALIZED          ║`);
+  console.log(`║  Socket.io: ✓ ENABLED                  ║`);
+  console.log(`║  MongoDB: ✓ CONNECTED                  ║`);
   console.log(`╚════════════════════════════════════════╝\n`);
 });

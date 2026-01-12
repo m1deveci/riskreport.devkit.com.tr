@@ -14,6 +14,7 @@ interface Region {
   qr_code_token: string;
   qr_code_url: string;
   is_active: boolean;
+  scan_count: number;
   created_at: string;
   locations?: { name: string };
 }
@@ -425,6 +426,7 @@ export function Regions() {
                 <th className="text-left p-4 text-sm font-semibold text-slate-300">{t('regions.location')}</th>
                 <th className="text-left p-4 text-sm font-semibold text-slate-300">{t('regions.description')}</th>
                 <th className="text-center p-4 text-sm font-semibold text-slate-300">{t('common.status') || 'Durum'}</th>
+                <th className="text-center p-4 text-sm font-semibold text-slate-300">{t('regions.scanCount') || 'Tarama Sayısı'}</th>
                 <th className="text-center p-4 text-sm font-semibold text-slate-300">{t('regions.qrCode') || 'QR Kod'}</th>
                 <th className="text-center p-4 text-sm font-semibold text-slate-300">{t('common.actions') || 'İşlemler'}</th>
               </tr>
@@ -453,6 +455,11 @@ export function Regions() {
                       }`}
                     >
                       {region.is_active ? t('common.active') : (t('common.inactive') || 'Pasif')}
+                    </span>
+                  </td>
+                  <td className="p-4 text-center">
+                    <span className="text-slate-100 font-semibold text-lg">
+                      {region.scan_count || 0}
                     </span>
                   </td>
                   <td className="p-4">

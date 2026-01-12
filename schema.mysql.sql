@@ -1,8 +1,9 @@
 /*
-  # Ramak Kala (Near-Miss) Reporting System - MySQL Database Schema
+  # Ramak Kala ve Tehlike Raporlama Sistemi (Near-Miss and Hazard Reporting System)
+  # MySQL Database Schema
 
   ## Overview
-  This is a MySQL version of the near-miss reporting system for occupational safety
+  This is a MySQL version of the near-miss and hazard reporting system for occupational safety
   across multiple locations (factories/workplaces).
 
   Note: RLS (Row Level Security) is not native to MySQL.
@@ -30,6 +31,7 @@ CREATE TABLE IF NOT EXISTS regions (
   qr_code_token VARCHAR(255) UNIQUE NOT NULL,
   qr_code_url TEXT NOT NULL,
   is_active BOOLEAN DEFAULT true,
+  scan_count INT DEFAULT 0,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_regions_location_id FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE,
@@ -58,17 +60,22 @@ CREATE TABLE IF NOT EXISTS near_miss_reports (
   phone VARCHAR(20) NOT NULL,
   category VARCHAR(100) NOT NULL,
   description LONGTEXT DEFAULT '',
+  image_path TEXT DEFAULT NULL,
   status VARCHAR(50) DEFAULT 'Yeni',
   internal_notes LONGTEXT DEFAULT '',
+  assigned_user_id CHAR(36) DEFAULT NULL,
+  assigned_user_name VARCHAR(255) DEFAULT NULL,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   CONSTRAINT fk_near_miss_reports_location_id FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE,
   CONSTRAINT fk_near_miss_reports_region_id FOREIGN KEY (region_id) REFERENCES regions(id) ON DELETE CASCADE,
+  CONSTRAINT fk_near_miss_reports_assigned_user_id FOREIGN KEY (assigned_user_id) REFERENCES users(id) ON DELETE SET NULL,
   INDEX idx_near_miss_reports_location_id (location_id),
   INDEX idx_near_miss_reports_region_id (region_id),
   INDEX idx_near_miss_reports_incident_number (incident_number),
   INDEX idx_near_miss_reports_created_at (created_at DESC),
-  INDEX idx_near_miss_reports_status (status)
+  INDEX idx_near_miss_reports_status (status),
+  INDEX idx_near_miss_reports_assigned_user_id (assigned_user_id)
 );
 
 -- Create users table
@@ -94,6 +101,18 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS location_ids JSON DEFAULT '[]';
 
 -- Add profile_picture column if it doesn't exist (for existing databases)
 ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_picture LONGBLOB DEFAULT NULL;
+
+-- Add image_path column to near_miss_reports if it doesn't exist (for existing databases)
+ALTER TABLE near_miss_reports ADD COLUMN IF NOT EXISTS image_path TEXT DEFAULT NULL;
+
+-- Add assigned user columns to near_miss_reports if they don't exist (for existing databases)
+ALTER TABLE near_miss_reports ADD COLUMN IF NOT EXISTS assigned_user_id CHAR(36) DEFAULT NULL;
+ALTER TABLE near_miss_reports ADD COLUMN IF NOT EXISTS assigned_user_name VARCHAR(255) DEFAULT NULL;
+
+-- Add foreign key for assigned_user_id if it doesn't exist
+-- Note: MySQL doesn't have "IF NOT EXISTS" for constraints, so we need to check manually or use stored procedure
+-- For simplicity, we'll add the index if the column was just created
+ALTER TABLE near_miss_reports ADD INDEX IF NOT EXISTS idx_near_miss_reports_assigned_user_id (assigned_user_id);
 
 -- Create system logs table
 CREATE TABLE IF NOT EXISTS system_logs (

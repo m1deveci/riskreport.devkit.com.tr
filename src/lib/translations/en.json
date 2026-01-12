@@ -14,6 +14,7 @@
     "close": "Close",
     "active": "Active",
     "inactive": "Inactive",
+    "status": "Status",
     "actions": "Actions",
     "all": "All",
     "unknown": "Unknown",
@@ -33,14 +34,14 @@
     "dashboard": "Dashboard",
     "locations": "Locations",
     "regions": "Regions",
-    "reports": "Near-Miss Reports",
+    "reports": "Near-Miss and Hazard Reports",
     "logs": "System Logs",
     "users": "Users and Experts",
     "settings": "Settings"
   },
   "dashboard": {
     "title": "Dashboard",
-    "subtitle": "Near-miss reporting system summary and statistics",
+    "subtitle": "Near-Miss and Hazard reporting system overview and statistics",
     "totalLocations": "TOTAL LOCATIONS",
     "totalReports": "TOTAL REPORTS",
     "newReports": "NEW REPORTS",
@@ -197,10 +198,12 @@
     "createFirstRegion": "Create your first region to start",
     "selectLocation": "Select Location",
     "qrCodeUrl": "QR Code URL",
+    "scanCount": "Scan Count",
+    "viewQr": "View QR Code",
     "downloadQr": "Download QR Code"
   },
   "reports": {
-    "title": "Near-Miss Reports",
+    "title": "Near-Miss and Hazard Reports",
     "subtitle": "View and manage all near-miss reports",
     "search": "Search reports...",
     "filter": "Filter",

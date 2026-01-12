@@ -99,6 +99,16 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
 
       setRegion(regionData);
 
+      // Increment scan count for this region
+      try {
+        await fetch(`/api/regions/${regionId}/increment-scan`, {
+          method: 'POST',
+        });
+      } catch (err) {
+        // Don't block the form if scan count fails to increment
+        console.error('Failed to increment scan count:', err);
+      }
+
       // Fetch location data
       const locationsResponse = await fetch('/api/locations');
       if (locationsResponse.ok) {
