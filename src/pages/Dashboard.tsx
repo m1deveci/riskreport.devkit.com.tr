@@ -69,8 +69,9 @@ export function Dashboard() {
       const user = userStr ? JSON.parse(userStr) : null;
       setCurrentUser(user);
 
-      // Check if user has no assigned locations and is not admin
-      if (user && user.role !== 'admin' && (!user.location_ids || user.location_ids.length === 0)) {
+      // Check if user has no assigned locations and is not admin or viewer
+      // Viewers are assigned to individual reports, not locations, so they should not be restricted here
+      if (user && user.role !== 'admin' && user.role !== 'viewer' && (!user.location_ids || user.location_ids.length === 0)) {
         // User has no access to any locations
         setStats({
           totalLocations: 0,
@@ -255,7 +256,8 @@ export function Dashboard() {
   }
 
   // Check if user is restricted and has no assigned locations
-  if (currentUser && currentUser.role !== 'admin' && (!currentUser.location_ids || currentUser.location_ids.length === 0)) {
+  // Viewers are assigned to individual reports, not locations, so they should not see this message
+  if (currentUser && currentUser.role !== 'admin' && currentUser.role !== 'viewer' && (!currentUser.location_ids || currentUser.location_ids.length === 0)) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 -my-6 px-6 py-6">
         <div className="flex items-center justify-center h-96">

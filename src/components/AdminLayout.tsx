@@ -47,9 +47,9 @@ const getMenuItems = (t: (key: string) => string, userRole?: string) => {
     { id: 'settings', label: t('sidebar.settings'), icon: Settings, adminOnly: true },
   ];
 
-  // Viewer (atanan kullanıcılar) sadece Reports sayfasını görebilir
+  // Viewer (atanan kullanıcılar) Dashboard ve Reports sayfalarını görebilir
   if (userRole === 'viewer') {
-    return allItems.filter(item => item.id === 'reports');
+    return allItems.filter(item => item.id === 'dashboard' || item.id === 'reports');
   }
 
   // ISG Expert kullanıcıları logs ve settings'i görmemeli
