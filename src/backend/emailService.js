@@ -6,6 +6,21 @@ dotenv.config();
 let transporter = null;
 let smtpConfig = null;
 
+/**
+ * Escapes HTML special characters to prevent XSS attacks in email content
+ * @param {string} text - The text to escape
+ * @returns {string} - The escaped text safe for HTML
+ */
+function escapeHtml(text) {
+  if (!text) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 // Initialize transporter with config (to be called after SMTP settings are loaded)
 export async function initializeEmailService(pool) {
   try {
@@ -527,10 +542,17 @@ export async function sendReportAssignmentEmail(email, userName, reportData, loc
 
     const reportUrl = `https://riskreport.devkit.com.tr/#/reports`;
 
+    // Escape all user-provided data to prevent XSS
+    const safeUserName = escapeHtml(userName);
+    const safeIncidentNumber = escapeHtml(reportData.incident_number);
+    const safeLocationName = escapeHtml(locationName);
+    const safeCategory = escapeHtml(reportData.category);
+    const safeDescription = escapeHtml(reportData.description || 'Açıklama girilmemiş');
+
     const mailOptions = {
       from: `"${smtpConfig.fromName}" <${smtpConfig.fromEmail}>`,
       to: email,
-      subject: `Size Bir Rapor Atandı - ${reportData.incident_number}`,
+      subject: `Size Bir Rapor Atandı - ${safeIncidentNumber}`,
       html: `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f7fa; margin: 0; padding: 0;">
           <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f7fa;">
@@ -550,7 +572,7 @@ export async function sendReportAssignmentEmail(email, userName, reportData, loc
                   <tr>
                     <td style="padding: 40px 30px;">
                       <p style="margin: 0 0 20px 0; font-size: 16px; color: #2c3e50; line-height: 1.6;">
-                        Merhaba <strong>${userName}</strong>,
+                        Merhaba <strong>${safeUserName}</strong>,
                       </p>
                       <p style="margin: 0 0 25px 0; font-size: 15px; color: #555; line-height: 1.6;">
                         Size bir Ramak Kala ve Tehlike raporu atanmıştır. Lütfen raporun detaylarını aşağıda inceleyip gerekli işlemleri yapınız.
@@ -563,28 +585,28 @@ export async function sendReportAssignmentEmail(email, userName, reportData, loc
                         <div style="margin-bottom: 15px;">
                           <label style="display: block; font-size: 12px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 5px;">Olay Numarası:</label>
                           <div style="background: white; padding: 12px; border-radius: 5px; border: 1px solid #e0e7ff; font-family: 'Courier New', monospace; font-size: 14px; color: #2c3e50; font-weight: 600;">
-                            ${reportData.incident_number}
+                            ${safeIncidentNumber}
                           </div>
                         </div>
 
                         <div style="margin-bottom: 15px;">
                           <label style="display: block; font-size: 12px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 5px;">Lokasyon:</label>
                           <div style="background: white; padding: 12px; border-radius: 5px; border: 1px solid #e0e7ff; font-size: 14px; color: #2c3e50;">
-                            ${locationName}
+                            ${safeLocationName}
                           </div>
                         </div>
 
                         <div style="margin-bottom: 15px;">
                           <label style="display: block; font-size: 12px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 5px;">Kategori:</label>
                           <div style="background: #dbeafe; padding: 12px; border-radius: 5px; border: 1px solid #93c5fd; font-size: 14px; color: #1e40af; font-weight: 600;">
-                            ${reportData.category}
+                            ${safeCategory}
                           </div>
                         </div>
 
                         <div>
                           <label style="display: block; font-size: 12px; color: #7f8c8d; text-transform: uppercase; margin-bottom: 5px;">Açıklama:</label>
                           <div style="background: white; padding: 12px; border-radius: 5px; border: 1px solid #e0e7ff; font-size: 14px; color: #2c3e50; line-height: 1.6;">
-                            ${reportData.description || 'Açıklama girilmemiş'}
+                            ${safeDescription}
                           </div>
                         </div>
                       </div>
@@ -618,7 +640,7 @@ export async function sendReportAssignmentEmail(email, userName, reportData, loc
           </table>
         </div>
       `,
-      text: `Size Bir Rapor Atandı\n\nMerhaba ${userName},\n\nSize bir Ramak Kala ve Tehlike raporu atanmıştır.\n\n--- RAPOR BİLGİLERİ ---\nOlay Numarası: ${reportData.incident_number}\nLokasyon: ${locationName}\nKategori: ${reportData.category}\nAçıklama: ${reportData.description || 'Açıklama girilmemiş'}\n\nRaporu görüntülemek için: ${reportUrl}\n\nRamak Kala ve Tehlike Raporlama Sistemi`
+      text: `Size Bir Rapor Atandı\n\nMerhaba ${safeUserName},\n\nSize bir Ramak Kala ve Tehlike raporu atanmıştır.\n\n--- RAPOR BİLGİLERİ ---\nOlay Numarası: ${safeIncidentNumber}\nLokasyon: ${safeLocationName}\nKategori: ${safeCategory}\nAçıklama: ${safeDescription}\n\nRaporu görüntülemek için: ${reportUrl}\n\nRamak Kala ve Tehlike Raporlama Sistemi`
     };
 
     const result = await transporter.sendMail(mailOptions);
@@ -648,13 +670,19 @@ export async function sendReportUpdateNotification(recipients, userName, reportD
       throw new Error('No recipients provided');
     }
 
+    // Escape all user-provided data to prevent XSS
+    const safeUserName = escapeHtml(userName);
+    const safeIncidentNumber = escapeHtml(reportData.incident_number);
+    const safeCategory = escapeHtml(reportData.category);
+    const safeLocationName = escapeHtml(locationName);
+
     const changesHtml = changes.map(change => `
       <div style="background: #f3f4f6; padding: 12px; border-radius: 5px; margin-bottom: 10px;">
-        <p style="margin: 0; font-size: 13px; color: #6b7280; font-weight: 600;">${change.field_display}</p>
+        <p style="margin: 0; font-size: 13px; color: #6b7280; font-weight: 600;">${escapeHtml(change.field_display)}</p>
         <div style="display: flex; align-items: center; gap: 10px; margin-top: 5px;">
-          <span style="color: #ef4444; font-size: 14px;">${change.old_value || '-'}</span>
+          <span style="color: #ef4444; font-size: 14px;">${escapeHtml(change.old_value || '-')}</span>
           <span style="color: #6b7280;">→</span>
-          <span style="color: #10b981; font-size: 14px; font-weight: 600;">${change.new_value || '-'}</span>
+          <span style="color: #10b981; font-size: 14px; font-weight: 600;">${escapeHtml(change.new_value || '-')}</span>
         </div>
       </div>
     `).join('');
@@ -664,7 +692,7 @@ export async function sendReportUpdateNotification(recipients, userName, reportD
     const mailOptions = {
       from: `"${smtpConfig.fromName}" <${smtpConfig.fromEmail}>`,
       to: recipients.join(','),
-      subject: `Rapor Güncellendi - ${reportData.incident_number}`,
+      subject: `Rapor Güncellendi - ${safeIncidentNumber}`,
       html: `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f7fa; margin: 0; padding: 0;">
           <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f7fa;">
@@ -684,7 +712,7 @@ export async function sendReportUpdateNotification(recipients, userName, reportD
                   <tr>
                     <td style="padding: 40px 30px;">
                       <p style="margin: 0 0 20px 0; font-size: 16px; color: #2c3e50; line-height: 1.6;">
-                        <strong>${userName}</strong> tarafından bir raporda değişiklik yapıldı.
+                        <strong>${safeUserName}</strong> tarafından bir raporda değişiklik yapıldı.
                       </p>
 
                       <!-- Report Details Card -->
@@ -694,21 +722,21 @@ export async function sendReportUpdateNotification(recipients, userName, reportD
                         <div style="margin-bottom: 15px;">
                           <label style="display: block; font-size: 12px; color: #92400e; text-transform: uppercase; margin-bottom: 5px;">Olay Numarası:</label>
                           <div style="background: white; padding: 12px; border-radius: 5px; border: 1px solid #fbbf24; font-family: 'Courier New', monospace; font-size: 14px; color: #2c3e50; font-weight: 600;">
-                            ${reportData.incident_number}
+                            ${safeIncidentNumber}
                           </div>
                         </div>
 
                         <div style="margin-bottom: 15px;">
                           <label style="display: block; font-size: 12px; color: #92400e; text-transform: uppercase; margin-bottom: 5px;">Lokasyon:</label>
                           <div style="background: white; padding: 12px; border-radius: 5px; border: 1px solid #fbbf24; font-size: 14px; color: #2c3e50;">
-                            ${locationName}
+                            ${safeLocationName}
                           </div>
                         </div>
 
                         <div>
                           <label style="display: block; font-size: 12px; color: #92400e; text-transform: uppercase; margin-bottom: 5px;">Kategori:</label>
                           <div style="background: white; padding: 12px; border-radius: 5px; border: 1px solid #fbbf24; font-size: 14px; color: #2c3e50;">
-                            ${reportData.category}
+                            ${safeCategory}
                           </div>
                         </div>
                       </div>
@@ -748,7 +776,7 @@ export async function sendReportUpdateNotification(recipients, userName, reportD
           </table>
         </div>
       `,
-      text: `Rapor Güncellendi\n\n${userName} tarafından bir raporda değişiklik yapıldı.\n\n--- RAPOR BİLGİLERİ ---\nOlay Numarası: ${reportData.incident_number}\nLokasyon: ${locationName}\nKategori: ${reportData.category}\n\n--- YAPILAN DEĞİŞİKLİKLER ---\n${changes.map(c => `${c.field_display}: ${c.old_value || '-'} → ${c.new_value || '-'}`).join('\n')}\n\nRaporu görüntülemek için: ${reportUrl}\n\nRamak Kala ve Tehlike Raporlama Sistemi`
+      text: `Rapor Güncellendi\n\n${safeUserName} tarafından bir raporda değişiklik yapıldı.\n\n--- RAPOR BİLGİLERİ ---\nOlay Numarası: ${safeIncidentNumber}\nLokasyon: ${safeLocationName}\nKategori: ${safeCategory}\n\n--- YAPILAN DEĞİŞİKLİKLER ---\n${changes.map(c => `${escapeHtml(c.field_display)}: ${escapeHtml(c.old_value || '-')} → ${escapeHtml(c.new_value || '-')}`).join('\n')}\n\nRaporu görüntülemek için: ${reportUrl}\n\nRamak Kala ve Tehlike Raporlama Sistemi`
     };
 
     const result = await transporter.sendMail(mailOptions);
