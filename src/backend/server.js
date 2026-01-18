@@ -2276,9 +2276,58 @@ app.put('/api/settings', authenticateToken, adminOnly, async (req, res) => {
       connection.release();
       res.json({ success: true, changes: result.affectedRows, action: 'updated' });
     }
+    // Re-initialize email service with new settings
+    await initializeEmailService(pool);
+    console.log('Email service re-initialized with new settings');
   } catch (error) {
     console.error('Settings update error:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// SMTP Test Endpoint
+app.post('/api/settings/test-smtp', authenticateToken, adminOnly, async (req, res) => {
+  try {
+    const { smtp_host, smtp_port, smtp_username, smtp_password, smtp_from_email } = req.body;
+
+    if (!smtp_host || !smtp_username || !smtp_password) {
+      return res.status(400).json({ error: 'SMTP Host, kullanıcı adı ve şifre zorunludur' });
+    }
+
+    // Create a temporary transporter for testing
+    const testTransporter = nodemailer.createTransport({
+      host: smtp_host,
+      port: parseInt(smtp_port) || 587,
+      secure: false,
+      auth: {
+        user: smtp_username,
+        pass: smtp_password,
+      },
+      connectionTimeout: 10000, // 10 seconds timeout
+    });
+
+    // Verify SMTP connection
+    await testTransporter.verify();
+
+    res.json({
+      success: true,
+      message: 'SMTP bağlantısı başarılı'
+    });
+  } catch (error) {
+    console.error('SMTP test error:', error);
+
+    let errorMessage = 'SMTP bağlantısı başarısız';
+    if (error.code === 'ECONNREFUSED') {
+      errorMessage = 'SMTP sunucusuna bağlanılamadı. Host ve port bilgilerini kontrol edin.';
+    } else if (error.code === 'EAUTH') {
+      errorMessage = 'Kimlik doğrulama başarısız. Kullanıcı adı ve şifrenizi kontrol edin.';
+    } else if (error.code === 'ETIMEDOUT') {
+      errorMessage = 'Bağlantı zaman aşımına uğradı. Sunucu erişilebilir durumda değil.';
+    } else if (error.message) {
+      errorMessage = `SMTP hatası: ${error.message}`;
+    }
+
+    res.status(400).json({ error: errorMessage });
   }
 });
 

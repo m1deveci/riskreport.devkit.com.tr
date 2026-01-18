@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { logAction, LogActions } from '../lib/logger';
-import { Settings as SettingsIcon, Save, AlertCircle, CheckCircle2, Download, Upload, Trash2, Eye, Globe, Mail, Image as ImageIcon } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Download, Upload, Trash2, Eye, Globe, Mail, Image as ImageIcon, Send } from 'lucide-react';
 import { useI18n, useLanguageChange } from '../lib/i18n';
+import { showSuccess, showError, confirmDelete, showLoading, closeLoading, showSmtpTestResult } from '../lib/sweetalert';
 
 interface SystemSettings {
   id: string;
@@ -36,8 +37,7 @@ export function Settings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [backingUp, setBackingUp] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [testingSmtp, setTestingSmtp] = useState(false);
   const [uploading, setUploading] = useState<{ logo: boolean; background: boolean; favicon: boolean }>({
     logo: false,
     background: false,
@@ -86,7 +86,6 @@ export function Settings() {
     if (!file) return;
 
     setUploading({ ...uploading, [type]: true });
-    setError('');
 
     try {
       const formDataObj = new FormData();
@@ -106,22 +105,21 @@ export function Settings() {
       const pathKey = `${type}_path` as keyof typeof formData;
       setFormData({ ...formData, [pathKey]: data.path });
 
-      setSuccess(`${type.charAt(0).toUpperCase() + type.slice(1)} başarıyla yüklendi`);
-      setTimeout(() => setSuccess(''), 3000);
+      const typeNames = { logo: 'Logo', background: 'Arka plan', favicon: 'Favicon' };
+      showSuccess(`${typeNames[type]} başarıyla yüklendi`);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Yükleme başarısız';
-      setError(errorMessage);
+      showError(errorMessage);
     } finally {
       setUploading({ ...uploading, [type]: false });
     }
   }
 
   async function handleDeleteAsset(type: 'logo' | 'background' | 'favicon') {
-    if (!confirm(`${type.charAt(0).toUpperCase() + type.slice(1)} dosyasını silmek istediğinize emin misiniz?`)) {
-      return;
-    }
+    const typeNames = { logo: 'Logo', background: 'Arka plan', favicon: 'Favicon' };
+    const confirmed = await confirmDelete(`${typeNames[type]} dosyasını`);
+    if (!confirmed) return;
 
-    setError('');
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`/api/settings/asset/${type}`, {
@@ -140,44 +138,75 @@ export function Settings() {
       const pathKey = `${type}_path` as keyof typeof formData;
       setFormData({ ...formData, [pathKey]: '' });
 
-      setSuccess(`${type.charAt(0).toUpperCase() + type.slice(1)} dosyası silindi`);
-      setTimeout(() => setSuccess(''), 3000);
+      showSuccess(`${typeNames[type]} dosyası silindi`);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Silme başarısız';
-      setError(errorMessage);
+      showError(errorMessage);
     }
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true);
-    setError('');
-    setSuccess('');
 
     try {
       await api.settings.update(formData);
-
       await logAction(LogActions.UPDATE_SETTINGS);
-      setSuccess(t('messages.successUpdated') || 'Ayarlar başarıyla kaydedildi');
       await loadSettings();
-
-      setTimeout(() => setSuccess(''), 3000);
+      showSuccess(t('messages.successUpdated') || 'Ayarlar başarıyla kaydedildi');
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : t('messages.errorGeneric');
-      setError(errorMessage);
+      showError(errorMessage);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleTestSmtp() {
+    setTestingSmtp(true);
+    showLoading('SMTP bağlantısı test ediliyor...');
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/settings/test-smtp', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          smtp_host: formData.smtp_host,
+          smtp_port: formData.smtp_port,
+          smtp_username: formData.smtp_username,
+          smtp_password: formData.smtp_password,
+          smtp_from_email: formData.smtp_from_email,
+        }),
+      });
+
+      const data = await response.json();
+      closeLoading();
+
+      if (response.ok && data.success) {
+        showSmtpTestResult(true, 'SMTP sunucusuna başarıyla bağlanıldı ve e-posta gönderilebilir durumda.');
+      } else {
+        showSmtpTestResult(false, data.error || 'SMTP bağlantısı kurulamadı');
+      }
+    } catch (err: unknown) {
+      closeLoading();
+      const errorMessage = err instanceof Error ? err.message : 'SMTP test hatası';
+      showSmtpTestResult(false, errorMessage);
+    } finally {
+      setTestingSmtp(false);
     }
   }
 
   async function handleDownloadBackup() {
     try {
       setBackingUp(true);
-      setError('');
       const token = localStorage.getItem('token');
 
       if (!token) {
-        setError('Kimlik doğrulama gereklidir');
+        showError('Kimlik doğrulama gereklidir');
         setBackingUp(false);
         return;
       }
@@ -215,11 +244,10 @@ export function Settings() {
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
 
-      setSuccess(`Veritabanı yedeği başarıyla indirildi: ${filename}`);
-      setTimeout(() => setSuccess(''), 5000);
+      showSuccess(`Veritabanı yedeği başarıyla indirildi: ${filename}`);
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Yedek oluşturulamadı';
-      setError(errorMessage);
+      showError(errorMessage);
       console.error('Backup failed:', err);
     } finally {
       setBackingUp(false);
@@ -301,24 +329,6 @@ export function Settings() {
           </div>
 
           <div className="p-6 space-y-4">
-            {error && (
-              <div className="bg-red-50 border-l-4 border-red-400 p-4">
-                <div className="flex">
-                  <AlertCircle className="w-5 h-5 text-red-600 mr-3 flex-shrink-0" />
-                  <p className="text-sm text-red-700">{error}</p>
-                </div>
-              </div>
-            )}
-
-            {success && (
-              <div className="bg-green-50 border-l-4 border-green-400 p-4">
-                <div className="flex">
-                  <CheckCircle2 className="w-5 h-5 text-green-600 mr-3 flex-shrink-0" />
-                  <p className="text-sm text-green-700">{success}</p>
-                </div>
-              </div>
-            )}
-
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 {t('settings.siteTitle')}
@@ -572,6 +582,31 @@ export function Settings() {
                   className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
+            </div>
+
+            {/* SMTP Test Button */}
+            <div className="mt-6 pt-6 border-t border-slate-600">
+              <button
+                type="button"
+                onClick={handleTestSmtp}
+                disabled={testingSmtp || !formData.smtp_host || !formData.smtp_username}
+                className="flex items-center gap-2 bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {testingSmtp ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Test Ediliyor...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4" />
+                    SMTP Bağlantısını Test Et
+                  </>
+                )}
+              </button>
+              <p className="mt-2 text-xs text-slate-400">
+                Ayarları kaydetmeden önce SMTP bağlantınızın çalışıp çalışmadığını test edebilirsiniz.
+              </p>
             </div>
           </div>
         </div>
