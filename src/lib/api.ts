@@ -59,6 +59,7 @@ export const api = {
   logs: {
     getList: async () => apiCall('/logs'),
     get: async (id: string) => apiCall(`/logs/${id}`),
+    create: async (data: any) => apiCall('/logs', { method: 'POST', body: JSON.stringify(data) }),
   },
   experts: {
     getList: async () => apiCall('/isg-experts'),

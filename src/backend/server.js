@@ -2250,18 +2250,34 @@ app.put('/api/settings', authenticateToken, adminOnly, async (req, res) => {
     const { site_title, smtp_host, smtp_port, smtp_username, smtp_password, smtp_from_email, backup_target_path, logo_path, background_path, favicon_path } = req.body;
     const connection = await pool.getConnection();
 
-    const [result] = await connection.query(
-      `UPDATE system_settings SET
-       site_title = ?, smtp_host = ?, smtp_port = ?,
-       smtp_username = ?, smtp_password = ?, smtp_from_email = ?,
-       backup_target_path = ?, logo_path = ?, background_path = ?, favicon_path = ?
-       WHERE id = (SELECT id FROM system_settings LIMIT 1)`,
-      [site_title, smtp_host, smtp_port, smtp_username, smtp_password, smtp_from_email, backup_target_path, logo_path, background_path, favicon_path]
-    );
+    // First check if settings exist
+    const [existing] = await connection.query('SELECT id FROM system_settings LIMIT 1');
 
-    connection.release();
-    res.json({ success: true, changes: result.affectedRows });
+    if (existing.length === 0) {
+      // Insert new settings if none exist
+      const [insertResult] = await connection.query(
+        `INSERT INTO system_settings (id, site_title, smtp_host, smtp_port, smtp_username, smtp_password, smtp_from_email, backup_target_path, logo_path, background_path, favicon_path)
+         VALUES (UUID(), ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [site_title, smtp_host, smtp_port, smtp_username, smtp_password, smtp_from_email, backup_target_path, logo_path, background_path, favicon_path]
+      );
+      connection.release();
+      res.json({ success: true, changes: 1, action: 'inserted' });
+    } else {
+      // Update existing settings
+      const settingsId = existing[0].id;
+      const [result] = await connection.query(
+        `UPDATE system_settings SET
+         site_title = ?, smtp_host = ?, smtp_port = ?,
+         smtp_username = ?, smtp_password = ?, smtp_from_email = ?,
+         backup_target_path = ?, logo_path = ?, background_path = ?, favicon_path = ?
+         WHERE id = ?`,
+        [site_title, smtp_host, smtp_port, smtp_username, smtp_password, smtp_from_email, backup_target_path, logo_path, background_path, favicon_path, settingsId]
+      );
+      connection.release();
+      res.json({ success: true, changes: result.affectedRows, action: 'updated' });
+    }
   } catch (error) {
+    console.error('Settings update error:', error);
     res.status(500).json({ error: error.message });
   }
 });
