@@ -15,6 +15,7 @@ import { promisify } from 'util';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import mongoose from 'mongoose';
+import nodemailer from 'nodemailer';
 import { sendPasswordResetEmail, sendNearMissReportEmail, sendWelcomeEmail, verifyEmailConnection, initializeEmailService, sendPasswordResetNotificationEmail, sendReportAssignmentEmail, sendReportUpdateNotification } from './emailService.js';
 
 // Load environment variables
