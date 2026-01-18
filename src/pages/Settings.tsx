@@ -163,6 +163,11 @@ export function Settings() {
   }
 
   async function handleTestSmtp() {
+    if (!formData.smtp_host || !formData.smtp_username || !formData.smtp_password) {
+      showError('SMTP Host, kullanıcı adı ve şifre alanlarını doldurun');
+      return;
+    }
+
     setTestingSmtp(true);
     showLoading('SMTP bağlantısı test ediliyor...');
 
@@ -186,6 +191,9 @@ export function Settings() {
       const data = await response.json();
       closeLoading();
 
+      // Small delay to ensure loading is closed before showing result
+      await new Promise(resolve => setTimeout(resolve, 100));
+
       if (response.ok && data.success) {
         showSmtpTestResult(true, 'SMTP sunucusuna başarıyla bağlanıldı ve e-posta gönderilebilir durumda.');
       } else {
@@ -193,6 +201,7 @@ export function Settings() {
       }
     } catch (err: unknown) {
       closeLoading();
+      await new Promise(resolve => setTimeout(resolve, 100));
       const errorMessage = err instanceof Error ? err.message : 'SMTP test hatası';
       showSmtpTestResult(false, errorMessage);
     } finally {
