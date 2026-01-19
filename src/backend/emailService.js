@@ -570,7 +570,7 @@ export async function sendReportAssignmentEmail(email, userName, reportData, loc
     const mailOptions = {
       from: `"${smtpConfig.fromName}" <${smtpConfig.fromEmail}>`,
       to: email,
-      subject: `Size Bir Rapor Atandı - ${safeIncidentNumber}`,
+      subject: `Size Bir Ramakkala ve Tehlike Raporu Atandı - ${safeIncidentNumber}`,
       html: `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f5f7fa; margin: 0; padding: 0;">
           <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f7fa;">
@@ -593,7 +593,7 @@ export async function sendReportAssignmentEmail(email, userName, reportData, loc
                         Merhaba <strong>${safeUserName}</strong>,
                       </p>
                       <p style="margin: 0 0 25px 0; font-size: 15px; color: #555; line-height: 1.6;">
-                        Size bir Ramak Kala ve Tehlike raporu atanmıştır. Lütfen raporun detaylarını aşağıda inceleyip gerekli işlemleri yapınız.
+                        Size bir Ramakkala ve Tehlike raporu atanmıştır. Lütfen raporun detaylarını aşağıda inceleyip gerekli işlemleri yapınız.
                       </p>
 
                       <!-- Report Details Card -->
@@ -658,7 +658,7 @@ export async function sendReportAssignmentEmail(email, userName, reportData, loc
           </table>
         </div>
       `,
-      text: `Size Bir Rapor Atandı\n\nMerhaba ${safeUserName},\n\nSize bir Ramak Kala ve Tehlike raporu atanmıştır.\n\n--- RAPOR BİLGİLERİ ---\nOlay Numarası: ${safeIncidentNumber}\nLokasyon: ${safeLocationName}\nKategori: ${safeCategory}\nAçıklama: ${safeDescription}\n\nRaporu görüntülemek için: ${reportUrl}\n\nRamak Kala ve Tehlike Raporlama Sistemi`
+      text: `Size Bir Ramakkala ve Tehlike Raporu Atandı\n\nMerhaba ${safeUserName},\n\nSize bir Ramakkala ve Tehlike raporu atanmıştır.\n\n--- RAPOR BİLGİLERİ ---\nOlay Numarası: ${safeIncidentNumber}\nLokasyon: ${safeLocationName}\nKategori: ${safeCategory}\nAçıklama: ${safeDescription}\n\nRaporu görüntülemek için: ${reportUrl}\n\nRamak Kala ve Tehlike Raporlama Sistemi`
     };
 
     const result = await transporter.sendMail(mailOptions);
