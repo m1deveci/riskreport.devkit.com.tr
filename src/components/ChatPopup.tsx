@@ -228,8 +228,9 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ currentUser }) => {
                 {selectedUser ? (
                   <>
                     <h2 className="font-bold text-base">{selectedUser.full_name || selectedUser.name}</h2>
-                    <p className="text-xs text-blue-100">
-                      {selectedUser.is_online ? '🟢 Çevrimiçi' : '⚪ Çevrimdışı'}
+                    <p className="text-xs text-blue-100 flex items-center gap-1">
+                      <span className={`inline-block w-2 h-2 rounded-full ${selectedUser.is_online ? 'bg-green-400' : 'bg-red-400'}`}></span>
+                      {selectedUser.is_online ? 'Çevrimiçi' : 'Çevrimdışı'}
                     </p>
                   </>
                 ) : (
@@ -308,9 +309,10 @@ const ChatPopup: React.FC<ChatPopupProps> = ({ currentUser }) => {
                               <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-cyan-400 flex items-center justify-center text-white font-bold text-sm">
                                 {(user.full_name || user.name || 'U').charAt(0).toUpperCase()}
                               </div>
-                              {user.is_online && (
-                                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-                              )}
+                              {/* Online/Offline indicator */}
+                              <div className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${
+                                user.is_online ? 'bg-green-500' : 'bg-red-500'
+                              }`}></div>
                             </div>
 
                             {/* User Info */}
