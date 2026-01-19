@@ -154,7 +154,7 @@ export async function sendNearMissReportEmail(recipients, reportData, locationNa
     const mailOptions = {
       from: `"${smtpConfig.fromName}" <${smtpConfig.fromEmail}>`,
       to: recipients.join(','),
-      subject: `Ramak Kala Bildirim - ${safeIncidentNumber}`,
+      subject: `Ramakkala Bildirim - ${safeIncidentNumber}`,
       html: `
         <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #2c3e50; margin: 0; padding: 0; background-color: #f5f7fa;">
           <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f7fa; margin: 0; padding: 0;">
@@ -167,7 +167,7 @@ export async function sendNearMissReportEmail(recipients, reportData, locationNa
                   <tr>
                     <td style="background: linear-gradient(135deg, #d32f2f 0%, #e53935 100%); padding: 40px 30px; text-align: center;">
                       <p style="margin: 0 0 10px 0; font-size: 13px; color: rgba(255,255,255,0.9); text-transform: uppercase; letter-spacing: 1px;">🚨 Acil Bildirim</p>
-                      <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: white;">Yeni Ramak Kala Bildirimi</h1>
+                      <h1 style="margin: 0; font-size: 28px; font-weight: 700; color: white;">Yeni Ramakkala Bildirimi</h1>
                     </td>
                   </tr>
 
@@ -240,7 +240,7 @@ export async function sendNearMissReportEmail(recipients, reportData, locationNa
                   <tr>
                     <td style="background-color: #2c3e50; color: rgba(255,255,255,0.8); padding: 20px 30px; text-align: center; border-radius: 0 0 8px 8px;">
                       <p style="margin: 0 0 5px 0; font-size: 12px;">Risk Report Sistemi</p>
-                      <p style="margin: 0; font-size: 11px; opacity: 0.7;">Ramak Kala (Near-Miss) Yönetim Platformu</p>
+                      <p style="margin: 0; font-size: 11px; opacity: 0.7;">Ramakkala (Near-Miss) Yönetim Platformu</p>
                     </td>
                   </tr>
                 </table>
@@ -249,7 +249,7 @@ export async function sendNearMissReportEmail(recipients, reportData, locationNa
           </table>
         </div>
       `,
-      text: `Yeni Ramak Kala Bildirimi\n\nOlay No: ${safeIncidentNumber}\nLokasyon: ${safeLocationName}\nBaşlayan Kişi: ${safeFullName}\nİletişim: ${safePhone}\nKategori: ${safeCategory}\nAçıklama: ${safeDescription}\n\nDetaylı bilgi için: https://riskreport.devkit.com.tr/#/logs`,
+      text: `Yeni Ramakkala Bildirimi\n\nOlay No: ${safeIncidentNumber}\nLokasyon: ${safeLocationName}\nBaşlayan Kişi: ${safeFullName}\nİletişim: ${safePhone}\nKategori: ${safeCategory}\nAçıklama: ${safeDescription}\n\nDetaylı bilgi için: https://riskreport.devkit.com.tr/#/logs`,
     };
 
     const result = await transporter.sendMail(mailOptions);
@@ -393,7 +393,7 @@ export async function sendWelcomeEmail(email, fullName, plainPassword, locationI
                   <tr>
                     <td style="background-color: #1f2937; color: rgba(255,255,255,0.8); padding: 25px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
                       <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600;">Risk Report Sistemi</p>
-                      <p style="margin: 0; font-size: 12px; opacity: 0.8;">Ramak Kala (Near-Miss) Yönetim Platformu</p>
+                      <p style="margin: 0; font-size: 12px; opacity: 0.8;">Ramakkala (Near-Miss) Yönetim Platformu</p>
                       <p style="margin: 10px 0 0 0; font-size: 11px; opacity: 0.6;">Bu e-posta, sistem yöneticisi tarafından otomatik olarak oluşturulmuştur.</p>
                     </td>
                   </tr>
@@ -523,7 +523,7 @@ export async function sendPasswordResetNotificationEmail(email, fullName, plainP
                   <tr>
                     <td style="background-color: #1f2937; color: rgba(255,255,255,0.8); padding: 25px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
                       <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600;">Risk Report Sistemi</p>
-                      <p style="margin: 0; font-size: 12px; opacity: 0.8;">Ramak Kala (Near-Miss) Yönetim Platformu</p>
+                      <p style="margin: 0; font-size: 12px; opacity: 0.8;">Ramakkala (Near-Miss) Yönetim Platformu</p>
                       <p style="margin: 10px 0 0 0; font-size: 11px; opacity: 0.6;">Bu e-posta, sistem yöneticisi tarafından otomatik olarak oluşturulmuştur.</p>
                     </td>
                   </tr>
@@ -647,7 +647,7 @@ export async function sendReportAssignmentEmail(email, userName, reportData, loc
                   <!-- Footer -->
                   <tr>
                     <td style="background-color: #1f2937; color: rgba(255,255,255,0.8); padding: 25px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
-                      <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600;">Ramak Kala ve Tehlike Raporlama Sistemi</p>
+                      <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600;">Ramakkala ve Tehlike Raporlama Sistemi</p>
                       <p style="margin: 0; font-size: 12px; opacity: 0.8;">Güvenli ve Sağlıklı Çalışma Ortamı İçin</p>
                       <p style="margin: 10px 0 0 0; font-size: 11px; opacity: 0.6;">Bu e-posta otomatik olarak oluşturulmuştur.</p>
                     </td>
@@ -658,7 +658,7 @@ export async function sendReportAssignmentEmail(email, userName, reportData, loc
           </table>
         </div>
       `,
-      text: `Size Bir Ramakkala ve Tehlike Raporu Atandı\n\nMerhaba ${safeUserName},\n\nSize bir Ramakkala ve Tehlike raporu atanmıştır.\n\n--- RAPOR BİLGİLERİ ---\nOlay Numarası: ${safeIncidentNumber}\nLokasyon: ${safeLocationName}\nKategori: ${safeCategory}\nAçıklama: ${safeDescription}\n\nRaporu görüntülemek için: ${reportUrl}\n\nRamak Kala ve Tehlike Raporlama Sistemi`
+      text: `Size Bir Ramakkala ve Tehlike Raporu Atandı\n\nMerhaba ${safeUserName},\n\nSize bir Ramakkala ve Tehlike raporu atanmıştır.\n\n--- RAPOR BİLGİLERİ ---\nOlay Numarası: ${safeIncidentNumber}\nLokasyon: ${safeLocationName}\nKategori: ${safeCategory}\nAçıklama: ${safeDescription}\n\nRaporu görüntülemek için: ${reportUrl}\n\nRamakkala ve Tehlike Raporlama Sistemi`
     };
 
     const result = await transporter.sendMail(mailOptions);
@@ -783,7 +783,7 @@ export async function sendReportUpdateNotification(recipients, userName, reportD
                   <!-- Footer -->
                   <tr>
                     <td style="background-color: #1f2937; color: rgba(255,255,255,0.8); padding: 25px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
-                      <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600;">Ramak Kala ve Tehlike Raporlama Sistemi</p>
+                      <p style="margin: 0 0 8px 0; font-size: 13px; font-weight: 600;">Ramakkala ve Tehlike Raporlama Sistemi</p>
                       <p style="margin: 0; font-size: 12px; opacity: 0.8;">İSG Yönetim Platformu</p>
                       <p style="margin: 10px 0 0 0; font-size: 11px; opacity: 0.6;">Bu e-posta otomatik olarak oluşturulmuştur.</p>
                     </td>
@@ -794,7 +794,7 @@ export async function sendReportUpdateNotification(recipients, userName, reportD
           </table>
         </div>
       `,
-      text: `Rapor Güncellendi\n\n${safeUserName} tarafından bir raporda değişiklik yapıldı.\n\n--- RAPOR BİLGİLERİ ---\nOlay Numarası: ${safeIncidentNumber}\nLokasyon: ${safeLocationName}\nKategori: ${safeCategory}\n\n--- YAPILAN DEĞİŞİKLİKLER ---\n${changes.map(c => `${escapeHtml(c.field_display)}: ${escapeHtml(c.old_value || '-')} → ${escapeHtml(c.new_value || '-')}`).join('\n')}\n\nRaporu görüntülemek için: ${reportUrl}\n\nRamak Kala ve Tehlike Raporlama Sistemi`
+      text: `Rapor Güncellendi\n\n${safeUserName} tarafından bir raporda değişiklik yapıldı.\n\n--- RAPOR BİLGİLERİ ---\nOlay Numarası: ${safeIncidentNumber}\nLokasyon: ${safeLocationName}\nKategori: ${safeCategory}\n\n--- YAPILAN DEĞİŞİKLİKLER ---\n${changes.map(c => `${escapeHtml(c.field_display)}: ${escapeHtml(c.old_value || '-')} → ${escapeHtml(c.new_value || '-')}`).join('\n')}\n\nRaporu görüntülemek için: ${reportUrl}\n\nRamakkala ve Tehlike Raporlama Sistemi`
     };
 
     const result = await transporter.sendMail(mailOptions);

@@ -63,7 +63,7 @@ const getMenuItems = (t: (key: string) => string, userRole?: string) => {
 export function AdminLayout({ children, currentUser, currentPage, onNavigate }: AdminLayoutProps) {
   const { language, setLanguage, t } = useI18n();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [siteTitle, setSiteTitle] = useState('Ramak Kala Sistemi');
+  const [siteTitle, setSiteTitle] = useState('Ramakkala Sistemi');
   const [menuItems, setMenuItems] = useState(() => getMenuItems(t, currentUser.role));
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
   const [newReportsCount, setNewReportsCount] = useState(0);
