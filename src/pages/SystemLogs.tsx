@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { ActionDescriptions, formatLogDetails } from '../lib/logger';
-import { FileText, Search, ChevronDown, ChevronUp, Download } from 'lucide-react';
+import { FileText, Search, ChevronDown, ChevronUp, Download, LogIn, MapPin, Map, AlertTriangle, UserCheck, Users, Settings } from 'lucide-react';
 import { useI18n, useLanguageChange } from '../lib/i18n';
 import { exportLogsAsPDF, exportLogsAsExcel, type SystemLogExportData } from '../lib/exportUtils';
 
@@ -15,6 +15,52 @@ interface SystemLog {
   users?: { full_name: string };
 }
 
+// Action categories for filtering
+const ACTION_CATEGORIES = {
+  auth: {
+    name: 'Oturum',
+    icon: LogIn,
+    color: { bg: 'bg-blue-600', bgLight: 'bg-blue-500/20', border: 'border-blue-500', ring: 'ring-blue-400', text: 'text-blue-400', textActive: 'text-blue-100' },
+    actions: ['LOGIN_SUCCESS', 'LOGIN_FAILED', 'LOGOUT'],
+  },
+  location: {
+    name: 'Lokasyon',
+    icon: MapPin,
+    color: { bg: 'bg-green-600', bgLight: 'bg-green-500/20', border: 'border-green-500', ring: 'ring-green-400', text: 'text-green-400', textActive: 'text-green-100' },
+    actions: ['CREATE_LOCATION', 'UPDATE_LOCATION', 'DELETE_LOCATION'],
+  },
+  region: {
+    name: 'Bölge',
+    icon: Map,
+    color: { bg: 'bg-purple-600', bgLight: 'bg-purple-500/20', border: 'border-purple-500', ring: 'ring-purple-400', text: 'text-purple-400', textActive: 'text-purple-100' },
+    actions: ['CREATE_REGION', 'UPDATE_REGION', 'DELETE_REGION'],
+  },
+  nearmiss: {
+    name: 'Ramakkala',
+    icon: AlertTriangle,
+    color: { bg: 'bg-orange-600', bgLight: 'bg-orange-500/20', border: 'border-orange-500', ring: 'ring-orange-400', text: 'text-orange-400', textActive: 'text-orange-100' },
+    actions: ['CREATE_NEARMISS', 'UPDATE_NEARMISS', 'DELETE_NEARMISS'],
+  },
+  isgExpert: {
+    name: 'İSG Uzmanı',
+    icon: UserCheck,
+    color: { bg: 'bg-cyan-600', bgLight: 'bg-cyan-500/20', border: 'border-cyan-500', ring: 'ring-cyan-400', text: 'text-cyan-400', textActive: 'text-cyan-100' },
+    actions: ['CREATE_ISG_EXPERT', 'UPDATE_ISG_EXPERT', 'DELETE_ISG_EXPERT'],
+  },
+  user: {
+    name: 'Kullanıcı',
+    icon: Users,
+    color: { bg: 'bg-pink-600', bgLight: 'bg-pink-500/20', border: 'border-pink-500', ring: 'ring-pink-400', text: 'text-pink-400', textActive: 'text-pink-100' },
+    actions: ['CREATE_USER', 'UPDATE_USER', 'DELETE_USER'],
+  },
+  system: {
+    name: 'Sistem',
+    icon: Settings,
+    color: { bg: 'bg-amber-600', bgLight: 'bg-amber-500/20', border: 'border-amber-500', ring: 'ring-amber-400', text: 'text-amber-400', textActive: 'text-amber-100' },
+    actions: ['UPDATE_SETTINGS', 'DOWNLOAD_BACKUP', 'UPDATE_PROFILE', 'CHANGE_PASSWORD'],
+  },
+};
+
 export function SystemLogs() {
   const { t } = useI18n();
   const [logs, setLogs] = useState<SystemLog[]>([]);
@@ -23,34 +69,44 @@ export function SystemLogs() {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
   const [usersMap, setUsersMap] = useState<Record<string, string>>({});
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   useEffect(() => {
     loadLogs();
   }, []);
 
   useEffect(() => {
+    let result = [...logs];
+
+    // Apply category filter first
+    if (activeCategory) {
+      const category = ACTION_CATEGORIES[activeCategory as keyof typeof ACTION_CATEGORIES];
+      if (category) {
+        result = result.filter((log) => category.actions.includes(log.action));
+      }
+    }
+
+    // Then apply search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      setFilteredLogs(
-        logs.filter((log) => {
-          const actionDesc = ActionDescriptions[log.action]?.tr || log.action;
-          const userName = (log.users as unknown as { full_name: string })?.full_name || 'Sistem';
-          // Parse details if it's a string (from database)
-          const parsedDetails = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
-          const detailsText = formatLogDetails(log.action, parsedDetails, usersMap).toLowerCase();
+      result = result.filter((log) => {
+        const actionDesc = ActionDescriptions[log.action]?.tr || log.action;
+        const userName = (log.users as unknown as { full_name: string })?.full_name || 'Sistem';
+        // Parse details if it's a string (from database)
+        const parsedDetails = typeof log.details === 'string' ? JSON.parse(log.details) : log.details;
+        const detailsText = formatLogDetails(log.action, parsedDetails, usersMap).toLowerCase();
 
-          return (
-            log.action.toLowerCase().includes(term) ||
-            actionDesc.toLowerCase().includes(term) ||
-            userName.toLowerCase().includes(term) ||
-            detailsText.includes(term)
-          );
-        })
-      );
-    } else {
-      setFilteredLogs(logs);
+        return (
+          log.action.toLowerCase().includes(term) ||
+          actionDesc.toLowerCase().includes(term) ||
+          userName.toLowerCase().includes(term) ||
+          detailsText.includes(term)
+        );
+      });
     }
-  }, [logs, searchTerm]);
+
+    setFilteredLogs(result);
+  }, [logs, searchTerm, activeCategory]);
 
   useLanguageChange();
 
@@ -170,7 +226,67 @@ export function SystemLogs() {
         </div>
       </div>
 
-      <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md p-4">
+      {/* Action Category Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 mb-6">
+        {/* Tümü Card */}
+        <button
+          onClick={() => setActiveCategory(null)}
+          className={`p-3 rounded-lg border transition-all duration-200 ${
+            activeCategory === null
+              ? 'bg-slate-600 border-slate-500 ring-2 ring-slate-400'
+              : 'bg-gradient-to-br from-slate-800 to-slate-700 border-slate-700 hover:border-slate-500'
+          }`}
+        >
+          <div className="flex flex-col items-center gap-2">
+            <div className={`p-2 rounded-lg ${activeCategory === null ? 'bg-slate-500' : 'bg-slate-500/20'}`}>
+              <FileText className={`w-5 h-5 ${activeCategory === null ? 'text-white' : 'text-slate-400'}`} />
+            </div>
+            <div className="text-center">
+              <p className={`text-lg font-bold ${activeCategory === null ? 'text-white' : 'text-slate-300'}`}>
+                {logs.length}
+              </p>
+              <p className={`text-xs ${activeCategory === null ? 'text-slate-100' : 'text-slate-400'}`}>
+                Tümü
+              </p>
+            </div>
+          </div>
+        </button>
+
+        {/* Category Cards */}
+        {Object.entries(ACTION_CATEGORIES).map(([key, category]) => {
+          const Icon = category.icon;
+          const count = logs.filter((log) => category.actions.includes(log.action)).length;
+          const isActive = activeCategory === key;
+
+          return (
+            <button
+              key={key}
+              onClick={() => setActiveCategory(isActive ? null : key)}
+              className={`p-3 rounded-lg border transition-all duration-200 ${
+                isActive
+                  ? `${category.color.bg} ${category.color.border} ring-2 ${category.color.ring}`
+                  : `bg-gradient-to-br from-slate-800 to-slate-700 border-slate-700 hover:${category.color.border}`
+              }`}
+            >
+              <div className="flex flex-col items-center gap-2">
+                <div className={`p-2 rounded-lg ${isActive ? category.color.bg.replace('600', '500') : category.color.bgLight}`}>
+                  <Icon className={`w-5 h-5 ${isActive ? 'text-white' : category.color.text}`} />
+                </div>
+                <div className="text-center">
+                  <p className={`text-lg font-bold ${isActive ? 'text-white' : category.color.text}`}>
+                    {count}
+                  </p>
+                  <p className={`text-xs truncate ${isActive ? category.color.textActive : 'text-slate-400'}`}>
+                    {category.name}
+                  </p>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md p-4 mb-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-500" />
           <input
