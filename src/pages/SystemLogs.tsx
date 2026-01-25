@@ -36,7 +36,7 @@ const ACTION_CATEGORIES = {
     actions: ['CREATE_REGION', 'UPDATE_REGION', 'DELETE_REGION'],
   },
   nearmiss: {
-    name: 'Ramakkala',
+    name: 'Ramak Kala',
     icon: AlertTriangle,
     color: { bg: 'bg-orange-600', bgLight: 'bg-orange-500/20', border: 'border-orange-500', ring: 'ring-orange-400', text: 'text-orange-400', textActive: 'text-orange-100' },
     actions: ['CREATE_NEARMISS', 'UPDATE_NEARMISS', 'DELETE_NEARMISS'],

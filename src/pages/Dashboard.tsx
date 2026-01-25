@@ -282,7 +282,7 @@ export function Dashboard() {
       {/* Header Section */}
       <div className="mb-8">
         <h1 className="text-4xl font-bold text-white mb-2">{t('dashboard.title') || 'Gösterge Paneli'}</h1>
-        <p className="text-slate-400 text-lg">{t('dashboard.subtitle') || 'Ramakkala raporlama sistemi özeti ve istatistikleri'}</p>
+        <p className="text-slate-400 text-lg">{t('dashboard.subtitle') || 'Ramak Kala raporlama sistemi özeti ve istatistikleri'}</p>
       </div>
 
       {/* Stats Cards Grid */}

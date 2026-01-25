@@ -273,7 +273,7 @@ export function Reports() {
     const filename = `raporlar_${new Date().toISOString().split('T')[0]}.pdf`;
     await exportReportsAsPDF(dataToExport, {
       filename,
-      title: 'Ramakkala Raporları',
+      title: 'Ramak Kala Raporları',
       subtitle: `Toplam ${dataToExport.length} rapor`,
     });
   }
@@ -301,7 +301,7 @@ export function Reports() {
     const filename = `raporlar_${new Date().toISOString().split('T')[0]}.xlsx`;
     exportReportsAsExcel(dataToExport, {
       filename,
-      title: 'Ramakkala Raporları',
+      title: 'Ramak Kala Raporları',
     });
   }
 

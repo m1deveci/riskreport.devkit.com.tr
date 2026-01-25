@@ -38,7 +38,7 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
   const [incidentNumber, setIncidentNumber] = useState('');
   const [region, setRegion] = useState<Region | null>(null);
   const [location, setLocation] = useState<Location | null>(null);
-  const [siteTitle, setSiteTitle] = useState('Ramakkala Raporlama Sistemi');
+  const [siteTitle, setSiteTitle] = useState('Ramak Kala Raporlama Sistemi');
   const [turnstileToken, setTurnstileToken] = useState<string>('');
   const turnstileRef = useRef<any>(null);
 
@@ -352,7 +352,7 @@ export function NearMissForm({ locationId, regionId, qrToken }: NearMissFormProp
             <p className="text-2xl font-bold text-blue-600">{incidentNumber}</p>
           </div>
           <p className="text-gray-600 mb-6">
-            Ramakkala raporunuz başarıyla kaydedildi. İSG ekibi bilgilendirildi ve en kısa sürede
+            Ramak Kala raporunuz başarıyla kaydedildi. İSG ekibi bilgilendirildi ve en kısa sürede
             incelenecektir.
           </p>
           <button

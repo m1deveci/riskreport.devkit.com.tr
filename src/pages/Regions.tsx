@@ -291,7 +291,7 @@ export function Regions() {
       // Draw main title
       ctx.fillStyle = '#1F2937'; // Dark gray
       ctx.font = 'bold 24px Arial, sans-serif';
-      ctx.fillText('Ramakkala Bildirimi Yap', finalCanvas.width / 2, 80);
+      ctx.fillText('Ramak Kala Bildirimi Yap', finalCanvas.width / 2, 80);
 
       // Draw instruction text
       ctx.fillStyle = '#6B7280'; // Gray

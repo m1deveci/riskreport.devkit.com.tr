@@ -182,7 +182,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
             </div>
           )}
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            {settings?.site_title || 'Ramakkala Sistemi'}
+            {settings?.site_title || 'Ramak Kala Sistemi'}
           </h1>
         
         </div>
@@ -266,7 +266,7 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
         <div className="mt-6 pt-6 border-t border-gray-200">
           <p className="text-xs text-gray-500 text-center">
-          Ramakkala Raporlama Sistemi &copy; 2025 Tüm hakları saklıdır. - Geliştirici: Devkit
+          Ramak Kala Raporlama Sistemi &copy; 2025 Tüm hakları saklıdır. - Geliştirici: Devkit
           </p>
         </div>
       </div>

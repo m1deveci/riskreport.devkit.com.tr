@@ -2930,7 +2930,7 @@ await initializeEmailService(pool);
 
 httpServer.listen(port, '0.0.0.0', () => {
   console.log(`\n╔════════════════════════════════════════╗`);
-  console.log(`║  Ramakkala Reporting System (MySQL)    ║`);
+  console.log(`║  Ramak Kala Reporting System (MySQL)    ║`);
   console.log(`║  Server running on port ${port}              ║`);
   console.log(`║  Database: ${process.env.MYSQL_DATABASE}                      ║`);
   console.log(`║  User: ${process.env.MYSQL_USER}                         ║`);

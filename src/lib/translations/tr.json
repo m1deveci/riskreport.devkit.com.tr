@@ -41,7 +41,7 @@
   },
   "dashboard": {
     "title": "Gösterge Paneli",
-    "subtitle": "Ramakkala ve Tehlike raporlama sistemi özeti ve istatistikleri",
+    "subtitle": "Ramak Kala ve Tehlike raporlama sistemi özeti ve istatistikleri",
     "totalLocations": "TOPLAM LOKASYON",
     "totalReports": "TOPLAM RAPOR",
     "newReports": "YENİ RAPORLAR",
@@ -113,7 +113,7 @@
     "title": "Ayarlar",
     "subtitle": "İSG Yönetim Paneli",
     "siteTitle": "Site Başlığı",
-    "siteTitlePlaceholder": "Ramakkala ve Tehlike Raporlama Sistemi",
+    "siteTitlePlaceholder": "Ramak Kala ve Tehlike Raporlama Sistemi",
     "siteTitleHelp": "Bu başlık, uygulamanın başında gösterilir",
     "save": "Kaydet",
     "generalTab": "Genel Ayarlar",
@@ -203,8 +203,8 @@
     "downloadQr": "QR Kodu İndir"
   },
   "reports": {
-    "title": "Ramakkala ve Tehlike Raporları",
-    "subtitle": "Tüm Ramakkala ve Tehlike bildirimlerini görüntüleyin ve yönetin",
+    "title": "Ramak Kala ve Tehlike Raporları",
+    "subtitle": "Tüm Ramak Kala ve Tehlike bildirimlerini görüntüleyin ve yönetin",
     "search": "Rapor ara...",
     "filter": "Filtrele",
     "category": "Kategori",

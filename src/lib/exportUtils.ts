@@ -177,7 +177,7 @@ export async function exportReportsAsPDF(
   // Başlık
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text(options.title || 'Ramakkala Raporları', 10, y);
+  doc.text(options.title || 'Ramak Kala Raporları', 10, y);
   y += 7;
 
   // Subtitle
