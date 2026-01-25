@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { logAction, LogActions } from '../lib/logger';
-import { Plus, Edit2, Trash2, QrCode, Download, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Plus, Edit2, Trash2, QrCode, Download, AlertCircle, CheckCircle2, MapPin, Building2 } from 'lucide-react';
 import { useI18n, useLanguageChange } from '../lib/i18n';
 import QRCode from 'qrcode';
 import Swal from 'sweetalert2';
@@ -38,6 +38,7 @@ export function Regions() {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedLocationFilter, setSelectedLocationFilter] = useState<string>('');
+  const [activeLocationCard, setActiveLocationCard] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({
     location_id: '',
@@ -372,6 +373,24 @@ export function Regions() {
     }
   }
 
+  // Calculate region counts per location
+  const locationCounts = locations.reduce((acc, loc) => {
+    acc[loc.id] = regions.filter((r) => r.location_id === loc.id).length;
+    return acc;
+  }, {} as Record<string, number>);
+
+  // Handle location card click
+  function handleLocationCardClick(locationId: string | null) {
+    if (locationId === activeLocationCard) {
+      // Clicking the same card again deselects it
+      setActiveLocationCard(null);
+      setSelectedLocationFilter('');
+    } else {
+      setActiveLocationCard(locationId);
+      setSelectedLocationFilter(locationId || '');
+    }
+  }
+
   const filteredRegions = selectedLocationFilter
     ? regions.filter((r) => r.location_id === selectedLocationFilter)
     : regions;
@@ -386,7 +405,7 @@ export function Regions() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 -mx-6 -my-6 px-6 py-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-4xl font-bold text-white">{t('regions.title')}</h1>
           <p className="text-slate-400 text-lg mt-2">{t('regions.subtitle') || 'QR kodlu bölgeleri yönetin'}</p>
@@ -401,11 +420,85 @@ export function Regions() {
         </button>
       </div>
 
-      <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md p-4">
+      {/* Location Cards */}
+      {locations.length > 0 && (
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-6">
+          {/* Tümü Card */}
+          <button
+            onClick={() => handleLocationCardClick(null)}
+            className={`p-4 rounded-lg border transition-all duration-200 ${
+              activeLocationCard === null && !selectedLocationFilter
+                ? 'bg-slate-600 border-slate-500 ring-2 ring-slate-400'
+                : 'bg-gradient-to-br from-slate-800 to-slate-700 border-slate-700 hover:border-slate-500'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${activeLocationCard === null && !selectedLocationFilter ? 'bg-slate-500' : 'bg-slate-500/20'}`}>
+                <Building2 className={`w-5 h-5 ${activeLocationCard === null && !selectedLocationFilter ? 'text-white' : 'text-slate-400'}`} />
+              </div>
+              <div className="text-left min-w-0">
+                <p className={`text-xl font-bold ${activeLocationCard === null && !selectedLocationFilter ? 'text-white' : 'text-slate-300'}`}>
+                  {regions.length}
+                </p>
+                <p className={`text-xs truncate ${activeLocationCard === null && !selectedLocationFilter ? 'text-slate-100' : 'text-slate-400'}`}>
+                  Tümü
+                </p>
+              </div>
+            </div>
+          </button>
+
+          {/* Location Cards */}
+          {locations.map((location, index) => {
+            const colors = [
+              { bg: 'bg-blue-600', bgLight: 'bg-blue-500/20', border: 'border-blue-500', ring: 'ring-blue-400', text: 'text-blue-400', textActive: 'text-blue-100' },
+              { bg: 'bg-green-600', bgLight: 'bg-green-500/20', border: 'border-green-500', ring: 'ring-green-400', text: 'text-green-400', textActive: 'text-green-100' },
+              { bg: 'bg-purple-600', bgLight: 'bg-purple-500/20', border: 'border-purple-500', ring: 'ring-purple-400', text: 'text-purple-400', textActive: 'text-purple-100' },
+              { bg: 'bg-orange-600', bgLight: 'bg-orange-500/20', border: 'border-orange-500', ring: 'ring-orange-400', text: 'text-orange-400', textActive: 'text-orange-100' },
+              { bg: 'bg-cyan-600', bgLight: 'bg-cyan-500/20', border: 'border-cyan-500', ring: 'ring-cyan-400', text: 'text-cyan-400', textActive: 'text-cyan-100' },
+              { bg: 'bg-pink-600', bgLight: 'bg-pink-500/20', border: 'border-pink-500', ring: 'ring-pink-400', text: 'text-pink-400', textActive: 'text-pink-100' },
+              { bg: 'bg-amber-600', bgLight: 'bg-amber-500/20', border: 'border-amber-500', ring: 'ring-amber-400', text: 'text-amber-400', textActive: 'text-amber-100' },
+              { bg: 'bg-teal-600', bgLight: 'bg-teal-500/20', border: 'border-teal-500', ring: 'ring-teal-400', text: 'text-teal-400', textActive: 'text-teal-100' },
+            ];
+            const color = colors[index % colors.length];
+            const isActive = activeLocationCard === location.id;
+
+            return (
+              <button
+                key={location.id}
+                onClick={() => handleLocationCardClick(location.id)}
+                className={`p-4 rounded-lg border transition-all duration-200 ${
+                  isActive
+                    ? `${color.bg} ${color.border} ring-2 ${color.ring}`
+                    : `bg-gradient-to-br from-slate-800 to-slate-700 border-slate-700 hover:${color.border}`
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className={`p-2 rounded-lg ${isActive ? color.bg.replace('600', '500') : color.bgLight}`}>
+                    <MapPin className={`w-5 h-5 ${isActive ? 'text-white' : color.text}`} />
+                  </div>
+                  <div className="text-left min-w-0">
+                    <p className={`text-xl font-bold ${isActive ? 'text-white' : color.text}`}>
+                      {locationCounts[location.id] || 0}
+                    </p>
+                    <p className={`text-xs truncate ${isActive ? color.textActive : 'text-slate-400'}`} title={location.name}>
+                      {location.name}
+                    </p>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md p-4 mb-4">
         <label className="block text-sm font-medium text-slate-300 mb-2">{t('regions.filterByLocation') || 'Lokasyona Göre Filtrele'}</label>
         <select
           value={selectedLocationFilter}
-          onChange={(e) => setSelectedLocationFilter(e.target.value)}
+          onChange={(e) => {
+            setSelectedLocationFilter(e.target.value);
+            setActiveLocationCard(e.target.value || null);
+          }}
           className="w-full sm:w-64 px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
           <option value="">{t('regions.allLocations') || 'Tüm Lokasyonlar'}</option>
