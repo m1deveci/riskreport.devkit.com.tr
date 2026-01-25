@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
 import { logAction, LogActions } from '../lib/logger';
 import { api } from '../lib/api';
-import { Search, Filter, X, AlertTriangle, Eye, Download, Image as ImageIcon, Lock, History, FileDown, UserPlus, Users } from 'lucide-react';
+import { Search, Filter, X, AlertTriangle, Eye, Download, Image as ImageIcon, Lock, History, FileDown, UserPlus, Users, Clock, CheckCircle, PlayCircle } from 'lucide-react';
 import type { UserProfile } from '../lib/auth';
 import { useI18n, useLanguageChange } from '../lib/i18n';
 import { exportReportsAsPDF, exportReportsAsExcel, type ReportExportData } from '../lib/exportUtils';
@@ -124,6 +124,8 @@ export function Reports() {
     date_from: '',
     date_to: '',
   });
+  const [activeStatusCard, setActiveStatusCard] = useState<string | null>(null); // null = show all except "Tamamlandı"
+  const [showCompleted, setShowCompleted] = useState(false); // Default: don't show completed
   const [editNotes, setEditNotes] = useState('');
   const [editStatus, setEditStatus] = useState('');
 
@@ -145,7 +147,7 @@ export function Reports() {
 
   useEffect(() => {
     applyFilters();
-  }, [reports, filters, searchTerm]);
+  }, [reports, filters, searchTerm, activeStatusCard, showCompleted]);
 
   useLanguageChange();
 
@@ -197,8 +199,16 @@ export function Reports() {
       filtered = filtered.filter((r) => r.category === filters.category);
     }
 
-    if (filters.status) {
+    // Status filtering: check activeStatusCard first, then filters.status
+    if (activeStatusCard) {
+      // If a status card is clicked, filter by that status
+      filtered = filtered.filter((r) => r.status === activeStatusCard);
+    } else if (filters.status) {
+      // If dropdown status filter is used
       filtered = filtered.filter((r) => r.status === filters.status);
+    } else if (!showCompleted) {
+      // Default: hide "Tamamlandı" reports if no specific status is selected
+      filtered = filtered.filter((r) => r.status !== 'Tamamlandı');
     }
 
     if (filters.date_from) {
@@ -236,6 +246,8 @@ export function Reports() {
       date_to: '',
     });
     setSearchTerm('');
+    setActiveStatusCard(null);
+    setShowCompleted(false);
   }
 
   async function handleExportPDF() {
@@ -583,6 +595,36 @@ export function Reports() {
     ? regions.filter((r) => r.location_id === filters.location_id)
     : regions;
 
+  // Calculate status counts for cards (based on all reports, not filtered)
+  const statusCounts = {
+    'Yeni': reports.filter((r) => r.status === 'Yeni').length,
+    'Devam Ediyor': reports.filter((r) => r.status === 'Devam Ediyor').length,
+    'Tamamlandı': reports.filter((r) => r.status === 'Tamamlandı').length,
+  };
+
+  // Handle status card click
+  function handleStatusCardClick(status: string | null) {
+    if (status === activeStatusCard) {
+      // Clicking the same card again deselects it
+      setActiveStatusCard(null);
+      setShowCompleted(false);
+    } else if (status === 'Tamamlandı') {
+      // Clicking Tamamlandı shows completed reports
+      setActiveStatusCard(status);
+      setShowCompleted(true);
+    } else if (status === null) {
+      // Clicking "all" shows everything
+      setActiveStatusCard(null);
+      setShowCompleted(true);
+    } else {
+      // Clicking a specific status
+      setActiveStatusCard(status);
+      setShowCompleted(false);
+    }
+    // Clear dropdown status filter when card is clicked
+    setFilters((prev) => ({ ...prev, status: '' }));
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -631,6 +673,97 @@ export function Reports() {
             Excel
           </button>
         </div>
+      </div>
+
+      {/* Status Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        {/* Yeni */}
+        <button
+          onClick={() => handleStatusCardClick('Yeni')}
+          className={`p-4 rounded-lg border transition-all duration-200 ${
+            activeStatusCard === 'Yeni'
+              ? 'bg-yellow-600 border-yellow-500 ring-2 ring-yellow-400'
+              : 'bg-gradient-to-br from-slate-800 to-slate-700 border-slate-700 hover:border-yellow-500'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-lg ${activeStatusCard === 'Yeni' ? 'bg-yellow-500' : 'bg-yellow-500/20'}`}>
+              <Clock className={`w-6 h-6 ${activeStatusCard === 'Yeni' ? 'text-white' : 'text-yellow-400'}`} />
+            </div>
+            <div className="text-left">
+              <p className={`text-2xl font-bold ${activeStatusCard === 'Yeni' ? 'text-white' : 'text-yellow-400'}`}>
+                {statusCounts['Yeni']}
+              </p>
+              <p className={`text-sm ${activeStatusCard === 'Yeni' ? 'text-yellow-100' : 'text-slate-400'}`}>Yeni</p>
+            </div>
+          </div>
+        </button>
+
+        {/* Devam Ediyor */}
+        <button
+          onClick={() => handleStatusCardClick('Devam Ediyor')}
+          className={`p-4 rounded-lg border transition-all duration-200 ${
+            activeStatusCard === 'Devam Ediyor'
+              ? 'bg-blue-600 border-blue-500 ring-2 ring-blue-400'
+              : 'bg-gradient-to-br from-slate-800 to-slate-700 border-slate-700 hover:border-blue-500'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-lg ${activeStatusCard === 'Devam Ediyor' ? 'bg-blue-500' : 'bg-blue-500/20'}`}>
+              <PlayCircle className={`w-6 h-6 ${activeStatusCard === 'Devam Ediyor' ? 'text-white' : 'text-blue-400'}`} />
+            </div>
+            <div className="text-left">
+              <p className={`text-2xl font-bold ${activeStatusCard === 'Devam Ediyor' ? 'text-white' : 'text-blue-400'}`}>
+                {statusCounts['Devam Ediyor']}
+              </p>
+              <p className={`text-sm ${activeStatusCard === 'Devam Ediyor' ? 'text-blue-100' : 'text-slate-400'}`}>Devam Ediyor</p>
+            </div>
+          </div>
+        </button>
+
+        {/* Tamamlandı */}
+        <button
+          onClick={() => handleStatusCardClick('Tamamlandı')}
+          className={`p-4 rounded-lg border transition-all duration-200 ${
+            activeStatusCard === 'Tamamlandı'
+              ? 'bg-green-600 border-green-500 ring-2 ring-green-400'
+              : 'bg-gradient-to-br from-slate-800 to-slate-700 border-slate-700 hover:border-green-500'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-lg ${activeStatusCard === 'Tamamlandı' ? 'bg-green-500' : 'bg-green-500/20'}`}>
+              <CheckCircle className={`w-6 h-6 ${activeStatusCard === 'Tamamlandı' ? 'text-white' : 'text-green-400'}`} />
+            </div>
+            <div className="text-left">
+              <p className={`text-2xl font-bold ${activeStatusCard === 'Tamamlandı' ? 'text-white' : 'text-green-400'}`}>
+                {statusCounts['Tamamlandı']}
+              </p>
+              <p className={`text-sm ${activeStatusCard === 'Tamamlandı' ? 'text-green-100' : 'text-slate-400'}`}>Tamamlandı</p>
+            </div>
+          </div>
+        </button>
+
+        {/* Tümü */}
+        <button
+          onClick={() => handleStatusCardClick(null)}
+          className={`p-4 rounded-lg border transition-all duration-200 ${
+            activeStatusCard === null && showCompleted
+              ? 'bg-slate-600 border-slate-500 ring-2 ring-slate-400'
+              : 'bg-gradient-to-br from-slate-800 to-slate-700 border-slate-700 hover:border-slate-500'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            <div className={`p-2 rounded-lg ${activeStatusCard === null && showCompleted ? 'bg-slate-500' : 'bg-slate-500/20'}`}>
+              <AlertTriangle className={`w-6 h-6 ${activeStatusCard === null && showCompleted ? 'text-white' : 'text-slate-400'}`} />
+            </div>
+            <div className="text-left">
+              <p className={`text-2xl font-bold ${activeStatusCard === null && showCompleted ? 'text-white' : 'text-slate-300'}`}>
+                {reports.length}
+              </p>
+              <p className={`text-sm ${activeStatusCard === null && showCompleted ? 'text-slate-100' : 'text-slate-400'}`}>Tümü</p>
+            </div>
+          </div>
+        </button>
       </div>
 
       <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md p-4 space-y-4">
