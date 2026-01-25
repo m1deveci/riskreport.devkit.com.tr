@@ -1405,6 +1405,31 @@ app.get('/api/reports', authenticateToken, async (req, res) => {
   try {
     const connection = await pool.getConnection();
 
+    // Fetch fresh user data from database to get current location_ids
+    const [userRows] = await connection.query(
+      'SELECT id, role, location_ids FROM users WHERE id = ?',
+      [req.user.id]
+    );
+
+    if (userRows.length === 0) {
+      connection.release();
+      return res.json([]);
+    }
+
+    const user = userRows[0];
+
+    // Parse location_ids properly (might be string or array)
+    let locationIds = [];
+    if (user.location_ids) {
+      try {
+        locationIds = typeof user.location_ids === 'string'
+          ? JSON.parse(user.location_ids)
+          : (Array.isArray(user.location_ids) ? user.location_ids : []);
+      } catch (e) {
+        locationIds = [];
+      }
+    }
+
     // Build query based on user role
     let query = `SELECT
       nmr.*,
@@ -1417,14 +1442,12 @@ app.get('/api/reports', authenticateToken, async (req, res) => {
     const params = [];
 
     // Role-based filtering
-    if (req.user.role === 'viewer') {
+    if (user.role === 'viewer') {
       // Viewer: only see reports assigned to them
       query += ` WHERE nmr.assigned_user_id = ?`;
-      params.push(req.user.id);
-    } else if (req.user.role === 'isg_expert') {
+      params.push(user.id);
+    } else if (user.role === 'isg_expert') {
       // ISG Expert: see reports from their assigned locations
-      const locationIds = req.user.location_ids || [];
-
       // If user has no assigned locations, return empty
       if (locationIds.length === 0) {
         connection.release();
@@ -1444,6 +1467,7 @@ app.get('/api/reports', authenticateToken, async (req, res) => {
     connection.release();
     res.json(rows);
   } catch (error) {
+    console.error('Error getting reports:', error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -1453,19 +1477,42 @@ app.get('/api/reports/count/new', authenticateToken, async (req, res) => {
   try {
     const connection = await pool.getConnection();
 
+    // Fetch fresh user data from database to get current location_ids
+    const [userRows] = await connection.query(
+      'SELECT id, role, location_ids FROM users WHERE id = ?',
+      [req.user.id]
+    );
+
+    if (userRows.length === 0) {
+      connection.release();
+      return res.json({ count: 0 });
+    }
+
+    const user = userRows[0];
+
+    // Parse location_ids properly (might be string or array)
+    let locationIds = [];
+    if (user.location_ids) {
+      try {
+        locationIds = typeof user.location_ids === 'string'
+          ? JSON.parse(user.location_ids)
+          : (Array.isArray(user.location_ids) ? user.location_ids : []);
+      } catch (e) {
+        locationIds = [];
+      }
+    }
+
     // Build query based on user role
     let query = `SELECT COUNT(*) as count FROM near_miss_reports WHERE status = 'Yeni'`;
     const params = [];
 
     // Role-based filtering
-    if (req.user.role === 'viewer') {
+    if (user.role === 'viewer') {
       // Viewer: count only reports assigned to them
       query += ` AND assigned_user_id = ?`;
-      params.push(req.user.id);
-    } else if (req.user.role === 'isg_expert') {
+      params.push(user.id);
+    } else if (user.role === 'isg_expert') {
       // ISG Expert: count reports from their assigned locations
-      const locationIds = req.user.location_ids || [];
-
       // If user has no assigned locations, return 0
       if (locationIds.length === 0) {
         connection.release();
@@ -1483,6 +1530,7 @@ app.get('/api/reports/count/new', authenticateToken, async (req, res) => {
     connection.release();
     res.json({ count: rows[0]?.count || 0 });
   } catch (error) {
+    console.error('Error getting new reports count:', error);
     res.status(500).json({ error: error.message });
   }
 });
