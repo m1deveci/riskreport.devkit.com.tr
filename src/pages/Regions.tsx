@@ -373,11 +373,21 @@ export function Regions() {
     }
   }
 
-  // Calculate region counts per location
-  const locationCounts = locations.reduce((acc, loc) => {
+  // Filter locations based on user permissions
+  const userLocations = user?.role === 'admin'
+    ? locations
+    : locations.filter((loc) => (user?.location_ids || []).includes(loc.id));
+
+  // Calculate region counts per location (only for user's accessible locations)
+  const locationCounts = userLocations.reduce((acc, loc) => {
     acc[loc.id] = regions.filter((r) => r.location_id === loc.id).length;
     return acc;
   }, {} as Record<string, number>);
+
+  // Total regions count for user's accessible locations
+  const totalAccessibleRegions = user?.role === 'admin'
+    ? regions.length
+    : regions.filter((r) => (user?.location_ids || []).includes(r.location_id)).length;
 
   // Handle location card click
   function handleLocationCardClick(locationId: string | null) {
@@ -421,34 +431,36 @@ export function Regions() {
       </div>
 
       {/* Location Cards */}
-      {locations.length > 0 && (
+      {userLocations.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mb-6">
-          {/* Tümü Card */}
-          <button
-            onClick={() => handleLocationCardClick(null)}
-            className={`p-4 rounded-lg border transition-all duration-200 ${
-              activeLocationCard === null && !selectedLocationFilter
-                ? 'bg-slate-600 border-slate-500 ring-2 ring-slate-400'
-                : 'bg-gradient-to-br from-slate-800 to-slate-700 border-slate-700 hover:border-slate-500'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-lg ${activeLocationCard === null && !selectedLocationFilter ? 'bg-slate-500' : 'bg-slate-500/20'}`}>
-                <Building2 className={`w-5 h-5 ${activeLocationCard === null && !selectedLocationFilter ? 'text-white' : 'text-slate-400'}`} />
+          {/* Tümü Card - only show if user has access to more than 1 location */}
+          {userLocations.length > 1 && (
+            <button
+              onClick={() => handleLocationCardClick(null)}
+              className={`p-4 rounded-lg border transition-all duration-200 ${
+                activeLocationCard === null && !selectedLocationFilter
+                  ? 'bg-slate-600 border-slate-500 ring-2 ring-slate-400'
+                  : 'bg-gradient-to-br from-slate-800 to-slate-700 border-slate-700 hover:border-slate-500'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`p-2 rounded-lg ${activeLocationCard === null && !selectedLocationFilter ? 'bg-slate-500' : 'bg-slate-500/20'}`}>
+                  <Building2 className={`w-5 h-5 ${activeLocationCard === null && !selectedLocationFilter ? 'text-white' : 'text-slate-400'}`} />
+                </div>
+                <div className="text-left min-w-0">
+                  <p className={`text-xl font-bold ${activeLocationCard === null && !selectedLocationFilter ? 'text-white' : 'text-slate-300'}`}>
+                    {totalAccessibleRegions}
+                  </p>
+                  <p className={`text-xs truncate ${activeLocationCard === null && !selectedLocationFilter ? 'text-slate-100' : 'text-slate-400'}`}>
+                    Tümü
+                  </p>
+                </div>
               </div>
-              <div className="text-left min-w-0">
-                <p className={`text-xl font-bold ${activeLocationCard === null && !selectedLocationFilter ? 'text-white' : 'text-slate-300'}`}>
-                  {regions.length}
-                </p>
-                <p className={`text-xs truncate ${activeLocationCard === null && !selectedLocationFilter ? 'text-slate-100' : 'text-slate-400'}`}>
-                  Tümü
-                </p>
-              </div>
-            </div>
-          </button>
+            </button>
+          )}
 
           {/* Location Cards */}
-          {locations.map((location, index) => {
+          {userLocations.map((location, index) => {
             const colors = [
               { bg: 'bg-blue-600', bgLight: 'bg-blue-500/20', border: 'border-blue-500', ring: 'ring-blue-400', text: 'text-blue-400', textActive: 'text-blue-100' },
               { bg: 'bg-green-600', bgLight: 'bg-green-500/20', border: 'border-green-500', ring: 'ring-green-400', text: 'text-green-400', textActive: 'text-green-100' },
@@ -491,24 +503,27 @@ export function Regions() {
         </div>
       )}
 
-      <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md p-4 mb-4">
-        <label className="block text-sm font-medium text-slate-300 mb-2">{t('regions.filterByLocation') || 'Lokasyona Göre Filtrele'}</label>
-        <select
-          value={selectedLocationFilter}
-          onChange={(e) => {
-            setSelectedLocationFilter(e.target.value);
-            setActiveLocationCard(e.target.value || null);
-          }}
-          className="w-full sm:w-64 px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-        >
-          <option value="">{t('regions.allLocations') || 'Tüm Lokasyonlar'}</option>
-          {locations.map((loc) => (
-            <option key={loc.id} value={loc.id}>
-              {loc.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      {/* Dropdown filter - only show if user has access to more than 1 location */}
+      {userLocations.length > 1 && (
+        <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md p-4 mb-4">
+          <label className="block text-sm font-medium text-slate-300 mb-2">{t('regions.filterByLocation') || 'Lokasyona Göre Filtrele'}</label>
+          <select
+            value={selectedLocationFilter}
+            onChange={(e) => {
+              setSelectedLocationFilter(e.target.value);
+              setActiveLocationCard(e.target.value || null);
+            }}
+            className="w-full sm:w-64 px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          >
+            <option value="">{t('regions.allLocations') || 'Tüm Lokasyonlar'}</option>
+            {userLocations.map((loc) => (
+              <option key={loc.id} value={loc.id}>
+                {loc.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 backdrop-blur-md overflow-hidden">
         <div className="overflow-x-auto">
