@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Swal from 'sweetalert2';
 import { logAction, LogActions } from '../lib/logger';
 import { api } from '../lib/api';
-import { Search, Filter, X, AlertTriangle, Eye, Download, Image as ImageIcon, Lock, History, FileDown, UserPlus, Users, Clock, CheckCircle, PlayCircle } from 'lucide-react';
+import { Search, Filter, X, AlertTriangle, Eye, Download, Image as ImageIcon, Lock, History, FileDown, UserPlus, Users, Clock, CheckCircle, PlayCircle, Plus, Camera, Loader2 } from 'lucide-react';
 import type { UserProfile } from '../lib/auth';
 import { useI18n, useLanguageChange } from '../lib/i18n';
 import { exportReportsAsPDF, exportReportsAsExcel, type ReportExportData } from '../lib/exportUtils';
@@ -128,6 +128,20 @@ export function Reports() {
   const [showCompleted, setShowCompleted] = useState(false); // Default: don't show completed
   const [editNotes, setEditNotes] = useState('');
   const [editStatus, setEditStatus] = useState('');
+
+  // Add Report Modal State
+  const [showAddReportModal, setShowAddReportModal] = useState(false);
+  const [addReportLoading, setAddReportLoading] = useState(false);
+  const [newReportData, setNewReportData] = useState({
+    location_id: '',
+    region_id: '',
+    full_name: '',
+    phone: '',
+    category: '',
+    description: '',
+    image: null as File | null,
+  });
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -625,6 +639,210 @@ export function Reports() {
     setFilters((prev) => ({ ...prev, status: '' }));
   }
 
+  // Get user's authorized locations
+  const userLocations = currentUser?.role === 'admin'
+    ? locations
+    : locations.filter((loc) => (currentUser?.location_ids || []).includes(loc.id));
+
+  // Get available regions for selected location in add report modal
+  const addReportRegions = newReportData.location_id
+    ? regions.filter((r) => r.location_id === newReportData.location_id)
+    : [];
+
+  // Format Turkish phone number
+  function formatTurkishPhone(value: string): string {
+    let cleaned = value.replace(/[^\d+]/g, '');
+    if (cleaned.startsWith('+')) {
+      cleaned = '+' + cleaned.substring(1).replace(/[^\d]/g, '');
+    } else {
+      cleaned = cleaned.replace(/[^\d]/g, '');
+    }
+
+    let digits = cleaned.replace(/\D/g, '');
+    if (!digits) return '';
+
+    if (cleaned.startsWith('0') && digits.length >= 10) {
+      digits = '90' + digits.substring(1);
+    } else if (digits.length === 10 && digits.startsWith('5')) {
+      digits = '90' + digits;
+    } else if (digits.length === 11 && digits.startsWith('0')) {
+      digits = '90' + digits.substring(1);
+    }
+
+    if (digits.startsWith('90') && digits.length >= 10) {
+      const countryCode = digits.substring(0, 2);
+      const areaCode = digits.substring(2, 5);
+      const firstPart = digits.substring(5, 8);
+      const secondPart = digits.substring(8, 10);
+      const thirdPart = digits.substring(10, 12);
+
+      let formatted = '+' + countryCode;
+      if (areaCode) formatted += ' ' + areaCode;
+      if (firstPart) formatted += ' ' + firstPart;
+      if (secondPart) formatted += ' ' + secondPart;
+      if (thirdPart) formatted += ' ' + thirdPart;
+
+      return formatted;
+    }
+
+    return cleaned;
+  }
+
+  // Handle image change for add report
+  function handleAddReportImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 10 * 1024 * 1024) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Hata',
+          text: 'Dosya boyutu 10 MB\'den küçük olmalıdır.',
+          confirmButtonColor: '#ef4444',
+        });
+        return;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Hata',
+          text: 'Lütfen bir resim dosyası seçiniz.',
+          confirmButtonColor: '#ef4444',
+        });
+        return;
+      }
+
+      setNewReportData({ ...newReportData, image: file });
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  // Remove image from add report
+  function removeAddReportImage() {
+    setNewReportData({ ...newReportData, image: null });
+    setImagePreview(null);
+  }
+
+  // Open add report modal
+  function openAddReportModal() {
+    // Set default location if user has only one
+    const defaultLocationId = userLocations.length === 1 ? userLocations[0].id : '';
+    setNewReportData({
+      location_id: defaultLocationId,
+      region_id: '',
+      full_name: '',
+      phone: '',
+      category: '',
+      description: '',
+      image: null,
+    });
+    setImagePreview(null);
+    setShowAddReportModal(true);
+  }
+
+  // Handle add report submit
+  async function handleAddReportSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setAddReportLoading(true);
+
+    try {
+      // Validation
+      if (!newReportData.location_id) {
+        throw new Error('Lokasyon seçimi zorunludur');
+      }
+      if (!newReportData.region_id) {
+        throw new Error('Bölge seçimi zorunludur');
+      }
+      if (!newReportData.full_name.trim()) {
+        throw new Error('Ad Soyad alanı zorunludur');
+      }
+      if (!newReportData.category) {
+        throw new Error('Kategori seçimi zorunludur');
+      }
+
+      const token = localStorage.getItem('token');
+
+      // Upload image if exists
+      let imagePath = '';
+      if (newReportData.image) {
+        const imageFormData = new FormData();
+        imageFormData.append('file', newReportData.image);
+        imageFormData.append('region_id', newReportData.region_id);
+
+        const uploadResponse = await fetch(
+          (import.meta.env.VITE_API_URL || 'http://localhost:6000') + '/api/upload',
+          {
+            method: 'POST',
+            body: imageFormData,
+          }
+        );
+
+        if (!uploadResponse.ok) {
+          throw new Error('Görsel yüklenirken hata oluştu');
+        }
+
+        const uploadData = await uploadResponse.json();
+        imagePath = uploadData.path;
+      }
+
+      // Submit report
+      const response = await fetch(
+        (import.meta.env.VITE_API_URL || 'http://localhost:6000') + '/api/reports/manual',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            location_id: newReportData.location_id,
+            region_id: newReportData.region_id,
+            full_name: newReportData.full_name.trim(),
+            phone: newReportData.phone || null,
+            category: newReportData.category,
+            description: newReportData.description.trim(),
+            image_path: imagePath,
+            status: 'Yeni',
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Rapor oluşturulurken hata oluştu');
+      }
+
+      const data = await response.json();
+
+      await Swal.fire({
+        icon: 'success',
+        title: 'Başarılı',
+        html: `Rapor başarıyla oluşturuldu.<br/><strong>Olay No: ${data.incident_number}</strong>`,
+        confirmButtonColor: '#3b82f6',
+        confirmButtonText: 'Tamam',
+      });
+
+      setShowAddReportModal(false);
+      await loadData();
+    } catch (err) {
+      console.error('Failed to add report:', err);
+      await Swal.fire({
+        icon: 'error',
+        title: 'Hata',
+        text: err instanceof Error ? err.message : 'Rapor oluşturulurken hata oluştu',
+        confirmButtonColor: '#ef4444',
+        confirmButtonText: 'Tamam',
+      });
+    } finally {
+      setAddReportLoading(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -672,6 +890,17 @@ export function Reports() {
             <FileDown className="w-4 h-4" />
             Excel
           </button>
+          {/* Rapor Ekle Butonu - Sadece admin ve isg_expert için */}
+          {(currentUser?.role === 'admin' || currentUser?.role === 'isg_expert') && (
+            <button
+              onClick={openAddReportModal}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors text-sm whitespace-nowrap"
+              title="Manuel Rapor Ekle"
+            >
+              <Plus className="w-4 h-4" />
+              Rapor Ekle
+            </button>
+          )}
         </div>
       </div>
 
@@ -1412,6 +1641,195 @@ export function Reports() {
                 </>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Report Modal */}
+      {showAddReportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+          <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 shadow-xl backdrop-blur-md max-w-2xl w-full my-8">
+            <div className="p-6 border-b border-slate-700 flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-white">Manuel Rapor Ekle</h2>
+              <button
+                onClick={() => setShowAddReportModal(false)}
+                className="text-slate-400 hover:text-slate-300"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <form onSubmit={handleAddReportSubmit} className="p-6 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Lokasyon <span className="text-red-600">*</span>
+                  </label>
+                  <select
+                    value={newReportData.location_id}
+                    onChange={(e) => setNewReportData({ ...newReportData, location_id: e.target.value, region_id: '' })}
+                    className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="">Lokasyon Seçin</option>
+                    {userLocations.map((loc) => (
+                      <option key={loc.id} value={loc.id}>
+                        {loc.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-300 mb-2">
+                    Bölge <span className="text-red-600">*</span>
+                  </label>
+                  <select
+                    value={newReportData.region_id}
+                    onChange={(e) => setNewReportData({ ...newReportData, region_id: e.target.value })}
+                    className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                    disabled={!newReportData.location_id}
+                  >
+                    <option value="">Bölge Seçin</option>
+                    {addReportRegions.map((reg) => (
+                      <option key={reg.id} value={reg.id}>
+                        {reg.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Ad Soyad <span className="text-red-600">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={newReportData.full_name}
+                  onChange={(e) => setNewReportData({ ...newReportData, full_name: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Bildirim yapan kişinin adı"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Telefon Numarası
+                </label>
+                <input
+                  type="tel"
+                  value={newReportData.phone}
+                  onChange={(e) => setNewReportData({ ...newReportData, phone: formatTurkishPhone(e.target.value) })}
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="+90 5XX XXX XX XX"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Kategori <span className="text-red-600">*</span>
+                </label>
+                <select
+                  value={newReportData.category}
+                  onChange={(e) => setNewReportData({ ...newReportData, category: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  <option value="">Kategori Seçin</option>
+                  {CATEGORIES.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Açıklama
+                </label>
+                <textarea
+                  value={newReportData.description}
+                  onChange={(e) => setNewReportData({ ...newReportData, description: e.target.value })}
+                  rows={4}
+                  className="w-full px-3 py-2 border border-slate-600 bg-slate-700 text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  placeholder="Ramak kala olayının detaylı açıklaması..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Görsel / Fotoğraf
+                </label>
+                <div className="relative">
+                  <input
+                    type="file"
+                    id="add-report-image"
+                    accept="image/*"
+                    onChange={handleAddReportImageChange}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="add-report-image"
+                    className="flex items-center justify-center gap-3 w-full px-4 py-6 border-2 border-dashed border-slate-600 rounded-lg cursor-pointer hover:border-blue-500 transition-colors bg-slate-700/50"
+                  >
+                    <Camera className="w-5 h-5 text-slate-400" />
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-slate-300">Fotoğraf Seç</p>
+                      <p className="text-xs text-slate-500 mt-1">Opsiyonel - İsterseniz görsel ekleyebilirsiniz</p>
+                    </div>
+                  </label>
+                </div>
+
+                {imagePreview && (
+                  <div className="mt-4 relative">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-full rounded-lg border border-slate-600 max-h-48 object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={removeAddReportImage}
+                      className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-1.5 hover:bg-red-700 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => setShowAddReportModal(false)}
+                  className="flex-1 px-4 py-2 bg-slate-700 text-slate-300 rounded-lg hover:bg-slate-600 transition-colors"
+                  disabled={addReportLoading}
+                >
+                  İptal
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  disabled={addReportLoading}
+                >
+                  {addReportLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Oluşturuluyor...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="w-4 h-4" />
+                      Rapor Oluştur
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

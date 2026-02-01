@@ -92,13 +92,17 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-// MongoDB Connection
+// MongoDB Connection (optional - for messaging feature)
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/riskreport';
+let mongoConnected = false;
 mongoose.connect(MONGODB_URI)
-  .then(() => console.log('✓ MongoDB connected'))
+  .then(() => {
+    console.log('✓ MongoDB connected');
+    mongoConnected = true;
+  })
   .catch((err) => {
-    console.error('✗ MongoDB connection error:', err);
-    process.exit(1);
+    console.warn('⚠ MongoDB connection failed (messaging feature disabled):', err.message);
+    // Continue without MongoDB - messaging feature will be unavailable
   });
 
 // ==================== MONGOOSE SCHEMAS ====================
@@ -1659,6 +1663,133 @@ app.post('/api/reports', async (req, res) => {
       email_sent_to: emailSentCount
     });
   } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Manual report creation by authenticated users (admin, isg_expert)
+app.post('/api/reports/manual', authenticateToken, async (req, res) => {
+  try {
+    const { location_id, region_id, full_name, phone, category, description, image_path } = req.body;
+
+    // Check if user is admin or isg_expert
+    if (req.user.role !== 'admin' && req.user.role !== 'isg_expert') {
+      return res.status(403).json({ error: 'Bu işlem için yetkiniz bulunmamaktadır' });
+    }
+
+    // Validation
+    if (!location_id || !region_id || !full_name || !category) {
+      return res.status(400).json({ error: 'Gerekli alanlar eksik' });
+    }
+
+    const connection = await pool.getConnection();
+
+    // For isg_expert, check if they have access to the selected location
+    if (req.user.role === 'isg_expert') {
+      // Get fresh user data from database
+      const [userRows] = await connection.query(
+        'SELECT location_ids FROM users WHERE id = ?',
+        [req.user.id]
+      );
+
+      if (userRows.length === 0) {
+        connection.release();
+        return res.status(403).json({ error: 'Kullanıcı bulunamadı' });
+      }
+
+      const user = userRows[0];
+      let locationIds = [];
+      if (user.location_ids) {
+        try {
+          locationIds = typeof user.location_ids === 'string'
+            ? JSON.parse(user.location_ids)
+            : (Array.isArray(user.location_ids) ? user.location_ids : []);
+        } catch (e) {
+          locationIds = [];
+        }
+      }
+
+      if (!locationIds.includes(location_id)) {
+        connection.release();
+        return res.status(403).json({ error: 'Bu lokasyonda rapor oluşturma yetkiniz bulunmamaktadır' });
+      }
+    }
+
+    const id = randomUUID();
+    const incidentNumber = `RK-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000000)).padStart(6, '0')}`;
+
+    await connection.query(
+      `INSERT INTO near_miss_reports
+       (id, incident_number, location_id, region_id, full_name, phone, category, description, image_path)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, incidentNumber, location_id, region_id, full_name, phone || null, category, description || '', image_path || null]
+    );
+
+    // Get location information
+    const [locationRows] = await connection.query(
+      'SELECT name FROM locations WHERE id = ?',
+      [location_id]
+    );
+
+    const locationName = locationRows.length > 0 ? locationRows[0].name : 'Bilinmeyen Lokasyon';
+
+    // Get all isg_expert users assigned to this location
+    const [experts] = await connection.query(
+      `SELECT id, email, full_name FROM users
+       WHERE role = 'isg_expert' AND is_active = true
+       AND JSON_CONTAINS(COALESCE(location_ids, '[]'), JSON_QUOTE(?))`,
+      [location_id]
+    );
+
+    const recipientEmails = experts.map(user => user.email);
+    const recipientNames = experts.map(user => user.full_name);
+
+    // Send emails to isg_expert users
+    let emailSentCount = 0;
+    if (recipientEmails.length > 0) {
+      try {
+        await sendNearMissReportEmail(recipientEmails, {
+          incident_number: incidentNumber,
+          full_name,
+          phone,
+          category,
+          description
+        }, locationName);
+        emailSentCount = recipientEmails.length;
+      } catch (emailError) {
+        console.error('Failed to send near-miss report emails:', emailError);
+        // Continue execution even if email sending fails
+      }
+    }
+
+    // Rapor oluşturmayı logla
+    await logAction(req.user.id, 'CREATE_NEARMISS', {
+      incident_number: incidentNumber,
+      location_id,
+      location_name: locationName,
+      region_id,
+      reporter_name: full_name,
+      category,
+      phone: phone || 'Belirtilmemiş',
+      manual_entry: true,
+      created_by: req.user.full_name,
+      email_recipients_count: emailSentCount,
+      email_recipients: recipientNames.length > 0 ? recipientNames.join(', ') : 'Yok'
+    });
+
+    // Rapor oluşturma geçmişini kaydet
+    await recordReportHistory(id, req.user.id, req.user.full_name, 'CREATE', null, null, null,
+      `Manuel rapor oluşturuldu - Bildirim Yapan: ${full_name}, Kategori: ${category}`);
+
+    connection.release();
+    res.json({
+      success: true,
+      id,
+      incident_number: incidentNumber,
+      email_sent_to: emailSentCount
+    });
+  } catch (error) {
+    console.error('Manual report creation error:', error);
     res.status(500).json({ error: error.message });
   }
 });
