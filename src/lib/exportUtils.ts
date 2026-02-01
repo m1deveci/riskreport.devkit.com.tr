@@ -33,6 +33,7 @@ export interface ReportExportData {
   description: string;
   internal_notes: string;
   created_at: string;
+  completion_duration?: string;
 }
 
 // Sistem Loglarını PDF olarak dışa aktar (Türkçe karakter desteği ile)
@@ -204,7 +205,8 @@ export async function exportReportsAsPDF(
     report.phone,
     report.category,
     report.status,
-    report.description.substring(0, 50), // İlk 50 karakter
+    report.completion_duration || '-',
+    report.description.substring(0, 40), // İlk 40 karakter
   ]);
 
   // autoTable ile tablo ekle
@@ -218,6 +220,7 @@ export async function exportReportsAsPDF(
         'Telefon',
         'Kategori',
         'Durum',
+        'Tamamlanma',
         'Açıklama',
       ],
     ],
@@ -225,14 +228,15 @@ export async function exportReportsAsPDF(
     startY: y,
     margin: 10,
     columnStyles: {
-      0: { cellWidth: 18 },
-      1: { cellWidth: 22 },
-      2: { cellWidth: 22 },
-      3: { cellWidth: 25 },
-      4: { cellWidth: 20 },
-      5: { cellWidth: 25 },
-      6: { cellWidth: 18 },
-      7: { cellWidth: 'auto' },
+      0: { cellWidth: 16 },
+      1: { cellWidth: 20 },
+      2: { cellWidth: 20 },
+      3: { cellWidth: 23 },
+      4: { cellWidth: 18 },
+      5: { cellWidth: 23 },
+      6: { cellWidth: 16 },
+      7: { cellWidth: 20 },
+      8: { cellWidth: 'auto' },
     },
     headStyles: {
       fillColor: [41, 128, 185],
@@ -282,6 +286,7 @@ export function exportReportsAsExcel(
     { wch: 35 },
     { wch: 25 },
     { wch: 18 },
+    { wch: 22 },
   ];
 
   // Başlık satırını biçimlendir

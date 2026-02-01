@@ -1438,10 +1438,17 @@ app.get('/api/reports', authenticateToken, async (req, res) => {
     let query = `SELECT
       nmr.*,
       l.name as location_name,
-      r.name as region_name
+      r.name as region_name,
+      rh.created_at as completion_date
     FROM near_miss_reports nmr
     LEFT JOIN locations l ON nmr.location_id = l.id
-    LEFT JOIN regions r ON nmr.region_id = r.id`;
+    LEFT JOIN regions r ON nmr.region_id = r.id
+    LEFT JOIN (
+      SELECT report_id, created_at
+      FROM report_history
+      WHERE field_name = 'status' AND new_value = 'Tamamlandı'
+      ORDER BY created_at DESC
+    ) rh ON nmr.id = rh.report_id`;
 
     const params = [];
 

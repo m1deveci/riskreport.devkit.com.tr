@@ -19,6 +19,7 @@ interface Report {
   status: string;
   internal_notes: string;
   created_at: string;
+  completion_date?: string;
   image_path?: string;
   location_name?: string;
   region_name?: string;
@@ -90,6 +91,33 @@ const getChangeDescription = (fieldName: string, oldValue: string, newValue: str
     return t('reports.notesChanged') || 'Not eklendi/değiştirildi';
   }
   return '';
+};
+
+// Helper function to calculate and format completion duration
+const formatCompletionDuration = (createdAt: string, completionDate: string): string => {
+  const created = new Date(createdAt);
+  const completed = new Date(completionDate);
+  const diffMs = completed.getTime() - created.getTime();
+
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays > 0) {
+    const remainingHours = diffHours % 24;
+    if (remainingHours > 0) {
+      return `${diffDays} gün ${remainingHours} saat`;
+    }
+    return `${diffDays} gün`;
+  } else if (diffHours > 0) {
+    const remainingMinutes = diffMinutes % 60;
+    if (remainingMinutes > 0) {
+      return `${diffHours} saat ${remainingMinutes} dakika`;
+    }
+    return `${diffHours} saat`;
+  } else {
+    return `${diffMinutes} dakika`;
+  }
 };
 
 export function Reports() {
@@ -282,6 +310,9 @@ export function Reports() {
         hour: '2-digit',
         minute: '2-digit',
       }),
+      completion_duration: report.status === 'Tamamlandı' && report.completion_date
+        ? formatCompletionDuration(report.created_at, report.completion_date)
+        : undefined,
     }));
 
     const filename = `raporlar_${new Date().toISOString().split('T')[0]}.pdf`;
@@ -310,6 +341,9 @@ export function Reports() {
         hour: '2-digit',
         minute: '2-digit',
       }),
+      completion_duration: report.status === 'Tamamlandı' && report.completion_date
+        ? formatCompletionDuration(report.created_at, report.completion_date)
+        : undefined,
     }));
 
     const filename = `raporlar_${new Date().toISOString().split('T')[0]}.xlsx`;
@@ -1262,6 +1296,18 @@ export function Reports() {
                     })}
                   </p>
                 </div>
+
+                {selectedReport.status === 'Tamamlandı' && selectedReport.completion_date && (
+                  <div>
+                    <label className="block text-sm font-medium text-slate-300 mb-1">
+                      <Clock className="w-4 h-4 inline mr-1" />
+                      Tamamlanma Süresi
+                    </label>
+                    <p className="text-green-400 font-semibold">
+                      {formatCompletionDuration(selectedReport.created_at, selectedReport.completion_date)}
+                    </p>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-slate-300 mb-1">{t('reports.location') || 'Lokasyon'}</label>
