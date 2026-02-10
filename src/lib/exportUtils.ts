@@ -1,11 +1,23 @@
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
-import html2canvas from 'html2canvas';
 import * as XLSX from 'xlsx';
+import html2canvas from 'html2canvas';
 
-declare global {
+// Helper to fix Turkish character issues in standard PDF fonts
+const fixTurkishChars = (text: string): string => {
+  if (!text) return '';
+  return text
+    .replace(/ğ/g, 'g').replace(/Ğ/g, 'G')
+    .replace(/ü/g, 'u').replace(/Ü/g, 'U')
+    .replace(/ş/g, 's').replace(/Ş/g, 'S')
+    .replace(/ı/g, 'i').replace(/İ/g, 'I')
+    .replace(/ö/g, 'o').replace(/Ö/g, 'O')
+    .replace(/ç/g, 'c').replace(/Ç/g, 'C');
+};
+
+declare module 'jspdf' {
   interface jsPDF {
-    autoTable: any;
+    autoTable: (options: any) => jsPDF;
   }
 }
 
@@ -75,10 +87,10 @@ export async function exportLogsAsPDF(
 
   // Tablo verilerini hazırla
   const tableData = logs.map((log) => [
-    log.date,
-    log.user,
-    log.action,
-    log.details,
+    fixTurkishChars(log.date),
+    fixTurkishChars(log.user),
+    fixTurkishChars(log.action),
+    fixTurkishChars(log.details),
   ]);
 
   // autoTable ile tablo ekle (Türkçe karakterleri destekler)
@@ -198,15 +210,15 @@ export async function exportReportsAsPDF(
 
   // Tablo verilerini hazırla
   const tableData = reports.map((report) => [
-    report.incident_number,
-    report.location_name,
-    report.region_name,
-    report.full_name,
-    report.phone,
-    report.category,
-    report.status,
-    report.completion_duration || '-',
-    report.description.substring(0, 40), // İlk 40 karakter
+    fixTurkishChars(report.incident_number),
+    fixTurkishChars(report.location_name),
+    fixTurkishChars(report.region_name),
+    fixTurkishChars(report.full_name),
+    fixTurkishChars(report.phone),
+    fixTurkishChars(report.category),
+    fixTurkishChars(report.status),
+    fixTurkishChars(report.completion_duration || '-'),
+    fixTurkishChars(report.description.substring(0, 40)), // İlk 40 karakter
   ]);
 
   // autoTable ile tablo ekle
@@ -347,12 +359,12 @@ export async function exportLocationRiskAsPDF(
 
   // Tablo verilerini hazırla
   const tableData = data.map((item) => [
-    item.location,
-    item.healthScore.toString(),
-    item.riskLevel,
-    item.reportCount.toString(),
-    item.lastReport,
-    item.regions,
+    fixTurkishChars(item.location),
+    fixTurkishChars(item.healthScore.toString()),
+    fixTurkishChars(item.riskLevel),
+    fixTurkishChars(item.reportCount.toString()),
+    fixTurkishChars(item.lastReport),
+    fixTurkishChars(item.regions),
   ]);
 
   // autoTable ile tablo ekle
@@ -461,12 +473,12 @@ export async function exportActionSpeedAsPDF(
 
   // Tablo verilerini hazırla
   const tableData = data.map((item) => [
-    item.rank.toString(),
-    item.location,
-    item.investigationDays.toString(),
-    item.resolutionDays.toString(),
-    item.resolutionRate,
-    item.speed,
+    fixTurkishChars(item.rank.toString()),
+    fixTurkishChars(item.location),
+    fixTurkishChars(item.investigationDays.toString()),
+    fixTurkishChars(item.resolutionDays.toString()),
+    fixTurkishChars(item.resolutionRate),
+    fixTurkishChars(item.speed),
   ]);
 
   // autoTable ile tablo ekle
@@ -534,4 +546,170 @@ export function exportActionSpeedAsExcel(
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Aksiyon Hızı');
 
   XLSX.writeFile(workbook, options.filename);
+}
+
+/**
+ * Rapor Detayını PDF olarak dışa aktar (Görsel ve tüm detaylar ile)
+ * HTML2Canvas kullanarak tüm karakterleri ve tasarımı korur.
+ */
+export async function exportSingleReportAsPDF(
+  report: any,
+  options: ExportOptions,
+  history: any[] = []
+): Promise<void> {
+  const container = document.createElement('div');
+  container.style.position = 'absolute';
+  container.style.left = '-9999px';
+  container.style.top = '0';
+  container.style.width = '700px'; // A4 proportional
+  container.style.backgroundColor = '#ffffff';
+  container.style.color = '#334155';
+  container.style.fontFamily = 'Arial, Helvetica, sans-serif';
+  container.style.padding = '40px';
+  container.style.lineHeight = '1.5';
+  
+  const imgUrl = report.image_path 
+    ? (report.image_path.startsWith('http') 
+        ? report.image_path 
+        : `${import.meta.env.VITE_API_URL || 'http://localhost:6000'}${report.image_path.startsWith('/') ? '' : '/'}${report.image_path}`)
+    : null;
+
+  const historyHtml = history.length > 0 ? `
+    <div style="margin-bottom: 30px;">
+      <h2 style="font-size: 18px; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 10px;">Rapor Hareketleri</h2>
+      <div style="font-size: 12px; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background-color: #f8fafc; text-align: left; border-bottom: 1px solid #e2e8f0;">
+              <th style="padding: 10px;">Tarih</th>
+              <th style="padding: 10px;">Kullanıcı</th>
+              <th style="padding: 10px;">İşlem</th>
+              <th style="padding: 10px;">Detay</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${history.map((h, index) => `
+              <tr style="${index !== history.length - 1 ? 'border-bottom: 1px solid #e2e8f0;' : ''}">
+                <td style="padding: 10px; white-space: nowrap;">${new Date(h.created_at).toLocaleString('tr-TR')}</td>
+                <td style="padding: 10px;">${h.changed_by_user_name || 'Sistem'}</td>
+                <td style="padding: 10px;">${h.action}</td>
+                <td style="padding: 10px;">${h.change_description || (h.field_name ? `${h.field_name}: ${h.old_value} → ${h.new_value}` : '-')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  ` : '';
+
+  container.innerHTML = `
+    <div style="border-bottom: 3px solid #1e293b; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-end;">
+      <div>
+        <h1 style="color: #1e293b; margin: 0; font-size: 28px; font-weight: bold;">RAMAK KALA RAPORU</h1>
+        <p style="color: #64748b; margin: 5px 0 0 0; font-size: 14px;">Risk Raporlama Sistemi</p>
+      </div>
+      <div style="text-align: right;">
+        <p style="margin: 0; font-weight: bold; color: #1e293b;">Olay No: ${report.incident_number}</p>
+        <p style="margin: 0; color: #64748b; font-size: 12px;">Tarih: ${new Date(report.created_at).toLocaleString('tr-TR')}</p>
+      </div>
+    </div>
+    
+    <div style="margin-bottom: 30px;">
+      <h2 style="font-size: 18px; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 15px;">Rapor Bilgileri</h2>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div>
+          <span style="color: #64748b; font-size: 12px; display: block; text-transform: uppercase;">Bildiren</span>
+          <span style="font-weight: bold;">${report.full_name}</span>
+        </div>
+        <div>
+          <span style="color: #64748b; font-size: 12px; display: block; text-transform: uppercase;">Kategori</span>
+          <span style="font-weight: bold;">${report.category}</span>
+        </div>
+        <div>
+          <span style="color: #64748b; font-size: 12px; display: block; text-transform: uppercase;">Lokasyon</span>
+          <span style="font-weight: bold;">${report.location_name || report.locations?.name || '-'}</span>
+        </div>
+        <div>
+          <span style="color: #64748b; font-size: 12px; display: block; text-transform: uppercase;">Bölge</span>
+          <span style="font-weight: bold;">${report.region_name || report.regions?.name || '-'}</span>
+        </div>
+        <div>
+          <span style="color: #64748b; font-size: 12px; display: block; text-transform: uppercase;">Telefon</span>
+          <span style="font-weight: bold;">${report.phone || '-'}</span>
+        </div>
+        <div>
+          <span style="color: #64748b; font-size: 12px; display: block; text-transform: uppercase;">Durum</span>
+          <span style="background-color: #f1f5f9; padding: 2px 8px; border-radius: 4px; font-weight: bold;">${report.status}</span>
+        </div>
+      </div>
+    </div>
+    
+    <div style="margin-bottom: 30px;">
+      <h2 style="font-size: 18px; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 10px;">Olay Açıklaması</h2>
+      <p style="white-space: pre-wrap; margin: 0; font-size: 14px; background-color: #f8fafc; padding: 15px; border-radius: 6px;">${report.description}</p>
+    </div>
+    
+    ${report.internal_notes ? `
+      <div style="margin-bottom: 30px;">
+        <h2 style="font-size: 18px; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 10px;">İç Notlar / Aksiyonlar</h2>
+        <p style="white-space: pre-wrap; margin: 0; font-size: 14px; background-color: #f0fdf4; padding: 15px; border-radius: 6px; color: #166534;">${report.internal_notes}</p>
+      </div>
+    ` : ''}
+    
+    ${imgUrl ? `
+      <div style="margin-bottom: 30px;">
+        <h2 style="font-size: 18px; color: #1e293b; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 15px;">Olay Görseli</h2>
+        <div style="text-align: center; background-color: #f1f5f9; padding: 10px; border-radius: 8px;">
+          <img src="${imgUrl}" style="max-width: 100%; max-height: 400px; border-radius: 4px;" />
+        </div>
+      </div>
+    ` : ''}
+
+    ${historyHtml}
+    
+    <div style="margin-top: 50px; border-top: 1px solid #e2e8f0; pt: 10px; font-size: 10px; color: #94a3b8; display: flex; justify-content: space-between;">
+      <span>Risk Raporlama Sistemi tarafından oluşturuldu</span>
+      <span>Oluşturma: ${new Date().toLocaleString('tr-TR')}</span>
+    </div>
+  `;
+  
+  document.body.appendChild(container);
+  
+  try {
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#ffffff'
+    });
+    
+    const imgData = canvas.toDataURL('image/jpeg', 0.95);
+    const pdf = new jsPDF({
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
+    });
+    
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const margin = 10;
+    const contentWidth = pageWidth - (2 * margin);
+    const contentHeight = (canvas.height * contentWidth) / canvas.width;
+    
+    // Check if content exceeds one page height
+    if (contentHeight > (pageHeight - 20)) {
+        // Simple scaling to fit one page if it's close, otherwise it would need complex slicing
+        const scaleToFit = (pageHeight - 20) / contentHeight;
+        pdf.addImage(imgData, 'JPEG', margin, margin, contentWidth * scaleToFit, contentHeight * scaleToFit);
+    } else {
+        pdf.addImage(imgData, 'JPEG', margin, margin, contentWidth, contentHeight);
+    }
+    
+    pdf.save(options.filename);
+  } catch (error) {
+    console.error('PDF creation failed:', error);
+    throw error;
+  } finally {
+    document.body.removeChild(container);
+  }
 }

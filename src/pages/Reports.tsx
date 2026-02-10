@@ -5,7 +5,7 @@ import { api } from '../lib/api';
 import { Search, Filter, X, AlertTriangle, Eye, Download, Image as ImageIcon, Lock, History, FileDown, UserPlus, Users, Clock, CheckCircle, PlayCircle, Plus, Camera, Loader2 } from 'lucide-react';
 import type { UserProfile } from '../lib/auth';
 import { useI18n, useLanguageChange } from '../lib/i18n';
-import { exportReportsAsPDF, exportReportsAsExcel, type ReportExportData } from '../lib/exportUtils';
+import { exportReportsAsPDF, exportReportsAsExcel, exportSingleReportAsPDF, type ReportExportData } from '../lib/exportUtils';
 
 interface Report {
   id: string;
@@ -321,6 +321,14 @@ export function Reports() {
       title: 'Ramak Kala Raporları',
       subtitle: `Toplam ${dataToExport.length} rapor`,
     });
+  }
+
+  async function handleExportSinglePDF(report: Report) {
+    const filename = `rapor_${report.incident_number}.pdf`;
+    await exportSingleReportAsPDF(report, {
+      filename,
+      title: 'Ramak Kala Raporu',
+    }, reportHistory);
   }
 
   function handleExportExcel() {
@@ -1269,12 +1277,21 @@ export function Reports() {
           <div className="rounded-lg bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 shadow-xl backdrop-blur-md max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-slate-700 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-white">{t('reports.reportDetail') || 'Rapor Detayı'}</h2>
-              <button
-                onClick={() => setShowDetailModal(false)}
-                className="text-slate-400 hover:text-slate-300"
-              >
-                <X className="w-6 h-6" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleExportSinglePDF(selectedReport)}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  <FileDown className="w-4 h-4" />
+                  Rapor Oluştur
+                </button>
+                <button
+                  onClick={() => setShowDetailModal(false)}
+                  className="text-slate-400 hover:text-slate-300"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
             </div>
 
             <div className="p-6 space-y-6">
